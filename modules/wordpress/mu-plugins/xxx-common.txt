@@ -423,7 +423,7 @@ function ss_menu() {
       
         	echo '<br class="clear" />
 		<h2>General Settings</h2>
-		<p><strong>SlickStack Build:</strong> ' . SS_BUILD . '</p>
+		<p><strong>MariHost WP Stack Build:</strong> ' . SS_BUILD . '</p>
 		<p><strong>Hardware (Datacenter) Vendor:</strong> ' . SYSTEM_VENDOR . '</p>
 		<p><strong>Virtualization Technology:</strong> ' . SYSTEM_VIRTUAL . '</p>
 		<p><strong>Linux Kernel:</strong> ' . SYSTEM_LINUX_KERNEL . '</p>
@@ -440,7 +440,7 @@ function ss_menu() {
 		<p><strong>MySQL Database(s) Size:</strong> ' . SYSTEM_MYSQL_SIZE . '</p>
 		<br class="clear" />
 		<br class="clear" />
-		<p>Are you a developer? This data is sourced from: <code>/var/www/meta/ss-constants.php</code></p>';
+		';
         
 		break;
 		
@@ -490,7 +490,7 @@ function ss_notices_resources() {
 /** ********************************************************************************************* */
 
 /** SlickStack Toolbar Shortcuts */
-add_action('admin_bar_menu', 'slickstack_menu', 25);
+// add_action('admin_bar_menu', 'slickstack_menu', 25);
 
 function slickstack_menu() {
     if(current_user_can('manage_options') ) {
