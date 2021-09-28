@@ -7,8 +7,9 @@
 #### path: /var/www/ss-sync-staging ################################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Syncs relevant files and database from production site to the staging site ###########
-#### module version: WordPress 5.5.x + MySQL 8.0.x + ###############################################
+#### module version: WordPress 5.8.x + MySQL 8.0.x #################################################
 #### sourced by: ss core cron jobs #################################################################
+#### bash aliases: ss sync staging #################################################################
 ####################################################################################################
 
 ## SS-SYNC DUPLICATES ALL RELEVANT FILES FROM PRODUCTION TO STAGING (BUT NOT UPLOADS) ##
@@ -23,7 +24,27 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Sync-Staging: Message (Begin Script) #######################################################
+#### TABLE OF CONTENTS (SS-Sync-Staging) ###########################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Import Production Database To Staging Database
+## D. Copy All Relevant Files From Production To Staging
+## E. Fix Any Hardcoded Links In Staging Theme Files
+
+####################################################################################################
+#### A. SS-Sync-Staging: Touch Timestamp File ######################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_SYNC_STAGING"
+
+####################################################################################################
+#### B. SS-Sync-Staging: Message (Begin Script) ####################################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
@@ -34,375 +55,62 @@ echo -e "${PURPLE}Running ss-sync-staging: Syncs relevant files and database fro
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
-#### SS-Sync-Staging: Copy All Relevant Files From Production To Staging ###########################
+#### C. SS-Sync-Staging: Import Production Database To Staging Database ############################
+####################################################################################################
+
+## this snippet duplicates the dumped production database and imports it into MySQL ##
+## then it briefly replaces the home/siteurl options to match the subdomain ##
+
+## only if staging site is enabled ##
+if [[ "$STAGING_SITE" == "true" ]]; then
+
+    ## import database ##
+    cp /var/www/backups/mysql/production.sql /tmp/staging.sql
+    chown mysql:mysql /tmp/staging.sql ## does not matter if -L flag used below
+    chmod 0644 /tmp/staging.sql ## does not matter if -L flag used below
+    sudo mysql -L -f staging < /tmp/staging.sql
+    rm /tmp/staging.sql
+    
+    ## fix staging home and siteurl fields (no mass search/replace to avoid potential conflicts) ##
+    if [[ "$SS_APP" == "wordpress" ]]; then
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN' WHERE option_name='home'";
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN' WHERE option_name='siteurl'";
+    fi
+    
+####################################################################################################
+#### D. SS-Sync-Staging: Copy All Relevant Files From Production To Staging ########################
 ####################################################################################################
 
 ## here we copy over everything from production to staging besides uploads (media files) ##
 ## schedule ss-clean beforehand in order to remove various (large) junk files ##
 
-## only if staging site not disabled in ss-config ##
-if [[ "$STAGING_SITE" != "false" ]] && [[ "$SS_APP" == "wordpress" || -z "$SS_APP"  ]]; then
+    ## copy wp core directories ##
+    ss_rsync /var/www/html/wp-admin/ /var/www/html/staging/wp-admin
+    ss_rsync /var/www/html/wp-includes/ /var/www/html/staging/wp-includes
 
-    ## create staging database ##
-    sudo mysql -e "CREATE DATABASE IF NOT EXISTS wordpress_staging;"
-
-    ## copy WordPress Core directories (wp-admin and wp-includes) ##
-    rsync /var/www/html/wp-admin/ /var/www/html/staging/wp-admin
-    rsync /var/www/html/wp-includes/ /var/www/html/staging/wp-includes
-
-    ## copy WordPress Core (PHP) files in web root ##
+    ## copy wp core root php files (only) ##
     # --exclude-from="/var/www/meta/exclude.txt" 
-    rsync --exclude="wp-config*.php*" --include="index.php" --include="wp-*.php" --exclude="*" /var/www/html/ /var/www/html/staging
+    ss_rsync --exclude="wp-config*.php*" --include="index.php" --include="wp-*.php" --exclude="*" /var/www/html/ /var/www/html/staging
 
     ## copy wp-content files over (skips media uploads) ##
-    rsync --max-size=5mb --exclude="mu-plugins*" --exclude="uploads*" /var/www/html/wp-content/ /var/www/html/staging/wp-content
+    ss_rsync --max-size=5mb --exclude="mu-plugins*" --exclude="uploads*" /var/www/html/wp-content/ /var/www/html/staging/wp-content
     
     ## remove potential run-on subdirectories ##
     rm /var/www/html/staging/staging*
 
 ####################################################################################################
-#### SS-Sync-Staging: Copy Database From Production To Staging (Modify Table Prefix) ###############
-####################################################################################################
-
-## schedule ss-dump beforehand to dump the MySQL database optimally before ss-sync runs ##
-## table prefix changed to staging_ (hardcoded) and minor search/replace occurs ##
-
-    ## cleanup tmp files ##
-    rm /var/www/meta/staging*.sql*
-    rm /tmp/staging*.sql*
-
-    ## duplicate production SQL dump to temporary staging SQL dump ##
-    cp /var/www/meta/wp.sql /tmp/staging.sql
-
-    ## change production table prefixes to staging_ prefix (shared database) ##
-    if [[ -z "$DB_PREFIX" ]]; then 
-        sed -i "s#wp_#staging_#g" /tmp/staging.sql
-    else 
-        sed -i "s#${DB_PREFIX}#staging_#g" /tmp/staging.sql
-    fi
-
-    ## replace all URLs with staging ##
-    sed -i "s#https://$SITE_DOMAIN#https://$SITE_DOMAIN/staging#g" /tmp/staging.sql
-    sed -i "s#http://$SITE_DOMAIN#https://$SITE_DOMAIN/staging#g" /tmp/staging.sql
-    sed -i "s#//$SITE_DOMAIN#//$SITE_DOMAIN/staging#g" /tmp/staging.sql
-    sed -i "s#$SITE_DOMAIN#$SITE_DOMAIN/staging#g" /tmp/staging.sql
-
-    ## fix potential run-on paths in temporary staging SQL dump ##
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging/staging#staging#g" /tmp/staging.sql
-    sed -i "s#staging/staging#staging#g" /tmp/staging.sql
-
-    ## fix potential excessive forward-slashes in temporary staging SQL dump ##
-    sed -i "s#staging///////////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging//////////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging/////////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging////////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging///////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging//////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging/////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging////////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging///////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging//////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging/////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging////#staging/#g" /tmp/staging.sql
-    sed -i "s#staging///#staging/#g" /tmp/staging.sql
-    sed -i "s#staging//#staging/#g" /tmp/staging.sql
-
-    ## fix potential double forward slashes between domain and subdirectory (caused by sed rules above) ##
-    sed -i "s#/////staging#/staging#g" /tmp/staging.sql
-    sed -i "s#////staging#/staging#g" /tmp/staging.sql
-    sed -i "s#///staging#/staging#g" /tmp/staging.sql
-    sed -i "s#//staging#/staging#g" /tmp/staging.sql
-
-    ## fix potential run-on table prefixes ##
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_staging_#staging_#g" /tmp/staging.sql
-    sed -i "s#staging_staging_#staging_#g" /tmp/staging.sql
-
-####################################################################################################
-#### SS-Sync-Staging: Fix Any Hardcoded Links In Theme Files #######################################
+#### E. SS-Sync-Staging: Fix Any Hardcoded Links In Staging Theme Files ############################
 ####################################################################################################
 
 ## many themes (or custom-coded themes) often contain hardcoded HTML assets and links ##
 ## here we forcefully fix these links to ensure staging sites render properly ##
 
-    ## fix hyperlinks (but not media src as they are shared with production uploads folder) ##
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#href="https://$SITE_DOMAIN#href="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#href="http://$SITE_DOMAIN#href="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#href="//$SITE_DOMAIN#href="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#href='https://$SITE_DOMAIN#href='https://$SITE_DOMAIN/staging#g" {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#href='http://$SITE_DOMAIN#href='https://$SITE_DOMAIN/staging#g" {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#href='//$SITE_DOMAIN#href='https://$SITE_DOMAIN/staging#g" {} +
-
-    ## fix sources (mirrors to production uploads folder using Nginx alias so this is just for cleaner source code) ##
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#src="https://$SITE_DOMAIN#src="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#src="http://$SITE_DOMAIN#src="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i 's#src="//$SITE_DOMAIN#src="https://$SITE_DOMAIN/staging#g' {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#src='https://$SITE_DOMAIN#src='https://$SITE_DOMAIN/staging#g" {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#src='http://$SITE_DOMAIN#src='https://$SITE_DOMAIN/staging#g" {} +
-    # find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#src='//$SITE_DOMAIN#src='https://$SITE_DOMAIN/staging#g" {} +
-
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#https://$SITE_DOMAIN#https://$SITE_DOMAIN/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#http://$SITE_DOMAIN#https://$SITE_DOMAIN/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#//$SITE_DOMAIN#//$SITE_DOMAIN/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#$SITE_DOMAIN#$SITE_DOMAIN/staging#g" {} +
-
-    ## now we fix potential hardcoded run-on paths in theme files (caused by previous seds) ##
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging/staging#staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/staging#staging#g" {} +
-
-    ## fix potential excessive forward-slashes in theme files ##
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging///////////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging//////////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/////////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging////////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging///////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging//////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging////////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging///////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging//////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging/////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging////#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging///#staging/#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#staging//#staging/#g" {} +
-
-    ## fix potential double forward slashes between domain and subdirectory (caused by sed rules above) ##
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#/////staging#/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#////staging#/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#///staging#/staging#g" {} +
-    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#//staging#/staging#g" {} +
-
-    ## import database ##
-    mysql "$DB_NAME" < /tmp/staging.sql
-
-    ## fix staging home and siteurl fields (no mass search/replace to avoid potential conflicts) ##
-    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='home'";
-    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='siteurl'";
-
-    mysql --execute="UPDATE ${DB_NAME}.staging_options SET option_value='https://$SITE_DOMAIN/staging' WHERE option_name='home'";
-    mysql --execute="UPDATE ${DB_NAME}.staging_options SET option_value='https://$SITE_DOMAIN/staging' WHERE option_name='siteurl'";
-
-    mysql --execute="UPDATE ${DB_NAME}.dev_options SET option_value='https://$SITE_DOMAIN/dev' WHERE option_name='home'";
-    mysql --execute="UPDATE ${DB_NAME}.dev_options SET option_value='https://$SITE_DOMAIN/dev' WHERE option_name='siteurl'";
-    
-    ## cleanup tmp files ##
-    rm /var/www/meta/staging*.sql*
-    rm /tmp/staging*.sql*
-
-####################################################################################################
-#### SS-Sync-Staging: Configure Staging Site WP-Config File (Same As SS-Install) ###################
-####################################################################################################
-
-    ## MODULE VERSION: WP-Config Build #
-
-    ## retrieve latest wp-config boilerplate ##
-    wget -O /var/www/html/staging/wp-config.php http://mirrors.slickstack.io/wordpress/wp-config-staging.txt
-
-    ###### WP Multisite settings ########
-
-    ## set multisite subdomains ##
-    if [[ -z "$WP_MULTISITE_SUBDOMAINS" ]]; then 
-        sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_MULTISITE_SUBDOMAINS/${WP_MULTISITE_SUBDOMAINS}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## set multisite ##
-    if [[ -z "$WP_MULTISITE" ]]; then 
-        sed -i "s/@WP_MULTISITE/false/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_MULTISITE/${WP_MULTISITE}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## multisite ##
-    if [[ "$WP_MULTISITE" == "true" ]]; then 
-        sed -i "s/@WP_MULTISITE/true/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_MULTISITE/false/g" /var/www/html/staging/wp-config.php
-    fi
-
-
-    ####### other WP Config settings ##########
-
-    ## replace database placeholders ##
-    sed -i "s/@DB_NAME/${DB_NAME}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_USER/${DB_USER}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_PASSWORD/${DB_PASSWORD}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_HOST/${DB_HOST}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_CHARSET/${DB_CHARSET}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_COLLATE/${DB_COLLATE}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@DB_PREFIX/staging_${DB_PREFIX}/g" /var/www/html/staging/wp-config.php
-
-    ## disable object cache (staging) ##
-    sed -i "s/@OBJECT_CACHE/false/g" /var/www/html/staging/wp-config.php
-
-    ## set language ##
-    if [[ -z "$WP_LANG" ]]; then 
-        sed -i "s/@WP_LANG/en-US/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_LANG/${WP_LANG}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## replace domain placeholders ##
-    sed -i "s#@SITE_DOMAIN#${SITE_DOMAIN}#g" /var/www/html/staging/wp-config.php
-    sed -i "s/@SITE_TLD/${SITE_TLD}/g" /var/www/html/staging/wp-config.php
-
-    ## replace SFTP Details placeholders ##
-    sed -i "s/@SFTP_USER/${SFTP_USER}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@SFTP_PASSWORD/${SFTP_PASSWORD}/g" /var/www/html/staging/wp-config.php
-    if [[ -z "$SSH_PORT" ]]; then 
-        sed -i "s/@SSH_PORT/6969/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@SSH_PORT/${SSH_PORT}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## replace CloudFlare placeholders ##
-    sed -i "s/@CLOUDFLARE_API_KEY/${CLOUDFLARE_API_KEY}/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@CLOUDFLARE_API_EMAIL/${CLOUDFLARE_API_EMAIL}/g" /var/www/html/staging/wp-config.php
-
-    ## CloudFlare DNS widget ##
-    if [[ -z "$CLOUDFLARE_WIDGET_DNS" ]]; then 
-        sed -i "s/@CLOUDFLARE_WIDGET_DNS/true/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@CLOUDFLARE_WIDGET_DNS/${CLOUDFLARE_WIDGET_DNS}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## lookup salt keys from production wp-config ##
-    PROD_AUTH_KEY=$(grep "'AUTH_KEY'" /var/www/html/wp-config.php)
-    PROD_SECURE_AUTH_KEY=$(grep "'SECURE_AUTH_KEY'" /var/www/html/wp-config.php)
-    PROD_LOGGED_IN_KEY=$(grep "'LOGGED_IN_KEY'" /var/www/html/wp-config.php)
-    PROD_NONCE_KEY=$(grep "'NONCE_KEY'" /var/www/html/wp-config.php)
-    PROD_AUTH_SALT=$(grep "'AUTH_SALT'" /var/www/html/wp-config.php)
-    PROD_SECURE_AUTH_SALT=$(grep "'SECURE_AUTH_SALT'" /var/www/html/wp-config.php)
-    PROD_LOGGED_IN_SALT=$(grep "'LOGGED_IN_SALT'" /var/www/html/wp-config.php)
-    PROD_NONCE_SALT=$(grep "'NONCE_SALT'" /var/www/html/wp-config.php)
-
-    ## generate unique salts ##
-    sed -i "s/@AUTHKEY/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@SECUREAUTHKEY/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@LOGGEDINKEY/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@NONCEKEY/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@AUTHSALT/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@SECUREAUTHSALT/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@LOGGEDINSALT/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@NONCESALT/$(openssl rand -hex 48)/g" /var/www/html/staging/wp-config.php
-
-    ## Replace Placeholders: Debug and Dev/staging server ##
-    sed -i "s/@WP_DEBUG/true/g" /var/www/html/staging/wp-config.php
-    sed -i "s/@WP_LOCAL_DEV/false/g" /var/www/html/staging/wp-config.php
-
-    ## core auto updates ##
-    if [[ -z "$WP_AUTO_UPDATE_CORE" ]]; then 
-        sed -i "s/@WP_AUTO_UPDATE_CORE/minor/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_AUTO_UPDATE_CORE/${WP_AUTO_UPDATE_CORE}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## autosave (drafts) ##
-    if [[ -z "$WP_AUTOSAVE_INTERVAL" ]]; then 
-        sed -i "s/@WP_AUTOSAVE_INTERVAL/60/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_AUTOSAVE_INTERVAL/${WP_AUTOSAVE_INTERVAL}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## revisions ##
-    if [[ -z "$WP_POST_REVISIONS" ]]; then 
-        sed -i "s/@WP_POST_REVISIONS/5/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_POST_REVISIONS/${WP_POST_REVISIONS}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## block external requests ##
-    if [[ -z "$WP_HTTP_BLOCK_EXTERNAL" ]]; then 
-        sed -i "s/@WP_HTTP_BLOCK_EXTERNAL/false/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_HTTP_BLOCK_EXTERNAL/${WP_HTTP_BLOCK_EXTERNAL}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## allowed hosts ##
-    if [[ -z "$WP_ACCESSIBLE_HOSTS" ]]; then 
-        sed -i "s/@WP_ACCESSIBLE_HOSTS/api.wordpress.org/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_ACCESSIBLE_HOSTS/${WP_ACCESSIBLE_HOSTS}/g" /var/www/html/staging/wp-config.php
-    fi
-
-    ## file edits ##
-    sed -i "s/@WP_DISALLOW_FILE_EDIT/false/g" /var/www/html/staging/wp-config.php
-
-    ## file mods ##
-    sed -i "s/@WP_DISALLOW_FILE_MODS/false/g" /var/www/html/staging/wp-config.php
-
-    ## file uploads ##
-    if [[ -z "$WP_ALLOW_UNFILTERED_UPLOADS" ]]; then 
-        sed -i "s/@WP_ALLOW_UNFILTERED_UPLOADS/true/g" /var/www/html/staging/wp-config.php
-    else 
-        sed -i "s/@WP_ALLOW_UNFILTERED_UPLOADS/${WP_ALLOW_UNFILTERED_UPLOADS}/g" /var/www/html/staging/wp-config.php
-    fi
-
-####################################################################################################
-#### SS-Sync-Staging: Install WordPress MU Plugins #################################################
-####################################################################################################
-
-    ## run ss-muplugs ##
-    source /var/www/ss-muplugs
-
-####################################################################################################
-#### SS-Sync-Staging: Reset Permissions (WordPress Core + WordPress Config) ########################
-####################################################################################################
-
-    ## run ss-perms-wordpress-core ##
-    source /var/www/ss-perms-wordpress-core
-
-    ## run ss-perms-wordpress-config ##
-    source /var/www/ss-perms-wordpress-config
+    ## change prod hardlinks to staging ##
+    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#https://$SITE_DOMAIN#https://staging.${SITE_DOMAIN}#g" {} +
+    find /var/www/html/staging/wp-content/themes/ -type f -exec sed -i "s#http://$SITE_DOMAIN#https://staging.${SITE_DOMAIN}#g" {} +
 
 ## end parent if ##
 fi
-
-####################################################################################################
-#### SS-Sync-Staging: Touch Timestamp File (End Of Script) #########################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_SYNC_STAGING"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
@@ -459,5 +167,7 @@ touch "$TIMESTAMP_SS_SYNC_STAGING"
 ## Ref: https://interconnectit.com/products/search-and-replace-for-wordpress-databases/
 ## Ref: https://wordpress.stackexchange.com/questions/9076/why-is-my-database-import-losing-text-widget-data
 ## Ref: https://gist.github.com/gmartellino/4692252
+## Ref: https://stackoverflow.com/questions/6837061/mysqlimport-error-1045-access-denied
+## Ref: https://community.localwp.com/t/database-empty-after-import-help/2820
 
 ## SS_EOF

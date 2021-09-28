@@ -9,7 +9,7 @@
 #### purpose: SlickStack core cron job *half-weekly* (09/13) will run every ~3 days ################
 #### module version: Ubuntu 20.04 LTS ##############################################################
 #### sourced by: root crontab ######################################################################
-#### bash aliases: ss cron 09, ss cron half-weekly, ss cron half weekly ############################
+#### bash aliases: ss cron 09, ss cron [half-weekly|half weekly] ###################################
 ####################################################################################################
 
 ## NEVER MODIFY THE ROOT CRONTAB OR SS CORE CRON JOBS OR YOUR STACK WILL STOP WORKING ##
@@ -182,19 +182,29 @@ touch "$TIMESTAMP_09_CRON_HALF_WEEKLY"
 ## the below tasks will be called if configured to run at this interval in ss-config ##
 ## certain tasks are automatically called if the relevant interval is missing ##
 
+## run ss-clean-database if set to half-weekly ##
+if [[ "$INTERVAL_SS_CLEAN_DATABASE" == "half-weekly" ]]; then 
+    source "$PATH_SS_CLEAN_DATABASE"
+fi
+
+## run ss-optimize-database if set to half-weekly ##
+if [[ "$INTERVAL_SS_OPTIMIZE_DATABASE" == "half-weekly" ]]; then 
+    source "$PATH_SS_OPTIMIZE_DATABASE"
+fi
+
 ## run ss-clean-files if set to half-weekly ##
 if [[ "$INTERVAL_SS_CLEAN_FILES" == "half-weekly" ]]; then 
     source "$PATH_SS_CLEAN_FILES"
 fi
 
+## run ss-optimize-files if set to half-weekly or if not defined (default) ##
+if [[ "$INTERVAL_SS_OPTIMIZE_FILES" == "half-weekly" ]] || [[ -z "$INTERVAL_SS_OPTIMIZE_FILES" ]]; then 
+    source "$PATH_SS_OPTIMIZE_FILES"
+fi
+
 ## run ss-dump-files if set to half-weekly ##
 if [[ "$INTERVAL_SS_DUMP_FILES" == "half-weekly" ]]; then 
     source "$PATH_SS_DUMP_FILES"
-fi
-
-## run ss-sync-staging if set to half-weekly ##
-if [[ "$INTERVAL_SS_SYNC_STAGING" == "half-weekly" ]]; then 
-    source "$PATH_SS_SYNC_STAGING"
 fi
 
 ## run ss-install-wordpress-config if set to half-weekly ##
@@ -207,9 +217,9 @@ if [[ "$INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS" == "half-weekly" ]]; then
     source "$PATH_SS_INSTALL_WORDPRESS_MU_PLUGINS"
 fi
 
-## run ss-dos2unix if set to half-weekly or if not defined (default) ##
-if [[ "$INTERVAL_SS_DOS2UNIX" == "half-weekly" ]] || [[ -z "$INTERVAL_SS_DOS2UNIX" ]]; then 
-    source "$PATH_SS_DOS2UNIX"
+## run ss-sync-staging if set to half-weekly ##
+if [[ "$INTERVAL_SS_SYNC_STAGING" == "half-weekly" ]]; then 
+    source "$PATH_SS_SYNC_STAGING"
 fi
 
 ## run ss-scan-malware if set to half-weekly ##
@@ -217,29 +227,79 @@ if [[ "$INTERVAL_SS_SCAN_MALWARE" == "half-weekly" ]]; then
     source "$PATH_SS_SCAN_MALWARE"
 fi
 
-## run ss-optimize-database if set to half-weekly ##
-if [[ "$INTERVAL_SS_OPTIMIZE_DATABASE" == "half-weekly" ]]; then 
-    source "$PATH_SS_OPTIMIZE_DATABASE"
+## run ss-purge-nginx if set to half-weekly ##
+if [[ "$INTERVAL_SS_PURGE_NGINX" == "half-weekly" ]]; then 
+    source "$PATH_SS_PURGE_NGINX"
 fi
 
-## run ss-encrypt if set to half-weekly ##
-if [[ "$INTERVAL_SS_ENCRYPT" == "half-weekly" ]]; then 
-    source "$PATH_SS_ENCRYPT"
+## run ss-purge-opcache if set to half-weekly ##
+if [[ "$INTERVAL_SS_PURGE_OPCACHE" == "half-weekly" ]]; then 
+    source "$PATH_SS_PURGE_OPCACHE"
 fi
 
-## run ss-purge if set to half-weekly ##
-if [[ "$INTERVAL_SS_PURGE" == "half-weekly" ]]; then 
-    source "$PATH_SS_PURGE"
+## run ss-purge-redis if set to half-weekly ##
+if [[ "$INTERVAL_SS_PURGE_REDIS" == "half-weekly" ]]; then 
+    source "$PATH_SS_PURGE_REDIS"
 fi
 
-## run ss-install-ubuntu-crontab if set to half-weekly ##
-if [[ "$INTERVAL_SS_INSTALL_UBUNTU_CRONTAB" == "half-weekly" ]]; then 
-    source "$PATH_SS_INSTALL_UBUNTU_CRONTAB"
+## run ss-purge-transients if set to half-weekly ##
+if [[ "$INTERVAL_SS_PURGE_TRANSIENTS" == "half-weekly" ]]; then 
+    source "$PATH_SS_PURGE_TRANSIENTS"
+fi
+
+## run ss-install-adminer if set to half-weekly ##
+if [[ "$INTERVAL_SS_INSTALL_ADMINER" == "half-weekly" ]]; then 
+    source "$PATH_SS_INSTALL_ADMINER"
+fi
+
+## run ss-reset-password-sftp if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESET_PASSWORD_SFTP" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESET_PASSWORD_SFTP"
+fi
+
+## run ss-install-ubuntu-users if set to half-weekly ##
+if [[ "$INTERVAL_SS_INSTALL_UBUNTU_USERS" == "half-weekly" ]]; then 
+    source "$PATH_SS_INSTALL_UBUNTU_USERS"
 fi
 
 ## run ss-install-ubuntu-bash if set to half-weekly or if not defined (default) ##
 if [[ "$INTERVAL_SS_INSTALL_UBUNTU_BASH" == "half-weekly" ]] || [[ -z "$INTERVAL_SS_INSTALL_UBUNTU_BASH" ]]; then 
     source "$PATH_SS_INSTALL_UBUNTU_BASH"
+fi
+
+## run ss-remote-backup if set to half-weekly ##
+if [[ "$INTERVAL_SS_REMOTE_BACKUP" == "half-weekly" ]]; then 
+    source "$PATH_SS_REMOTE_BACKUP"
+fi
+
+## run ss-restart-mysql if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESTART_MYSQL" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESTART_MYSQL"
+fi
+
+## run ss-restart-nginx if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESTART_NGINX" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESTART_NGINX"
+fi
+
+## run ss-restart-php if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESTART_PHP" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESTART_PHP"
+fi
+
+## run ss-restart-redis if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESTART_REDIS" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESTART_REDIS"
+fi
+
+## run ss-restart-ufw if set to half-weekly ##
+if [[ "$INTERVAL_SS_RESTART_UFW" == "half-weekly" ]]; then 
+    source "$PATH_SS_RESTART_UFW"
+fi
+
+## run ss-empty-logs if set to half-weekly ##
+if [[ "$INTERVAL_SS_EMPTY_LOGS" == "half-weekly" ]]; then 
+    source "$PATH_SS_EMPTY_LOGS"
 fi
 
 ####################################################################################################

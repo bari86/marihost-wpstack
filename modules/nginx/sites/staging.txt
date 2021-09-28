@@ -7,35 +7,37 @@
 #### purpose: Nginx server block boilerplate optimized for SlickStack staging sites ################
 #### module version: Nginx 1.18.x ##################################################################
 #### sourced by: nginx.conf ########################################################################
-#### bash aliases: n/a #############################################################################
+#### bash aliases: n/a (ss-install-nginx-config) ###################################################
 ####################################################################################################
 
 ## SLICKSTACK SUPPORTS HTTPS-ONLY NGINX SERVER BLOCKS WITH HSTS ENABLED BY DEFAULT ##
 
 ####################################################################################################
-#### Server Block (Staging): Hardcoded Subdomain + Root Directory ##################################
+#### Server Block (Staging): Hardcoded Subdomain ###################################################
 ####################################################################################################
 
 ## CloudFlare ignores HTTP/2 from origin server but we enable in case of Lets Encrypt ##
 ## because SlickStack is HTTPS-only the canonical block is port 443 (SSL) only ##
 
 server {
-	listen				443 ssl http2;
-	listen				[::]:443 ssl http2;
-	server_name			staging.@SITE_DOMAIN_EXCLUDING_WWW;
-	root				/var/www/html/staging;
-	
+	listen			443 ssl http2;
+	listen			[::]:443 ssl http2;
+	server_name		staging.@SITE_DOMAIN_EXCLUDING_WWW;
+	root			/var/www/html/staging;
+	auth_basic		"Restricted Content";
+	auth_basic_user_file	/var/www/meta/.htpasswd;
+
 ####################################################################################################
-#### Server Block: Indexing + Public URI + Try Files Settings ######################################
+#### Server Block (Staging): Indexing + Public URI + Try Files Settings ############################
 ####################################################################################################
 
-    ## redirect index.php requests ##
+    ## redirect index.php to root ##
     if ($request_uri ~* "^(.*/)index\.php$") {
         return 301 $1;
     }
     
     ## force trailing slash on */wp-admin requests ##
-    rewrite /wp-admin$ $scheme://$host$uri/ permanent;
+    rewrite /wp-admin$ https://$host$uri/ permanent;
     
     ## try files order ##
     location / {
@@ -51,7 +53,7 @@ server {
 	# deny all;
     }
     
-    ## Certbot domain verification ##
+    ## domain verification ##
     location = /.well-known* {
         # default_type "text/plain";
         allow all;
@@ -64,7 +66,7 @@ server {
     }
 
 ####################################################################################################
-#### Server Block: FastCGI Cache Settings ##########################################################
+#### Server Block (Staging): FastCGI Cache Settings ################################################
 ####################################################################################################
 
 ## several common URI patterns are configured to skip FastCGI caching to avoid conflicts ##
@@ -118,7 +120,7 @@ server {
 ####################################################################################################
 
     location ~ \.php$ {
-        set $rt_session "";
+	set $rt_session "";
         if ($http_cookie ~* "wp_woocommerce_session_[^=]*=([^%]+)%7C") {
                 set $rt_session wp_woocommerce_session_$1;
         }	
@@ -126,37 +128,9 @@ server {
                 more_clear_headers "Set-Cookie*";
                 set $rt_session "";
         }
-
-        ## include /etc/nginx/fastcgi_params for older nginx versions
         include /etc/nginx/fastcgi.conf;
         try_files $uri =404;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        ## fastcgi_pass unix:/var/run/php/php7.4-fpm.sock
-	## fastcgi_pass unix:/run/php/php7.4-fpm.sock;
-	fastcgi_pass 127.0.0.1:9000;
-	fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache WORDPRESS;
-        fastcgi_cache_valid 200 301 404 @CACHEVALID;
-        fastcgi_cache_bypass $skip_cache;
-        fastcgi_no_cache $skip_cache;
-        ## below line should not be needed
-        # include snippets/fastcgi-php.conf;
-    }
-
-####################################################################################################
-#### Server Block: WP-Login Settings (Rate Limiting) ###############################################
-####################################################################################################
-
-    location = /wp-login.php {
-        ## limit access to one request per second per IP address
-        limit_req zone=wplogin burst=1 nodelay;
-        ## we must re-include this routing for php-fpm ##
-        include /etc/nginx/fastcgi.conf;
-        try_files $uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        ## fastcgi_pass unix:/var/run/php/php7.4-fpm.sock
-	## fastcgi_pass unix:/run/php/php7.4-fpm.sock;
 	fastcgi_pass 127.0.0.1:9000;
 	fastcgi_read_timeout 300;
         fastcgi_index index.php;
@@ -165,14 +139,38 @@ server {
         fastcgi_cache_bypass $skip_cache;
         fastcgi_no_cache $skip_cache;
     }
-    
+
 ####################################################################################################
-#### Server Block: Static Resource Settings (Expiration Headers) ###################################
+#### Server Block (Staging): WP-Login Settings (Rate Limiting) #####################################
 ####################################################################################################
 
-## CloudFlare (or CDNs) overwrite these headers ##
+## because of goofy Nginx we must reinclude all PHP directives here as they exist above ##
+## next we enable rate-limiting to prevent automated brute force hack attempts ##
+
+	location = /wp-login.php {
+		include /etc/nginx/fastcgi.conf;
+        	try_files $uri =404;
+        	fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_pass 127.0.0.1:9000;
+		fastcgi_read_timeout 300;
+        	fastcgi_index index.php;
+        	fastcgi_cache WORDPRESS;
+        	fastcgi_cache_valid 200 301 404 @CACHEVALID;
+        	fastcgi_cache_bypass $skip_cache;
+        	fastcgi_no_cache $skip_cache;
+	
+		## rate limit zone
+        	limit_req zone=wplogin burst=1 nodelay;
+    	}
     
-    location ~* .(atom|bmp|bz2|css|doc|docx|eot|gif|gz|ico|jpeg|jpg|js|mid|midi|mp4|ogg|ogv|otf|png|ppt|rar|rss|rtf|svg|svgz|tar|tgz|ttf|wav|woff|xls|zip)$ {
+####################################################################################################
+#### Server Block (Staging): Static Resource Settings ##############################################
+####################################################################################################
+
+## this snippet controls expiration headers and any other settings for static assets ##
+## keep in mind that CloudFlare or CDNs will likely overwrite these settings ##
+    
+    location ~* .(atom|bmp|bz2|css|doc|docx|eot|gif|gz|ico|jpeg|jpg|js|mid|midi|mp4|ogg|ogv|otf|png|ppt|rar|rss|rtf|svg|svgz|tar|tgz|ttf|wav|webp|woff|xls|zip)$ {
         expires max;
     }
 
@@ -285,8 +283,12 @@ server {
 	deny all;
     }
     
-        ## install script ##
-    location = /wp-admin/install*.php {
+####################################################################################################
+#### Server Block (Staging): Deny Access To Install.php ###################
+####################################################################################################
+    
+    ## install script ##
+    location = /wp-admin/install.php {
 	deny all;
     }
 
@@ -340,5 +342,11 @@ server {
 ## Ref: https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms
 ## Ref: https://www.keycdn.com/support/nginx-location-directive
 ## Ref: https://community.easyengine.io/t/caching-of-feeds/868
+## Ref: https://stackoverflow.com/questions/2010677/nginx-and-auth-basic
+## Ref: https://www.digitalocean.com/community/tutorials/how-to-set-up-password-authentication-with-nginx-on-ubuntu-14-04
+## Ref: https://serverfault.com/questions/290428/nginx-basic-auth-timeout
+## Ref: https://www.tecmint.com/setup-nginx-basic-http-authentication/
+## Ref: https://ubiq.co/tech-blog/how-to-configure-basic-authentication-in-nginx/
+## Ref: https://stackoverflow.com/questions/32104731/directive-inheritance-in-nested-location-blocks
 
 ## SS_EOF

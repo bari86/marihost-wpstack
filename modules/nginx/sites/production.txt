@@ -7,63 +7,64 @@
 #### purpose: Nginx server block boilerplate optimized for SlickStack production sites #############
 #### module version: Nginx 1.18.x ##################################################################
 #### sourced by: nginx.conf ########################################################################
-#### bash aliases: n/a #############################################################################
+#### bash aliases: n/a (ss-install-nginx-config) ###################################################
 ####################################################################################################
 
 ## SLICKSTACK SUPPORTS HTTPS-ONLY NGINX SERVER BLOCKS WITH HSTS ENABLED BY DEFAULT ##
 
 ####################################################################################################
-#### Server Block: Catch-All + Redirect To Canonical Domain ########################################
+#### Server Block (Production): Catch-All Redirect To Canonical Domain #############################
 ####################################################################################################
 
 ## here we force redirect any non-canonical requests to the canonical server block below ##
 ## this vastly improves security, prevents IP snooping, SEO problems, and beyond ##
 
 server {
-    listen                 80 default_server;
-    listen                 443 ssl default_server;
-    listen                 [::]:80;
-    listen                 [::]:443 ssl;
-    server_name            _;
-    return 301             https://@SITE_DOMAIN$request_uri;
+	listen		80 default_server;
+	listen		443 ssl default_server;
+	listen		[::]:80;
+	listen		[::]:443 ssl;
+	server_name	_;
+	return 301	https://@SITE_DOMAIN$request_uri;
 }
 
 ####################################################################################################
-#### Server Block: Canonical Domain (Single Website + Single Database Only) ########################
+#### Server Block (Production): Canonical Domain (Single Website Only) #############################
 ####################################################################################################
 
 ## CloudFlare ignores HTTP/2 from origin server but we enable in case of Lets Encrypt ##
 ## because SlickStack is HTTPS-only the canonical block is port 443 (SSL) only ##
 
 server {
-    listen				443 ssl http2;
-    listen				[::]:443 ssl http2;
-    server_name			@SITE_DOMAIN;
-	root				/var/www/html;
+	listen		443 ssl http2;
+	listen		[::]:443 ssl http2;
+	server_name	@SITE_DOMAIN;
+	root		/var/www/html;
 	
-	if ($http_host !~ "@SITE_DOMAIN|staging.@SITE_DOMAIN_EXCLUDING_WWW") {
-    	return 301    $scheme://@SITE_DOMAIN$request_uri;
-		}
+	## redirect any requests that do not match production/staging/dev ##
+	if ($http_host !~ "@SITE_DOMAIN|staging.@SITE_DOMAIN_EXCLUDING_WWW|dev.@SITE_DOMAIN_EXCLUDING_WWW") {
+	return 301	https://@SITE_DOMAIN$request_uri;
+	}
     
 ####################################################################################################
 #### Server Block (Production): Indexing + Public URI + Try Files Settings #########################
 ####################################################################################################
 
-    ## redirect index.php requests ##
+    ## redirect index.php to root ##
     if ($request_uri ~* "^(.*/)index\.php$") {
         return 301 $1;
     }
     
     ## force trailing slash on */wp-admin requests ##
-    rewrite /wp-admin$ $scheme://$host$uri/ permanent;
+    rewrite /wp-admin$ https://$host$uri/ permanent;
     
     ## try files order ##
     location / {
-    
-    ## 503 error if maintenance file found in web root ##
-      if (-f /var/www/html/maintenance.html) {
-    return 503;
-  }
+	
+		## 503 error if maintenance file found in web root ##
+		if (-f /var/www/html/maintenance.html) {
+			return 503;
+		}
   
         ## first try files, then directories, otherwise query index
         try_files $uri $uri/ /index.php?$args;
@@ -171,26 +172,27 @@ server {
     }
 
 ####################################################################################################
-#### Server Block: WP-Login Settings (Rate Limiting) ###############################################
+#### Server Block (Production): WP-Login Settings (Rate Limiting) ##################################
 ####################################################################################################
 
-    location = /wp-login.php {
-        ## limit access to one request per second per IP address
-        limit_req zone=wplogin burst=1 nodelay;
-        ## we must re-include this routing for php-fpm ##
-        include /etc/nginx/fastcgi.conf;
-        try_files $uri =404;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        ## fastcgi_pass unix:/var/run/php/php7.4-fpm.sock
-	## fastcgi_pass unix:/run/php/php7.4-fpm.sock;
-	fastcgi_pass 127.0.0.1:9000;
-	fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache WORDPRESS;
-        fastcgi_cache_valid 200 301 404 @CACHEVALID;
-        fastcgi_cache_bypass $skip_cache;
-        fastcgi_no_cache $skip_cache;
-    }
+## because of goofy Nginx we must reinclude all PHP directives here as they exist above ##
+## next we enable rate-limiting to prevent automated brute force hack attempts ##
+
+	location = /wp-login.php {
+		include /etc/nginx/fastcgi.conf;
+        	try_files $uri =404;
+        	fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_pass 127.0.0.1:9000;
+		fastcgi_read_timeout 300;
+        	fastcgi_index index.php;
+        	fastcgi_cache WORDPRESS;
+        	fastcgi_cache_valid 200 301 404 @CACHEVALID;
+        	fastcgi_cache_bypass $skip_cache;
+        	fastcgi_no_cache $skip_cache;
+	
+		## rate limit zone
+        	limit_req zone=wplogin burst=1 nodelay;
+    	}
     
 ####################################################################################################
 #### Server Block: Adminer (phpMyAdmin) Settings ###################################################
@@ -290,12 +292,13 @@ server {
    # }
     
 ####################################################################################################
-#### Server Block: Static Resource Settings (Expiration Headers) ###################################
+#### Server Block (Production): Static Resource Settings ###########################################
 ####################################################################################################
 
-## CloudFlare (or CDNs) overwrite these headers ##
+## this snippet controls expiration headers and any other settings for static assets ##
+## keep in mind that CloudFlare or CDNs will likely overwrite these settings ##
     
-    location ~* .(atom|bmp|bz2|css|doc|docx|eot|gif|gz|ico|jpeg|jpg|js|mid|midi|mp4|ogg|ogv|otf|png|ppt|rar|rss|rtf|svg|svgz|tar|tgz|ttf|wav|woff|xls|zip)$ {
+    location ~* .(atom|bmp|bz2|css|doc|docx|eot|gif|gz|ico|jpeg|jpg|js|mid|midi|mp4|ogg|ogv|otf|png|ppt|rar|rss|rtf|svg|svgz|tar|tgz|ttf|wav|webp|woff|xls|zip)$ {
         expires max;
     }
 
@@ -515,5 +518,7 @@ server {
 ## Ref: https://serverfault.com/questions/738452/what-does-the-at-sign-mean-in-nginx-location-blocks
 ## Ref: https://stackoverflow.com/questions/5600448/how-to-setup-custom-503-error-page-in-nginx-that-intercepts-all-requests
 ## Ref: https://serverfault.com/questions/325485/nginx-how-to-prevent-an-exactly-named-ssl-server-block-from-acting-as-the-catch
+## Ref: https://serverfault.com/questions/496371/nested-locations-nginx
+## Ref: https://stackoverflow.com/questions/37902544/nginx-sucessfully-password-protects-php-files-but-then-prompts-you-to-download
 
 ## SS_EOF

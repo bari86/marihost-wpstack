@@ -21,19 +21,29 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### TABLE OF CONTENTS #############################################################################
+#### TABLE OF CONTENTS (SS-Check) ##################################################################
 ####################################################################################################
 
-## A. Message (Begin Script)
-## B. Cleanup Temporary Files
-## C. Retrieve Cron Jobs + Bash Scripts (Except SS-Check)
-## D. Reset Permissions (SlickStack Core)
-## E. Cleanup Temporary Files
-## F. Message (Feedback)
-## G. Touch Timestamp File (End Script)
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Cleanup Temporary Files
+## D. Retrieve Cron Jobs + Bash Scripts (Except SS-Check)
+## E. Install SS Core Cron Jobs + SS Core Bash Scripts
+## F. Reset Permissions (SlickStack Core)
+## G. Cleanup Temporary Files
 
 ####################################################################################################
-#### A. SS-Check: Message (Begin Script) ###########################################################
+#### A. SS-Check: Touch Timestamp File #############################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_CHECK"
+
+####################################################################################################
+#### B. SS-Check: Message (Begin Script) ###########################################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
@@ -44,7 +54,7 @@ echo -e "${PURPLE}Running ss-check: Retrieves latest ss core cron jobs and ss co
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
-#### B. SS-Check: Cleanup Temporary Files ##########################################################
+#### C. SS-Check: Cleanup Temporary Files ##########################################################
 ####################################################################################################
 
 ## we briefly cleanup any leftover temporarily files that are relevant to this script ##
@@ -55,7 +65,7 @@ rm /tmp/ss*
 rm /tmp/*cron*
 
 ####################################################################################################
-#### C. SS-Check: Retrieve Cron Jobs + Bash Scripts (Except SS-Check) ##############################
+#### D. SS-Check: Retrieve Cron Jobs + Bash Scripts (Except SS-Check) ##############################
 ####################################################################################################
 
 ## here we retrieve all the latest ss core cron jobs and bash scripts to keep them updated ##
@@ -86,6 +96,7 @@ wget -O "$TMP_SS_DELETE_FILES" "$MIRROR_SS_DELETE_FILES"
 wget -O "$TMP_SS_DUMP_DATABASE" "$MIRROR_SS_DUMP_DATABASE"
 wget -O "$TMP_SS_DUMP_FILES" "$MIRROR_SS_DUMP_FILES"
 wget -O "$TMP_SS_EMPTY_LOGS" "$MIRROR_SS_EMPTY_LOGS"
+wget -O "$TMP_SS_ENCRYPT_ACME" "$MIRROR_SS_ENCRYPT_ACME"
 wget -O "$TMP_SS_ENCRYPT_CERTBOT" "$MIRROR_SS_ENCRYPT_CERTBOT"
 wget -O "$TMP_SS_ENCRYPT_OPENSSL" "$MIRROR_SS_ENCRYPT_OPENSSL"
 wget -O "$TMP_SS_FUNCTIONS" "$MIRROR_SS_FUNCTIONS"
@@ -136,8 +147,8 @@ wget -O "$TMP_SS_INSTALL_WORDPRESS_MU_PLUGINS" "$MIRROR_SS_INSTALL_WORDPRESS_MU_
 wget -O "$TMP_SS_MAINTENANCE_DISABLE" "$MIRROR_SS_MAINTENANCE_DISABLE"
 wget -O "$TMP_SS_MAINTENANCE_ENABLE" "$MIRROR_SS_MAINTENANCE_ENABLE"
 wget -O "$TMP_SS_MONITOR_RESOURCES" "$MIRROR_SS_MONITOR_RESOURCES"
-wget -O "$TMP_SS_OPTIMIZE_FILES" "$MIRROR_SS_OPTIMIZE_FILES"
 wget -O "$TMP_SS_OPTIMIZE_DATABASE" "$MIRROR_SS_OPTIMIZE_DATABASE"
+wget -O "$TMP_SS_OPTIMIZE_FILES" "$MIRROR_SS_OPTIMIZE_FILES"
 wget -O "$TMP_SS_PERMS" "$MIRROR_SS_PERMS"
 wget -O "$TMP_SS_PERMS_ADMINER" "$MIRROR_SS_PERMS_ADMINER"
 wget -O "$TMP_SS_PERMS_CLAMAV" "$MIRROR_SS_PERMS_CLAMAV"
@@ -198,7 +209,7 @@ wget -O "$TMP_SS_UPDATE_MODULES" "$MIRROR_SS_UPDATE_MODULES"
 wget -O "$TMP_SS_WORKER" "$MIRROR_SS_WORKER"
 
 ####################################################################################################
-#### SS-Check: Install SS Core Cron Jobs + SS Core Bash Scripts (Except SS-Check) ##################
+#### E. SS-Check: Install SS Core Cron Jobs + SS Core Bash Scripts #################################
 ####################################################################################################
 
 ## here we copy all the downloaded core files to the proper folders where they remain ##
@@ -229,6 +240,7 @@ cp "$TMP_SS_DELETE_FILES" "$PATH_SS_DELETE_FILES"
 cp "$TMP_SS_DUMP_DATABASE" "$PATH_SS_DUMP_DATABASE"
 cp "$TMP_SS_DUMP_FILES" "$PATH_SS_DUMP_FILES"
 cp "$TMP_SS_EMPTY_LOGS" "$PATH_SS_EMPTY_LOGS"
+cp "$TMP_SS_ENCRYPT_ACME" "$PATH_SS_ENCRYPT_ACME"
 cp "$TMP_SS_ENCRYPT_CERTBOT" "$PATH_SS_ENCRYPT_CERTBOT"
 cp "$TMP_SS_ENCRYPT_OPENSSL" "$PATH_SS_ENCRYPT_OPENSSL"
 cp "$TMP_SS_FUNCTIONS" "$PATH_SS_FUNCTIONS"
@@ -281,7 +293,6 @@ cp "$TMP_SS_MAINTENANCE_ENABLE" "$PATH_SS_MAINTENANCE_ENABLE"
 cp "$TMP_SS_MONITOR_RESOURCES" "$PATH_SS_MONITOR_RESOURCES"
 cp "$TMP_SS_OPTIMIZE_DATABASE" "$PATH_SS_OPTIMIZE_DATABASE"
 cp "$TMP_SS_OPTIMIZE_FILES" "$PATH_SS_OPTIMIZE_FILES"
-cp "$TMP_SS_OVERVIEW" "$PATH_SS_OVERVIEW"
 cp "$TMP_SS_PERMS" "$PATH_SS_PERMS"
 cp "$TMP_SS_PERMS_ADMINER" "$PATH_SS_PERMS_ADMINER"
 cp "$TMP_SS_PERMS_CLAMAV" "$PATH_SS_PERMS_CLAMAV"
@@ -327,7 +338,7 @@ cp "$TMP_SS_PURGE_OPCACHE" "$PATH_SS_PURGE_OPCACHE"
 cp "$TMP_SS_PURGE_REDIS" "$PATH_SS_PURGE_REDIS"
 cp "$TMP_SS_PURGE_TRANSIENTS" "$PATH_SS_PURGE_TRANSIENTS"
 cp "$TMP_SS_REBOOT_MACHINE" "$PATH_SS_REBOOT_MACHINE"
-cp "$TMP_SS_REMOTE" "$PATH_SS_REMOTE"
+cp "$TMP_SS_REMOTE_BACKUP" "$PATH_SS_REMOTE_BACKUP"
 cp "$TMP_SS_RESET_PASSWORD_SFTP" "$PATH_SS_RESET_PASSWORD_SFTP"
 cp "$TMP_SS_RESTART_MYSQL" "$PATH_SS_RESTART_MYSQL"
 cp "$TMP_SS_RESTART_NGINX" "$PATH_SS_RESTART_NGINX"
@@ -335,18 +346,20 @@ cp "$TMP_SS_RESTART_PHP" "$PATH_SS_RESTART_PHP"
 cp "$TMP_SS_RESTART_REDIS" "$PATH_SS_RESTART_REDIS"
 cp "$TMP_SS_RESTART_UFW" "$PATH_SS_RESTART_UFW"
 cp "$TMP_SS_SCAN_MALWARE" "$PATH_SS_SCAN_MALWARE"
+cp "$TMP_SS_STACK_OVERVIEW" "$PATH_SS_STACK_OVERVIEW"
 cp "$TMP_SS_SYNC_STAGING" "$PATH_SS_SYNC_STAGING"
 cp "$TMP_SS_UPDATE_CONFIG" "$PATH_SS_UPDATE_CONFIG"
 cp "$TMP_SS_UPDATE_MODULES" "$PATH_SS_UPDATE_MODULES"
 cp "$TMP_SS_WORKER" "$PATH_SS_WORKER"
 
 ####################################################################################################
-#### D. SS-Check: Reset Permissions (SlickStack Core) ##############################################
+#### F. SS-Check: Reset Permissions (SlickStack Core) ##############################################
 ####################################################################################################
 
 ## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS ##
 
 ## SNIPPET: ss-check, ss-worker, ss core cron jobs
+## UPDATED: 23SEP2021
 
 ## we hardcode this permissions reset snippet into all ss core scripts for redundancy ##
 ## this ensures permissions are regularly fixed without requiring dependencies ##
@@ -374,6 +387,7 @@ mkdir /var/www/logs
 mkdir /var/www/meta
 mkdir /var/www/meta/timestamps
 mkdir /var/www/sites
+touch /var/www/meta/.htpasswd
 
 ## if staging enabled
 if [[ "$STAGING_SITE" != "false" ]]; then 
@@ -399,7 +413,7 @@ chown root:root /var/www/backups/mysql ## must be root:root
 chown root:root /var/www/backups/mysql/data ## must be root:root
 chown www-data:www-data /var/www/cache ## must be www-data:www-data
 chown www-data:www-data /var/www/cache/nginx ## must be www-data:www-data
-chown www-data:www-data /var/www/cache/opcache ## must be www-data:www-data
+chown www-data:www-data /var/www/cache/opcache ## must be www-data:www-data (PHP-FPM pool)
 chown root:root /var/www/cache/system ## must be root:root
 chown root:root /var/www/certs ## must be root:root
 chown root:root /var/www/certs/keys ## must be root:root
@@ -411,13 +425,14 @@ chown -R "${SFTP_USER}":www-data /var/www/html/.well-known ## accessed by server
 chown -R "${SFTP_USER}":www-data /var/www/html/.well-known/acme-challenge ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
 chown www-data:www-data /var/www/logs ## must be www-data:www-data
 chown www-data:www-data /var/www/meta ## must be www-data:www-data
+chown www-data:www-data /var/www/meta/.htpasswd ## must be www-data:www-data
 chown www-data:www-data /var/www/meta/ss-constants.php ## must be www-data:www-data
 chown root:root /var/www/ss* ## must be root:root
 
 ## linux permissions ##
 chmod 0755 /var/www ## must be 0755
-chmod 0775 /var/www/cache ## 6755 should also work
-chmod 0755 /var/www/cache/opcache ## 755 should also work
+chmod 0775 /var/www/cache ## 0755 should also work
+chmod 0755 /var/www/cache/opcache ## 0755 should work
 chmod 0755 /var/www/certs ## must be 0755
 chmod 0700 /var/www/certs/keys ## must be 0700
 chmod 0644 /var/www/certs/*.crt ## must be 0644
@@ -431,11 +446,12 @@ chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root can execute
 chmod 0755 /var/www/html/.well-known ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
 chmod 0775 /var/www/logs ## 6755 should also work
 chmod 0775 /var/www/meta ## 6755 should also work
+chmod 0644 /var/www/meta/.htpasswd ## 0644 seems enough
 chmod 0440 /var/www/meta/ss-constants.php
 chmod 0700 /var/www/ss* ## 0700 means only root can execute
 
 ####################################################################################################
-#### E. SS-Check: Cleanup Temporary Files ##########################################################
+#### G. SS-Check: Cleanup Temporary Files ##########################################################
 ####################################################################################################
 
 ## we briefly cleanup any leftover temporarily files that are relevant to this script ##
@@ -444,27 +460,6 @@ chmod 0700 /var/www/ss* ## 0700 means only root can execute
 ## delete tmp files ##
 rm /tmp/ss*
 rm /tmp/*cron*
-
-####################################################################################################
-#### F. SS-Check: Message (Feedback) ###############################################################
-####################################################################################################
-
-## this is a simple message that announces to the shell the purpose of this bash script ##
-## it will only be noticed by sudo users who manually call ss core bash scripts ##
-
-## echo message ##
-echo -e "${PURPLE}Exiting ss-check: It appears we successfully retrieved latest ss core cron jobs and bash scripts... ${NOCOLOR}"
-
-
-####################################################################################################
-#### G. SS-Check: Touch Timestamp File (End Script) ################################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_CHECK"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

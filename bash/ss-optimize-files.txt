@@ -42,7 +42,7 @@ PACKAGE_DOS2UNIX_EXISTS=$(dpkg-query -W --showformat='${Status}\n' $PACKAGE_DOS2
 echo Checking for $PACKAGE_DOS2UNIX: $PACKAGE_DOS2UNIX_EXISTS
 if [ "" = "$PACKAGE_DOS2UNIX_EXISTS" ]; then
     echo "$PACKAGE_DOS2UNIX package not found. We will install the package before proceeding."
-    sudo apt install $PACKAGE_DOS2UNIX
+    sudo apt install "$PACKAGE_DOS2UNIX"
 fi
 
 ####################################################################################################
@@ -53,6 +53,23 @@ fi
 ## avoiding DOS formats (e.g. janky line breaks) helps ensure file compatibility ##
 
 find /var/www/html/ -type f -exec dos2unix --quiet --keepdate --oldfile --safe {} \;
+
+####################################################################################################
+#### SS-Optimize-Files: Strip All EXIF Metadata ####################################################
+####################################################################################################
+
+## for better file and image security run exiftool to remove any EXIF data from files ##
+## this helps prevent people from seeing things like GPS location and etc ##
+
+
+PACKAGE_EXIFTOOL_EXISTS=$(dpkg-query -W --showformat='${Status}\n' $PACKAGE_EXIFTOOL|grep "install ok installed")
+echo Checking for $PACKAGE_EXIFTOOL: $PACKAGE_EXIFTOOL_EXISTS
+if [ "" = "$PACKAGE_EXIFTOOL_EXISTS" ]; then
+    echo "$PACKAGE_EXIFTOOL package not found. We will install the package before proceeding."
+    sudo apt install "$PACKAGE_EXIFTOOL"
+fi
+
+exiftool -recurse -overwrite_original -EXIF= -ext jpg,jpeg /var/www/html
 
 ####################################################################################################
 #### SS-Optimize-Files: Touch Timestamp File (End Script) ##########################################
@@ -71,5 +88,7 @@ touch "$TIMESTAMP_SS_OPTIMIZE_FILES"
 ## Ref: https://askubuntu.com/questions/319307/reliably-check-if-a-package-is-installed-or-not
 ## Ref: https://stackoverflow.com/questions/1298066/check-if-an-apt-get-package-is-installed-and-then-install-it-if-its-not-on-linu
 ## Ref: https://www.computerhope.com/unix/dos2unix.htm
+## Ref: https://linuxnightly.com/how-to-remove-exif-data-via-linux-command-line/
+## Ref: https://stackoverflow.com/questions/2654281/how-to-remove-exif-data-without-recompressing-the-jpeg
 
 ## SS_EOF

@@ -45,12 +45,28 @@ function ss {
         command sudo bash /var/www/ss-check
     elif [[ $@ == "config certbot" ]]; then
         command sudo sed -i "s|\(^SSL_TYPE=\).*|SSL_TYPE=\"certbot\"|g" /var/www/ss-config
+    elif [[ $@ == "config dev disable" ]]; then
+        command sudo sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"false\"|g" /var/www/ss-config
+    elif [[ $@ == "config dev enable" ]]; then
+        command sudo sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"true\"|g" /var/www/ss-config
+    elif [[ $@ == "config disable dev" ]]; then
+        command sudo sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"false\"|g" /var/www/ss-config
+    elif [[ $@ == "config disable staging" ]]; then
+        command sudo sed -i "s|\(^STAGING_SITE=\).*|STAGING_SITE=\"false\"|g" /var/www/ss-config
+    elif [[ $@ == "config enable dev" ]]; then
+        command sudo sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"true\"|g" /var/www/ss-config
+    elif [[ $@ == "config enable staging" ]]; then
+        command sudo sed -i "s|\(^STAGING_SITE=\).*|STAGING_SITE=\"true\"|g" /var/www/ss-config
     elif [[ $@ == "config lets encrypt" ]]; then
         command sudo sed -i "s|\(^SSL_TYPE=\).*|SSL_TYPE=\"certbot\"|g" /var/www/ss-config
     elif [[ $@ == "config letsencrypt" ]]; then
         command sudo sed -i "s|\(^SSL_TYPE=\).*|SSL_TYPE=\"certbot\"|g" /var/www/ss-config
     elif [[ $@ == "config openssl" ]]; then
         command sudo sed -i "s|\(^SSL_TYPE=\).*|SSL_TYPE=\"openssl\"|g" /var/www/ss-config
+    elif [[ $@ == "config staging disable" ]]; then
+        command sudo sed -i "s|\(^STAGING_SITE=\).*|STAGING_SITE=\"false\"|g" /var/www/ss-config
+    elif [[ $@ == "config staging enable" ]]; then
+        command sudo sed -i "s|\(^STAGING_SITE=\).*|STAGING_SITE=\"true\"|g" /var/www/ss-config
     elif [[ $@ == "clean" ]]; then
         command sudo bash /var/www/ss-clean-files
         command sudo bash /var/www/ss-clean-database
@@ -295,7 +311,13 @@ function ss {
     elif [[ $@ == "install mysql config" ]]; then
         command sudo bash /var/www/ss-dump-database
         command sudo bash /var/www/ss-install-mysql-config
-        elif [[ $@ == "install mysql packages" ]]; then
+    elif [[ $@ == "install mysql database" ]]; then
+        command sudo bash /var/www/ss-dump-database
+        command sudo bash /var/www/ss-install-mysql-database
+    elif [[ $@ == "install mysql db" ]]; then
+        command sudo bash /var/www/ss-dump-database
+        command sudo bash /var/www/ss-install-mysql-database
+    elif [[ $@ == "install mysql packages" ]]; then
         command sudo bash /var/www/ss-dump-database
         command sudo bash /var/www/ss-install-mysql-packages
     elif [[ $@ == "install nginx" ]]; then
@@ -441,7 +463,7 @@ function ss {
     elif [[ $@ == "optimize files" ]]; then
         command sudo bash /var/www/ss-optimize-files
     elif [[ $@ == "overview" ]]; then
-        command sudo bash /var/www/ss-stack-overview ## repeat
+        command sudo bash /var/www/ss-stack-overview
     elif [[ $@ == "perms" ]]; then
         command sudo bash /var/www/ss-perms
     elif [[ $@ == "perms adminer" ]]; then
@@ -456,6 +478,10 @@ function ss {
         command sudo bash /var/www/ss-perms-craft-config
     elif [[ $@ == "perms craft core" ]]; then
         command sudo bash /var/www/ss-perms-craft-core
+    elif [[ $@ == "perms lets encrypt" ]]; then
+        command sudo bash /var/www/ss-perms-nginx-ssl
+    elif [[ $@ == "perms letsencrypt" ]]; then
+        command sudo bash /var/www/ss-perms-nginx-ssl
     elif [[ $@ == "perms magento config" ]]; then
         command sudo bash /var/www/ss-perms-magento-config
     elif [[ $@ == "perms magento core" ]]; then
@@ -480,10 +506,14 @@ function ss {
     elif [[ $@ == "perms nginx" ]]; then
         command sudo bash /var/www/ss-perms-nginx-config
         command sudo bash /var/www/ss-perms-nginx-core
+    elif [[ $@ == "perms nginx ssl" ]]; then
+        command sudo bash /var/www/ss-perms-nginx-ssl
     elif [[ $@ == "perms opencart config" ]]; then
         command sudo bash /var/www/ss-perms-opencart-config
     elif [[ $@ == "perms opencart core" ]]; then
         command sudo bash /var/www/ss-perms-opencart-core
+    elif [[ $@ == "perms openssl" ]]; then
+        command sudo bash /var/www/ss-perms-nginx-ssl
     elif [[ $@ == "perms php" ]]; then
         command sudo bash /var/www/ss-perms-php-config
         command sudo bash /var/www/ss-perms-php-packages
@@ -513,6 +543,8 @@ function ss {
         command sudo bash /var/www/ss-perms-redis-packages
     elif [[ $@ == "perms redis packages" ]]; then
         command sudo bash /var/www/ss-perms-redis-packages
+    elif [[ $@ == "perms ssl" ]]; then
+        command sudo bash /var/www/ss-perms-nginx-ssl
     elif [[ $@ == "perms ubuntu aliases" ]]; then
         command sudo bash /var/www/ss-perms-ubuntu-bash
     elif [[ $@ == "perms ubuntu bash" ]]; then
@@ -528,30 +560,30 @@ function ss {
     elif [[ $@ == "perms ubuntu utils" ]]; then
         command sudo bash /var/www/ss-perms-ubuntu-utils
     elif [[ $@ == "perms ufw" ]]; then
-        command sudo bash /var/www/ss-perms-ufw-core
+        command sudo bash /var/www/ss-perms-ufw-packages
         command sudo bash /var/www/ss-perms-ufw-config
     elif [[ $@ == "perms ufw core" ]]; then
-        command sudo bash /var/www/ss-perms-ufw-core
+        command sudo bash /var/www/ss-perms-ufw-packages
     elif [[ $@ == "perms ufw config" ]]; then
         command sudo bash /var/www/ss-perms-ufw-config
     elif [[ $@ == "perms wordpress cli" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-cli ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-cli
     elif [[ $@ == "perms wp cli" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-cli ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-cli
     elif [[ $@ == "perms wordpress config" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-config ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-config
     elif [[ $@ == "perms wp config" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-config ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-config
     elif [[ $@ == "perms wordpress core" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-core ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-core
     elif [[ $@ == "perms wp core" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-core ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-core
     elif [[ $@ == "perms wordpress mu plugins" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-mu-plugins ## Repeat
+        command sudo bash /var/www/ss-perms-wordpress-mu-plugins
     elif [[ $@ == "perms wp mu plugins" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-mu-plugins ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-mu-plugins
     elif [[ $@ == "perms mu plugins" ]]; then
-        command sudo bash /var/www/ss-perms-wordpress-mu-plugins ## repeat
+        command sudo bash /var/www/ss-perms-wordpress-mu-plugins
     elif [[ $@ == "purge" ]]; then
         command sudo bash /var/www/ss-purge-nginx
         command sudo bash /var/www/ss-purge-opcache
@@ -651,6 +683,9 @@ function ss {
     elif [[ $@ == "sync staging" ]]; then
         command sudo bash /var/www/ss-sync-staging
     elif [[ $@ == "update" ]]; then
+        command sudo bash /var/www/ss-check
+        command sudo bash /var/www/ss-worker
+        command sudo bash /var/www/ss-check
         command sudo bash /var/www/ss-update-config
         command sudo bash /var/www/ss-check
         command sudo bash /var/www/ss-worker

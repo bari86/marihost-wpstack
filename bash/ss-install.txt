@@ -193,7 +193,7 @@ ENDSTAND=$(tput rmso) # end standout
 ## in case of emergencies the SlickStack team might purposefully mismatch builds ##
 
 ## ensure ss-config (if exists) build matches ss-install ##
-if [[ -f "/var/www/ss-config" ]] && [[ "$SS_BUILD" != "AUG2021Q" ]]; then 
+if [[ -f "/var/www/ss-config" ]] && [[ "$SS_BUILD" != "SEP2021LL" ]]; then 
     echo -e "${YELLOW}Exiting ss-install: Please run ss-update-config since your ss-config is outdated and try again... ${NOCOLOR}"
     exit 1
 fi
@@ -322,7 +322,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     printf "\n"
     
     ## PROMPT: choose SSH port number (default = 22) ##
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose SSH port (avoid 22 if possible): "$NORMAL)" -e -i '22' ss_var_ssh_port || ss_var_ssh_port=22
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose SSH port (use 22 for best compatibility): "$NORMAL)" -e -i '22' ss_var_ssh_port || ss_var_ssh_port=22
     sed -i "s/@SSH_PORT/$ss_var_ssh_port/g" /tmp/ss-config
     
     ## new line ##
@@ -357,6 +357,13 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     ## new line ##
     printf "\n"
     
+    ## PROMPT: enable plugin blacklist (default = true) ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Enable the WordPress plugin blacklist: "$NORMAL)" -e -i 'true' ss_var_plugin_blacklist || ss_var_plugin_blacklist=true
+    sed -i "s/@SS_WORDPRESS_PLUGIN_BLACKLIST/$ss_var_plugin_blacklist/g" /tmp/ss-config
+    
+    ## new line ##
+    printf "\n"
+    
     ## PROMPT: link your pilot file (default = blank) ##
     read -t 300 -p "$(echo -e $LIGHTPURPLE"Link to your pilot file (leave blank if none): "$NORMAL)" -e -i 'https://gist.githubusercontent.com/...' ss_var_pilot_file || ss_var_pilot_file=
     sed -i "s/@SS_PILOT_FILE/$ss_var_pilot_file/g" /tmp/ss-config
@@ -371,8 +378,8 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     ## new line ##
     printf "\n"
     
-    ## PROMPT: choose database name (default = wordpress) ##
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose database name (single database): "$NORMAL)" -e -i 'wordpress' ss_var_db_name || ss_var_db_name=wordpress
+    ## PROMPT: choose database name (default = production) ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose database name (single database): "$NORMAL)" -e -i 'production' ss_var_db_name || ss_var_db_name=production
     sed -i "s/@DB_NAME/$ss_var_db_name/g" /tmp/ss-config
     
     ## new line ##
@@ -387,7 +394,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     
     ## PROMPT: choose database user password (default = random) ##
     db_pass_random=$(openssl rand -hex 12)
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose database user password: "$NORMAL)" -e -i ${db_pass_random} ss_var_db_password || ss_var_db_password=${db_pass_random}
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose database user password (should be strong): "$NORMAL)" -e -i ${db_pass_random} ss_var_db_password || ss_var_db_password=${db_pass_random}
     sed -i "s/@DB_PASSWORD_USER/$ss_var_db_password/g" /tmp/ss-config
     
     ## new line ##
@@ -429,7 +436,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     printf "\n"
     
     ## PROMPT: which SSL do you want ##
-    read -t 300 -p "$(echo -e $PINK"Which SSL cert do you want to use: "$NORMAL)" -e -i 'openssl' ss_var_ssl_type || ss_var_ssl_type=openssl
+    read -t 300 -p "$(echo -e $PINK"Choose SSL cert [openssl|certbot]: "$NORMAL)" -e -i 'openssl' ss_var_ssl_type || ss_var_ssl_type=openssl
     sed -i "s/@SSL_TYPE/$ss_var_ssl_type/g" /tmp/ss-config
     
     ## new line ##
@@ -446,7 +453,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     # read -p 'Enable WP multisite domain mapping (no): ' ss_var_wp_multisite_domain_mapping
     
     ## PROMPT: choose Cloudflare API key (otherwise 123456789) ##
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose Cloudflare API key (global key): "$NORMAL)" -e -i '123456789' ss_var_cloudflare_api_key || ss_var_cloudflare_api_key=123456789
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose Cloudflare API key (account profile): "$NORMAL)" -e -i '123456789' ss_var_cloudflare_api_key || ss_var_cloudflare_api_key=123456789
     sed -i "s/@CLOUDFLARE_API_KEY/$ss_var_cloudflare_api_key/g" /tmp/ss-config
     
     ## new line ##
@@ -459,16 +466,45 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     ## new line ##
     printf "\n"
     
-    ## PROMPT: enable native staging site features ##
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Enable native staging site: "$NORMAL)" -e -i 'true' ss_var_staging_site || ss_var_staging_site=true
+    ## PROMPT: enable staging site ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Enable staging site (subdomain): "$NORMAL)" -e -i 'false' ss_var_staging_site || ss_var_staging_site=false
     sed -i "s/@STAGING_SITE_STATUS/$ss_var_staging_site/g" /tmp/ss-config
     
     ## new line ##
     printf "\n"
     
-    ## PROMPT: enable native dev site features ##
-    read -t 300 -p "$(echo -e $LIGHTPURPLE"Enable native dev site: "$NORMAL)" -e -i 'true' ss_var_dev_site || ss_var_dev_site=true
+    ## PROMPT: protect staging site ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Password protect staging site: "$NORMAL)" -e -i 'false' ss_var_staging_site_protect || ss_var_staging_site_protect=false
+    sed -i "s/@STAGING_SITE_PROTECT/$ss_var_staging_site_protect/g" /tmp/ss-config
+    
+    ## new line ##
+    printf "\n"
+    
+    ## PROMPT: enable dev site ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Enable dev site (subdomain): "$NORMAL)" -e -i 'false' ss_var_dev_site || ss_var_dev_site=false
     sed -i "s/@DEV_SITE_STATUS/$ss_var_dev_site/g" /tmp/ss-config
+    
+    ## new line ##
+    printf "\n"
+    
+    ## PROMPT: protect dev site ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Password protect dev site: "$NORMAL)" -e -i 'false' ss_var_dev_site_protect || ss_var_dev_site_protect=false
+    sed -i "s/@DEV_SITE_PROTECT/$ss_var_dev_site_protect/g" /tmp/ss-config
+    
+    ## new line ##
+    printf "\n"
+    
+    ## PROMPT: choose guest username (default = guest) ##
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose guest username (to view staging/dev): "$NORMAL)" -e -i 'guest' ss_var_guest_user || ss_var_guest_user=guest
+    sed -i "s/@GUEST_USER/$ss_var_guest_user/g" /tmp/ss-config
+    
+    ## new line ##
+    printf "\n"
+    
+    ## PROMPT: choose guest password (default = random) ##
+    guest_pass_random=$(openssl rand -hex 12)
+    read -t 300 -p "$(echo -e $LIGHTPURPLE"Choose guest password (easy is fine): "$NORMAL)" -e -i ${guest_pass_random} ss_var_guest_password || ss_var_guest_password=${guest_pass_random}
+    sed -i "s/@GUEST_PASSWORD/$ss_var_guest_password/g" /tmp/ss-config
     
     ## new line ##
     printf "\n"
@@ -893,6 +929,29 @@ source "$PATH_SS_RESTART_MYSQL"
 
 ## run ss-restart-ufw ##
 source "$PATH_SS_RESTART_UFW"
+
+####################################################################################################
+#### SS-Install: Run SS-Worker #########################################
+####################################################################################################
+
+## just in case any random things need to be done ##
+
+## run ss-worker ##
+source "$PATH_SS_WORKER"
+
+
+####################################################################################################
+#### SS-Install: Validate Crontab ##################################################################
+####################################################################################################
+
+## this is a final check to ensure the root crontab was installed properly by ss-install ##
+## otherwise it will attempt to reinstall the crontab one more time here ##
+
+## validate crontab ##
+VALIDATE_CRONTAB=$(grep 'SS_EOF' /var/spool/cron/crontabs/root)
+if [[ -z "$VALIDATE_CRONTAB" ]]; then
+    source "$PATH_SS_INSTALL_UBUNTU_CRONTAB"
+fi
 
 ####################################################################################################
 #### SS-Install: Display SlickStack Configuration Overview #########################################

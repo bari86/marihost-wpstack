@@ -21,7 +21,7 @@
 ## run ss-update if ss-config outdated (check the public mirror link for current build) ##
 ## or copy and paste entire ss-config boilerplate before filling out the options ##
 
-SS_BUILD="AUG2021Q"
+SS_BUILD="SEP2021LL"
 
 ####################################################################################################
 #### SS-Config: Root User + Sudo User + SFTP User Settings #########################################
@@ -52,9 +52,9 @@ SFTP_PASSWORD="@SFTP_PASSWORD"
 ####################################################################################################
 
 ## using SSH keys is only recommended for advanced users who know what they are doing ##
-## be sure to copy your public key into: /var/www/meta/.ssh/authorized_keys ##
+## be sure to copy your public key hash into: /var/www/auth/authorized_keys ##
 
-## SSH_PORT = [22|6969|etc] best not to use port 22 for increased shell security ##
+## SSH_PORT = [22|6969|etc] best to keep port 22 for better vendor compatibility ##
 ## SSH_KEYS = [false|true] if enabled then password logins will be disabled ##
 
 SSH_PORT="@SSH_PORT"
@@ -82,7 +82,7 @@ SITE_NOINDEX="@SITE_NOINDEX"
 ## using a remote MySQL database has not been extensively tested (use at your own risk) ##
 ## for security reasons choose a unique password for the MySQL root/admin user ##
 
-## DB_NAME = [wordpress|etc] only one production database (along with _staging and _dev) ##
+## DB_NAME = [production] sole production database (staging/development are hardcoded) ##
 ## DB_USER = [example|etc] for easier management it can be the same as SFTP_USER ##
 ## DB_PASSWORD = [*must be unique*] something strong but not too complex or confusing ##
 ## DB_PASSWORD_ROOT = [*must be unique*] now only used for admin@127.0.0.1 ##
@@ -116,25 +116,29 @@ CLOUDFLARE_API_EMAIL="@CLOUDFLARE_API_EMAIL"
 # CLOUDFLARE_RECOMMENDED_SETTINGS="true"
 
 ####################################################################################################
-#### SS-Config: Staging Site + Dev Site Settings (Both Optional) ###################################
+#### SS-Config: Staging + Dev Site Settings ########################################################
 ####################################################################################################
 
-## STAGING_SITE = [true|false] enables staging subdomain and WP Admin toolbar switcher ##
-## STAGING_SITE_PROTECT = [false|true] password protect the staging site ##
-
-STAGING_SITE="@STAGING_SITE_STATUS"
-STAGING_SITE_PROTECT="false" ## coming soon
+## staging/dev sites are disabled by default but if enabled will load as subdomains ##
+## enabling here creates 2 new databases and Nginx blocks during ss-install ##
 
 ## DEV_SITE = [true|false] enables dev subdomain and WP Admin toolbar switcher ##
-## DEV_SITE_PROTECT = [false|true] password protect the dev site ##
+## DEV_SITE_PROTECT = [false|true] password protects dev site using guest ##
 
 DEV_SITE="@DEV_SITE_STATUS"
-DEV_SITE_PROTECT="false" ## coming soon
+DEV_SITE_PROTECT="@DEV_SITE_PROTECT"
 
-## STAGING_REPLACE_LINKS_DB = [high|low|false] how aggressive to fix MySQL links ##
-## STAGING_REPLACE_LINKS_THEME = [high|low|false] how aggressive to fix hardcode links ##
-# STAGING_REPLACE_LINKS_DB="high"
-# STAGING_REPLACE_LINKS_THEME="high"
+## STAGING_SITE = [true|false] enables staging subdomain and WP Admin toolbar switcher ##
+## STAGING_SITE_PROTECT = [false|true] password protects staging site using guest ##
+
+STAGING_SITE="@STAGING_SITE_STATUS"
+STAGING_SITE_PROTECT="@STAGING_SITE_PROTECT"
+
+## GUEST_USER = [*must be unique*] this user can login to view staging/dev sites ##
+## GUEST_PASSWORD = [*must be unique*] something easy for clients to remember ##
+
+GUEST_USER="@GUEST_USER"
+GUEST_PASSWORD="@GUEST_PASSWORD"
 
 ####################################################################################################
 #### SS-Config: Rclone Settings (Remote Backups) ###################################################
@@ -196,6 +200,12 @@ SS_SWAPFILE="true"
 SS_SWAPFILE_SIZE="2G"
 SS_TIMEZONE="UTC"
 
+## MODULE_PHP_CONFIG = [slickstack|default] use our boilerplate or package default ##
+## MODULE_NGINX_CONFIG = [slickstack|default] use our boilerplate or package default ##
+
+# MODULE_PHP_CONFIG="slickstack"
+# MODULE_NGINX_CONFIG="slickstack"
+
 ## SS_WORDPRESS_ADMIN_DASHBOARD = [true|false] enables dashboard area in WP Admin ##
 ## SS_WORDPRESS_MU_PLUGINS = [default|custom] use our default MU plugins or custom ones ##
 ## SS_WORDPRESS_PLUGIN_BLACKLIST [true|false] enable or disable the plugin blacklist ##
@@ -203,7 +213,7 @@ SS_TIMEZONE="UTC"
 
 SS_WORDPRESS_ADMIN_DASHBOARD="true"
 SS_WORDPRESS_MU_PLUGINS="default"
-SS_WORDPRESS_PLUGIN_BLACKLIST="true"
+SS_WORDPRESS_PLUGIN_BLACKLIST="@SS_WORDPRESS_PLUGIN_BLACKLIST"
 SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE="https://raw.githubusercontent.com/littlebizzy/slickstack/master/modules/wordpress/blacklist.txt"
 
 ## whitelabeling allows agencies to replace all SlickStack branding with their own ##
@@ -372,13 +382,13 @@ OPEN_FILE_CACHE_ERRORS="on"
 ## FCGI_SEND_TIMEOUT = [60s|etc] usually these timeouts can be about the same ##
 ## FCGI_BUFFERS = [32 32k] mess with buffers if you want the sky the fall ##
 ## FCGI_BUFFER_SIZE = [32k|etc] in most cases 32k is all you need ##
-## FCGI_BUSY_BUFFERS_SIZE = [256k|etc] 
-## FCGI_TEMP_FILE_WRITE_SIZE = [256k|etc] 
+## FCGI_BUSY_BUFFERS_SIZE = [256k|etc] in most cases 256k is all you need ##
+## FCGI_TEMP_FILE_WRITE_SIZE = [256k|etc] in most cases 256k is all you need ##
 
 FCGI_CACHE="true"
 FCGI_CACHE_VALID="1440m"
 FCGI_CACHE_INACTIVE="1440m"
-FCGI_CACHE_MEMORY="256m"
+FCGI_CACHE_MEMORY="256m" ## increase on higher RAM servers
 FCGI_CACHE_MAX_SIZE="4096m"
 # FCGI_CACHE_QUERIES="true"
 # FCGI_CACHE_QUERIES_SEARCH="true"
@@ -531,7 +541,7 @@ WWW_RLIMIT_FILES="65535"
 WWW_RLIMIT_CORE="0"
 
 ####################################################################################################
-#### SS-Config: OPcache Settings (Always Enabled On Production Servers) ############################
+#### SS-Config: OPcache Settings ###################################################################
 ####################################################################################################
 
 ## OPcache is one of the most powerful (and underrated) ways to scale cheap VPS servers ##
@@ -542,63 +552,64 @@ WWW_RLIMIT_CORE="0"
 ## OPCACHE_MAX_ACCELERATED_FILES = [10000|1000000|etc] must be between 200-1000000 files ##
 ## OPCACHE_MAX_WASTED_PERCENTAGE = [5|10|15|20|etc] careful not to set this too high ##
 ## OPCACHE_REVALIDATE_FREQUENCY = [2|15|60|etc] seconds before cache checks for changes ##
-## OPCACHE_HUGE_CODE_PAGES = [false|true] enable Huge Pages (not recommended) ##
+## OPCACHE_HUGE_CODE_PAGES = [false|true] only for experts (at your own risk) ##
+## OPCACHE_PRELOAD = [false|true] PHP script that should be included when preloading ##
+## OPCACHE_BLACKLIST_FILENAME = [*must be unique*] absolute path to blacklist file ##
 
-OPCACHE_MEMORY_CONSUMPTION="256"
+OPCACHE_MEMORY_CONSUMPTION="256" ## increase on higher RAM servers
 OPCACHE_INTERNED_STRINGS_BUFFER="64"
 OPCACHE_MAX_ACCELERATED_FILES="10000"
 OPCACHE_MAX_WASTED_PERCENTAGE="5"
 OPCACHE_REVALIDATE_FREQUENCY="2"
 OPCACHE_HUGE_CODE_PAGES="false"
-
-# OPCACHE_FILE_CACHE_ONLY="false"
-# OPCACHE_PRELOAD="false" ## PHP 7.4+
-# etc with new 7.4 options
+OPCACHE_PRELOAD=""
+OPCACHE_BLACKLIST_FILENAME=""
 
 ####################################################################################################
-#### SS-Config: Core Bash Script Settings ##########################################################
+#### SS-Config: Bash Script Settings ###############################################################
 ####################################################################################################
 
-## there are a few cleanup related options during wordpress core installation ##
-## keeping these enabled can help remove outdated or dangerous PHP files ##
+## these options allow you to seriously fine tune the functionality of bash scripts ##
+## you can disable certain code snippets by setting these options to false ##
 
-## SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS
-## SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_THEMES
-## SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_ROOT
-## SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_WP_CONTENT
-## SS_INSTALL_WORDPRESS_CORE_DELETE_WP_ADMIN
-## SS_INSTALL_WORDPRESS_CORE_DELETE_WP_INCLUDES
+## ss-clean-files ##
+SS_CLEAN_FILES_WORDPRESS_PLUGINS="true"
+SS_CLEAN_FILES_WORDPRESS_THEMES="true"
+SS_CLEAN_FILES_WORDPRESS_CONTENT="true"
+SS_CLEAN_FILES_ROOT_PUBLIC="true"
+SS_CLEAN_FILES_ROOT_PRIVATE="true"
 
+# SS_CLEAN_FILES_PHP_HACKS="true"
+# SS_CLEAN_FILES_BACKUPS="true"
+
+## ss-dump-database ##
+SS_DUMP_DATABASE_PRODUCTION="true"
+SS_DUMP_DATABASE_STAGING="false"
+SS_DUMP_DATABASE_DEVELOPMENT="false"
+SS_DUMP_DATABASE_FILES="false"
+
+## ss-dump-files ##
+SS_DUMP_FILES_PRODUCTION="true"
+SS_DUMP_FILES_STAGING="false"
+SS_DUMP_FILES_DEVELOPMENT="false"
+
+## ss-install-wordpress-core ##
 SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS="true"
 SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_THEMES="true"
 SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_ROOT="true"
 # SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_WP_CONTENT="true"
 SS_INSTALL_WORDPRESS_CORE_DELETE_WP_ADMIN="true"
 SS_INSTALL_WORDPRESS_CORE_DELETE_WP_INCLUDES="true"
-
 SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS="true"
 
-
-# SS_CLEAN_PHP_HACKS="true"
-# SS_CLEAN_BACKUPS="true"
-
-## SS_DUMP_MYSQL_DB = [true|false] enable to mysqldump your database to /meta/ ##
-## SS_DUMP_MYSQL_FILES = [false|true] only enable if you have tons of free disk space ##
-
-# SS_DUMP_MYSQL_DB="true"
-# SS_DUMP_MYSQL_FILES="false"
-
-SS_DUMP_DATABASE_PRODUCTION="true"
-SS_DUMP_DATABASE_STAGING="false"
-SS_DUMP_DATABASE_DEVELOPMENT="false"
-SS_DUMP_DATABASE_FILES="false"
-
-SS_DUMP_FILES_PRODUCTION="true"
-SS_DUMP_FILES_STAGING="false"
-SS_DUMP_FILES_DEVELOPMENT="false"
+## ss-sync-staging ##
+## STAGING_REPLACE_LINKS_DB = [high|low|false] how aggressive to fix MySQL links ##
+## STAGING_REPLACE_LINKS_THEME = [high|low|false] how aggressive to fix hardcode links ##
+# STAGING_REPLACE_LINKS_DB="high"
+# STAGING_REPLACE_LINKS_THEME="high"
 
 ####################################################################################################
-#### SS-Config: Interval Settings (Executed By SS Core Cron Jobs) ##################################
+#### SS-Config: Interval Settings ##################################################################
 ####################################################################################################
 
 ## modifying the below SlickStack intervals could affect server stability and updates ##
@@ -607,68 +618,103 @@ SS_DUMP_FILES_DEVELOPMENT="false"
 ## [often|regular|quarter-hourly|half-hourly|hourly|quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly|sometimes] ##
 
 ## INTERVAL_SS_CHECK = [often|regular|quarter-hourly|half-hourly|hourly] ##
+## INTERVAL_SS_CLEAN_DATABASE = [hourly|quarter-daily|half-daily|daily|half-weekly|weekly] ##
 ## INTERVAL_SS_CLEAN_FILES = [hourly|quarter-daily|half-daily|daily|half-weekly|weekly] ##
-## INTERVAL_SS_DOS2UNIX_FILES = [half-daily|daily|half-weekly|weekly|half-monthly] ##
 ## INTERVAL_SS_DUMP_DATABASE = [often|regular|quarter-hourly|half-hourly|hourly|quarter-daily|half-daily|daily] ##
 ## INTERVAL_SS_DUMP_FILES = [half-hourly|hourly|quarter-daily|half-daily|daily|half-weekly] ##
-## INTERVAL_SS_ENCRYPT = [weekly|half-monthly|monthly|sometimes] ##
+## INTERVAL_SS_EMPTY_LOGS = [quarter-daily|half-daily|daily|half-weekly|weekly] ##
+## INTERVAL_SS_ENCRYPT_ACME = 
 ## INTERVAL_SS_ENCRYPT_CERTBOT = [weekly|half-monthly|monthly|sometimes] ##
 ## INTERVAL_SS_ENCRYPT_OPENSSL = [weekly|half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_INSTALL_ADMINER = [weekly|half-monthly|monthly|sometimes] ##
+## INTERVAL_SS_INSTALL_ADMINER = [half-weekly|weekly|half-monthly|monthly|sometimes] ##
 ## INTERVAL_SS_INSTALL_CLAMAV = [weekly|half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_INSTALL_UBUNTU_BASH = [daily|half-weekly|weekly|half-monthly|monthly] ##
-## INTERVAL_SS_INSTALL_UBUNTU_CRONTAB = [daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_INSTALL_MYSQL_CONFIG =
+## INTERVAL_SS_INSTALL_MYSQL_DATABASE =
+## INTERVAL_SS_INSTALL_MYSQL_PACKAGES =
+## INTERVAL_SS_INSTALL_NGINX_CONFIG =
+## INTERVAL_SS_INSTALL_NGINX_PACKAGES =
+## INTERVAL_SS_INSTALL_NGINX_SSL =
+## INTERVAL_SS_INSTALL_PHP_CONFIG =
+## INTERVAL_SS_INSTALL_PHP_PACKAGES =
+## INTERVAL_SS_INSTALL_REDIS_CONFIG =
+## INTERVAL_SS_INSTALL_REDIS_PACKAGES =
+## INTERVAL_SS_INSTALL_UBUNTU_BASH = [daily|half-weekly|weekly|half-monthly] ##
+## INTERVAL_SS_INSTALL_UBUNTU_CRONTAB = [sometimes] ##
 ## INTERVAL_SS_INSTALL_UBUNTU_KERNEL = [weekly|half-monthly|monthly] ##
 ## INTERVAL_SS_INSTALL_UBUNTU_SSH = [weekly|half-monthly|monthly] ##
-## INTERVAL_SS_INSTALL_UBUNTU_USERS = [weekly|half-monthly|monthly] ##
-## INTERVAL_SS_INSTALL_UBUNTU_UTILS =
-## INTERVAL_SS_INSTALL_WORDPRESS_CLI="never"
+## INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE = [sometimes] ##
+## INTERVAL_SS_INSTALL_UBUNTU_USERS = [half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_INSTALL_UBUNTU_UTILS = [monthly|sometimes] ##
+## INTERVAL_SS_INSTALL_UFW_CONFIG = [monthly|sometimes] ##
+## INTERVAL_SS_INSTALL_UFW_PACKAGES = [monthly|sometimes] ##
+## INTERVAL_SS_INSTALL_WORDPRESS_CLI = [weekly|half-monthly|monthly|sometimes] ##
 ## INTERVAL_SS_INSTALL_WORDPRESS_CONFIG = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
-## INTERVAL_SS_INSTALL_WORDPRESS_CORE = [weekly|half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS = [quarter-daily|half-daily|daily|half-weekly] ##
-## INTERVAL_SS_OPTIMIZE_DATABASE = [daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_INSTALL_WORDPRESS_CORE = [weekly|half-monthly|monthly] ##
+## INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS = [half-daily|daily|half-weekly] ##
+## INTERVAL_SS_OPTIMIZE_DATABASE = [daily|half-weekly|weekly|half-monthly] ##
+## INTERVAL_SS_OPTIMIZE_FILES = [half-daily|daily|half-weekly|weekly|half-monthly] ##
 ## INTERVAL_SS_PERMS = [hourly|quarter-daily|half-daily|daily] ##
-## INTERVAL_SS_PURGE = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly|sometimes] ##
+## INTERVAL_SS_PURGE_NGINX = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_PURGE_OPCACHE = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_PURGE_REDIS = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_PURGE_TRANSIENTS = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
 ## INTERVAL_SS_REBOOT_MACHINE = [weekly|half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_REMOTE = [half-daily|daily|half-weekly|weekly|half-monthly] ##
-## INTERVAL_SS_RESET_PASSWORD [weekly|half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_RESTART_SERVICES = [quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_REMOTE_BACKUP = [half-daily|daily|half-weekly|weekly] ##
+## INTERVAL_SS_RESET_PASSWORD_SFTP = [half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_RESTART_MYSQL = [half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_RESTART_NGINX = [half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_RESTART_PHP = [half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_RESTART_REDIS = [half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
+## INTERVAL_SS_RESTART_UFW = [half-daily|daily|half-weekly|weekly|half-monthly|monthly] ##
 ## INTERVAL_SS_SCAN_MALWARE = [daily|half-weekly|weekly|half-monthly] ##
 ## INTERVAL_SS_SYNC_STAGING = [hourly|quarter-daily|half-daily|daily|half-weekly] ##
-## INTERVAL_SS_UPDATE = [half-monthly|monthly|sometimes] ##
 ## INTERVAL_SS_UPDATE_CONFIG = [half-monthly|monthly|sometimes] ##
-## INTERVAL_SS_UPDATE_PACKAGES = [half-monthly|monthly|sometimes] ##
+## INTERVAL_SS_UPDATE_MODULES = [monthly|sometimes] ##
 ## INTERVAL_SS_WORKER = [regular|quarter-hourly|half-hourly|hourly|quarter-daily] ##
 
 INTERVAL_SS_CHECK="often" ## default = often
+INTERVAL_SS_CLEAN_DATABASE="never" ## default = never (not functional yet)
 INTERVAL_SS_CLEAN_FILES="half-daily" ## default = half-daily
-INTERVAL_SS_DOS2UNIX_FILES="half-weekly" ## default = half-weekly
 INTERVAL_SS_DUMP_DATABASE="hourly" ## default = hourly
 INTERVAL_SS_DUMP_FILES="never" ## default = never
-INTERVAL_SS_ENCRYPT="sometimes"
-INTERVAL_SS_OPTIMIZE_DATABASE="weekly" ## default = weekly
-INTERVAL_SS_PERMS="quarter-daily" ## default = quarter-daily
-INTERVAL_SS_PURGE="monthly" ## default = monthly
-INTERVAL_SS_REBOOT_MACHINE="never" ## default = never
-INTERVAL_SS_REMOTE="never"
-INTERVAL_SS_RESET_PASSWORD="never"
-INTERVAL_SS_RESTART_SERVICES="never"
-INTERVAL_SS_PURGE="monthly"
-INTERVAL_SS_SCAN_MALWARE="weekly" ## default = weekly
-INTERVAL_SS_SYNC_STAGING="half-daily" ## default = half-daily
-INTERVAL_SS_UPDATE="never"
-INTERVAL_SS_UPDATE_CONFIG="never"
-INTERVAL_SS_UPDATE_PACKAGES="never"
-INTERVAL_SS_INSTALL_ADMINER="never" ## default = never
+INTERVAL_SS_EMPTY_LOGS="never" ## default = never
+INTERVAL_SS_ENCRYPT_ACME="never" ## default = never (not functional yet)
+INTERVAL_SS_ENCRYPT_CERTBOT="sometimes" ## default = sometimes
+INTERVAL_SS_ENCRYPT_OPENSSL="never" ## default = never
+INTERVAL_SS_INSTALL_ADMINER="monthly" ## default = monthly
 INTERVAL_SS_INSTALL_CLAMAV="never" ## default = never
 INTERVAL_SS_INSTALL_UBUNTU_BASH="half-weekly" ## default = half-weekly
 INTERVAL_SS_INSTALL_UBUNTU_CRONTAB="sometimes" ## default = sometimes
 INTERVAL_SS_INSTALL_UBUNTU_KERNEL="never" ## default = never
 INTERVAL_SS_INSTALL_UBUNTU_SSH="never" ## default = never
+INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE="never" ## default = never
 INTERVAL_SS_INSTALL_UBUNTU_USERS="never" ## default = never
+INTERVAL_SS_INSTALL_UBUNTU_UTILS="never" ## default = never
+INTERVAL_SS_INSTALL_UFW_CONFIG="never" ## default = never
+INTERVAL_SS_INSTALL_UFW_PACKAGES="never" ## default = never
+INTERVAL_SS_INSTALL_WORDPRESS_CLI="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_CONFIG="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_CORE="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS="daily" ## default = daily
+INTERVAL_SS_OPTIMIZE_DATABASE="weekly" ## default = weekly
+INTERVAL_SS_OPTIMIZE_FILES="half-weekly" ## default = half-weekly
+INTERVAL_SS_PERMS="quarter-daily" ## default = quarter-daily
+INTERVAL_SS_PURGE_NGINX="never" ## default = never
+INTERVAL_SS_PURGE_OPCACHE="never" ## default = never
+INTERVAL_SS_PURGE_REDIS="never" ## default = never
+INTERVAL_SS_PURGE_TRANSIENTS="never" ## default = never
+INTERVAL_SS_REBOOT_MACHINE="never" ## default = never
+INTERVAL_SS_REMOTE_BACKUP="never" ## default = never (not functional yet)
+INTERVAL_SS_RESET_PASSWORD_SFTP="never" ## default = never
+INTERVAL_SS_RESTART_MYSQL="never" ## default = never
+INTERVAL_SS_RESTART_NGINX="never" ## default = never
+INTERVAL_SS_RESTART_PHP="never" ## default = never
+INTERVAL_SS_RESTART_REDIS="never" ## default = never
+INTERVAL_SS_RESTART_UFW="never" ## default = never
+INTERVAL_SS_SCAN_MALWARE="weekly" ## default = weekly
+INTERVAL_SS_SYNC_STAGING="half-daily" ## default = half-daily
+INTERVAL_SS_UPDATE_CONFIG="never" ## default = never
+INTERVAL_SS_UPDATE_MODULES="never" ## default = never
 INTERVAL_SS_WORKER="regular" ## default = regular
 
 ####################################################################################################

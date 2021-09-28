@@ -9,7 +9,7 @@
 #### purpose: SlickStack core cron job *quarter-daily* (06/13) will run every 6 hours ##############
 #### module version: Ubuntu 20.04 LTS ##############################################################
 #### sourced by: root crontab ######################################################################
-#### bash aliases: ss cron 06, ss cron quarter-daily, ss cron quarter daily ########################
+#### bash aliases: ss cron 06, ss cron [quarter-daily|quarter daily] ###############################
 ####################################################################################################
 
 ## NEVER MODIFY THE ROOT CRONTAB OR SS CORE CRON JOBS OR YOUR STACK WILL STOP WORKING ##
@@ -199,6 +199,11 @@ if [[ "$INTERVAL_SS_WORKER" == "quarter-daily" ]]; then
     source "$PATH_SS_WORKER"
 fi
 
+## run ss-clean-database if set to quarter-daily ##
+if [[ "$INTERVAL_SS_CLEAN_DATABASE" == "quarter-daily" ]]; then 
+    source "$PATH_SS_CLEAN_DATABASE"
+fi
+
 ## run ss-dump-database if set to quarter-daily ##
 if [[ "$INTERVAL_SS_DUMP_DATABASE" == "quarter-daily" ]]; then 
     source "$PATH_SS_DUMP_DATABASE"
@@ -224,19 +229,34 @@ if [[ "$INTERVAL_SS_SYNC_STAGING" == "quarter-daily" ]]; then
     source "$PATH_SS_SYNC_STAGING"
 fi
 
-## run ss-install-wordpress-mu-plugins if set to quarter-daily ##
-if [[ "$INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS" == "quarter-daily" ]]; then 
-    source "$PATH_SS_INSTALL_WORDPRESS_MU_PLUGINS"
-fi
-
 ## run ss-perms if set to quarter-daily or if not defined (default) ##
 if [[ "$INTERVAL_SS_PERMS" == "quarter-daily" ]] || [[ -z "$INTERVAL_SS_PERMS" ]]; then 
     source "$PATH_SS_PERMS"
 fi
 
-## run ss-purge if set to quarter-daily ##
-if [[ "$INTERVAL_SS_PURGE" == "quarter-daily" ]]; then 
-    source "$PATH_SS_PURGE"
+## run ss-purge-nginx if set to quarter-daily ##
+if [[ "$INTERVAL_SS_PURGE_NGINX" == "quarter-daily" ]]; then 
+    source "$PATH_SS_PURGE_NGINX"
+fi
+
+## run ss-purge-opcache if set to quarter-daily ##
+if [[ "$INTERVAL_SS_PURGE_OPCACHE" == "quarter-daily" ]]; then 
+    source "$PATH_SS_PURGE_OPCACHE"
+fi
+
+## run ss-purge-redis if set to quarter-daily ##
+if [[ "$INTERVAL_SS_PURGE_REDIS" == "quarter-daily" ]]; then 
+    source "$PATH_SS_PURGE_REDIS"
+fi
+
+## run ss-purge-transients if set to quarter-daily ##
+if [[ "$INTERVAL_SS_PURGE_TRANSIENTS" == "quarter-daily" ]]; then 
+    source "$PATH_SS_PURGE_TRANSIENTS"
+fi
+
+## run ss-empty-logs if set to quarter-daily ##
+if [[ "$INTERVAL_SS_EMPTY_LOGS" == "quarter-daily" ]]; then 
+    source "$PATH_SS_EMPTY_LOGS"
 fi
 
 ####################################################################################################

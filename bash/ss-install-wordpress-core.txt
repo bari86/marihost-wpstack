@@ -7,8 +7,8 @@
 #### path: /var/www/ss-install-wordpress-core ######################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls the WordPress module (CMS) package and non-config files (idempotent) ######
-#### module version: WordPress 5.7.x ###############################################################
-#### sourced by: ss-install, ss install wordpress, ss install wp ###################################
+#### module version: WordPress 5.8.x ###############################################################
+#### sourced by: ss-install ########################################################################
 #### bash aliases: ss install wordpress core, ss install wp core ###################################
 ####################################################################################################
 
@@ -24,7 +24,27 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Install-WordPress-Core: Message (Begin Script) #############################################
+#### TABLE OF CONTENTS (SS-Install-WordPress-Core) #################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Install Ubuntu Utils
+## D. Cleanup Temporary Files
+## E. Install WordPress Core
+
+####################################################################################################
+#### A. SS-Install-WordPress-Core: Touch Timestamp File ############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_INSTALL_WORDPRESS_CORE"
+
+####################################################################################################
+#### B. SS-Install-WordPress-Core: Message (Begin Script) ##########################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
@@ -39,55 +59,41 @@ sleep "$SLEEP_MESSAGE_BEGIN"
 ####################################################################################################
 
 ## proceed if more than 720 mins (12 hours) ##
-if [[ ! -f "/var/www/meta/.timestamp-ss-install-wordpress-core" ]] || \
-   [[ -n $(find "/var/www/meta/.timestamp-ss-install-wordpress-core" -amin +720) ]]
-then
+# if [[ ! -f "/var/www/meta/.timestamp-ss-install-wordpress-core" ]] || \
+ #  [[ -n $(find "/var/www/meta/.timestamp-ss-install-wordpress-core" -amin +720) ]]
+# then
 
 ####################################################################################################
-#### SS-Install-WordPress-Core: Install Ubuntu Utils ###############################################
+#### C. SS-Install-WordPress-Core: Install Ubuntu Utils ############################################
 ####################################################################################################
 
 ## run ss-install-ubuntu-utils ##
 source "$PATH_SS_INSTALL_UBUNTU_UTILS"
 
 ####################################################################################################
-#### SS-Install-WordPress-Core: Cleanup Temporary Files ############################################
+#### D. SS-Install-WordPress-Core: Cleanup Temporary Files #########################################
 ####################################################################################################
 
 ## delete tmp files ##
 rm "$TMP_WORDPRESS_ZIP"
-
-####################################################################################################
-#### SS-Install-WordPress-Core: Install WordPress Core (CMS) #######################################
-####################################################################################################
-
-## CMS modules are installed on SlickStack via files hosted on our public mirror servers ##
-## we always install the latest stable patched minor version (not major versions) ##
-
-## cleanup files ##
 rm /var/www/html/wordpress*
 rm /var/www/html/staging/wordpress*
 rm /var/www/html/dev/wordpress*
 
-## make dirs ##
-mkdir /var/www/html
+####################################################################################################
+#### E. SS-Install-WordPress-Core: Install WordPress Core ##########################################
+####################################################################################################
 
-## brief permissions reset ##
-chown -R $SFTP_USER:wordpress /var/www/html
-chown -R $SFTP_USER:wordpress /var/www/html/staging
-chown -R $SFTP_USER:wordpress /var/www/html/dev
-chmod 6775 /var/www/html
-chmod 6775 /var/www/html/staging
-chmod 6775 /var/www/html/dev
+## CMS modules are installed by SlickStack via files from our public mirror servers ##
+## we always install the latest stable minor version (never major versions) ##
 
-
-
-## download latest (patched) WordPress version ##
+## retrieve latest version ##
 wget -O "$TMP_WORDPRESS_ZIP" "$MIRROR_WORDPRESS_ZIP"
 
-
-## ADD CHECK HERE... if /tmp/wordpress.zip not found (e.g. SS mirror down) then retrieve latest from wordpress.org/latest.zip
-
+## try third party mirror if file not exists ##
+if [[ ! -f "$TMP_WORDPRESS_ZIP" ]]; then
+    wget -O "$TMP_WORDPRESS_ZIP" "$MIRROR_THIRDPARTY_WORDPRESS_ZIP"
+fi
 
 ####################################################################################################
 #### SS-Install-WordPress-Core: Cleanup Files + Install WordPress Core (Production) ################
@@ -157,28 +163,29 @@ fi
 ## this installation process removes outdated WordPress Core files or potential malware ##
 ## it is not foolproof but it should address the majority of common problems ##
 
-## cleanup old files and potential malware unless disabled ##
-if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_WP_ADMIN" != "false" ]]; then
-    rm /var/www/html/dev/wp-admin
-fi
-
-if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_WP_INCLUDES" != "false" ]]; then
-    rm /var/www/html/dev/wp-includes
-fi
-
-if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_ROOT" != "false" ]]; then
-    find /var/www/html/dev/ -maxdepth 1 -type f ! -name "wp-config.php" -name "*.php" -delete 
-    # cd /var/www/html/dev/ && find . -type f ! -name "wp-config.php" -name "*.php" -delete 
-fi
-
-## copy zip to dev ##
 if [[ "$DEV_SITE" == "true" ]]; then 
+
+    if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_WP_ADMIN" != "false" ]]; then
+        rm /var/www/html/dev/wp-admin
+    fi
+
+    if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_WP_INCLUDES" != "false" ]]; then
+        rm /var/www/html/dev/wp-includes
+    fi
+
+    if [[ -f "/tmp/wordpress.zip" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_DELETE_PHP_FILES_ROOT" != "false" ]]; then
+        find /var/www/html/dev/ -maxdepth 1 -type f ! -name "wp-config.php" -name "*.php" -delete 
+        # cd /var/www/html/dev/ && find . -type f ! -name "wp-config.php" -name "*.php" -delete 
+    fi
+
+    ## copy zip to dev ##
     cp "$TMP_WORDPRESS_ZIP" /var/www/html/dev
     unzip /var/www/html/dev/wordpress.zip -d /var/www/html/dev
     chown -R www-data:wordpress /var/www/html/dev/wordpress
     chmod 775 /var/www/html/dev/wordpress
     ## install wp core files ##
     rsync /var/www/html/dev/wordpress/* /var/www/html/dev
+    
 fi
 
 ####################################################################################################
@@ -191,9 +198,38 @@ rm /var/www/html/wordpress*
 rm /var/www/html/staging/wordpress*
 rm /var/www/html/dev/wordpress*
 
+
+
+#########################################################
+#########################################################
+#########################################################
+
+## populate database basics to avoid /wp-admin/install.php redirects ##
+
+# define('WP_SITEURL', 'https://dev."${SITE_DOMAIN}"');
+
+# INSTALLED_ALREADY_DEV=$(mysql --database=development --execute="SELECT * FROM ${DB_PREFIX}options WHERE option_name LIKE 'admin_email'";)
+
+# if [[ "$DEV_SITE" == "true" ]] && [[ -z "$INSTALLED_ALREADY_DEV" ]]; then
+
+    /usr/bin/php -q -r "
+    include '/var/www/html/dev/wp-admin/install.php';
+    wp_install('dev site', '"${SFTP_USER}"', '"${SFTP_USER}"@"${SITE_DOMAIN_EXCLUDING_WWW}"', 1, '', '"${SFTP_PASSWORD}"');
+    "
+    
+# fi
+
 ####################################################################################################
 #### SS-Install-WordPress-Core: Optimize WP_Options (For Virgin Installs) ##########################
 ####################################################################################################
+
+## minimum options required to avoid /wp-admin/install.php redirect are as follows ##
+## home/siteurl, blogname, admin_user, admin_email, admin_password ##
+
+# home/siteurl is done below so just these
+# mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='${SITE_DOMAIN}' WHERE option_name='blogname'";
+# mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='' WHERE option_name='admin_email'";
+### mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='' WHERE option_name='admin_password'";
 
 if [[ ! -f "$TIMESTAMP_SS_INSTALL_WORDPRESS_CORE" ]] && [[ "$SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS" == "disabledfornow" ]]; then
 
@@ -284,46 +320,41 @@ fi
 #### SS-Install-WordPress-Core: Fix Site Domains (Modify Database Options) #########################
 ####################################################################################################
 
-## SNIPPET: ss-install-wordpress-core, ss-install-wordpress-config
+## SNIPPET: ss-install-wordpress-config, ss-install-wordpress-core
+## UPDATED: 19SEP2021
 
-## here we manually fix certain fields in the MySQL database to ensure proper functions ##
-## this fix required for WP Multisite (wp-config will override on single sites) ##
+## here we manually fix certain fields in the database to ensure proper functionality ##
+## this fix required for WP Multisite (wp-config.php enough for single sites) ##
 
-## fix site domains (production) ##
-mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='home'";
-mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='siteurl'";
+if [[ "$SS_APP" == "wordpress" ]]; then 
 
-## fix site domains (staging) ##
-if [[ "$STAGING_SITE" != "false" ]]; then 
-mysql --execute="UPDATE ${DB_NAME}.staging_options SET option_value='https://$SITE_DOMAIN/staging' WHERE option_name='home'";
-mysql --execute="UPDATE ${DB_NAME}.staging_options SET option_value='https://$SITE_DOMAIN/staging' WHERE option_name='siteurl'";
+    ## production ##
+    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='home'";
+    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='siteurl'";
 
-mysql --execute="UPDATE ${DB_NAME}_staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_TLD' WHERE option_name='home'";
-mysql --execute="UPDATE ${DB_NAME}_staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_TLD' WHERE option_name='siteurl'";
-fi
+    ## staging ##
+    if [[ "$STAGING_SITE" == "true" ]]; then 
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='home'";
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='siteurl'";
+    fi
 
-## fix site domains (dev) ##
-if [[ "$DEV_SITE" != "false" ]]; then 
-mysql --execute="UPDATE ${DB_NAME}.dev_options SET option_value='https://$SITE_DOMAIN/dev' WHERE option_name='home'";
-mysql --execute="UPDATE ${DB_NAME}.dev_options SET option_value='https://$SITE_DOMAIN/dev' WHERE option_name='siteurl'";
+    ## development ##
+    if [[ "$DEV_SITE" == "true" ]]; then 
+        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='home'";
+        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='siteurl'";
+    fi
 
-mysql --execute="UPDATE ${DB_NAME}_dev.${DB_PREFIX}options SET option_value='https://dev.$SITE_TLD' WHERE option_name='home'";
-mysql --execute="UPDATE ${DB_NAME}_dev.${DB_PREFIX}options SET option_value='https://dev.$SITE_TLD' WHERE option_name='siteurl'";
 fi
 
 ####################################################################################################
-#### SS-Install-WordPress-Core: Configure WP-Config File (Production + Staging) ####################
+#### SS-Install-WordPress-Core: Run SS-Sync-Staging #################################
 ####################################################################################################
 
-## this wp-config setup script is distinct so that it can be run separately if needed ##
-## it will also be called whenever the ss-sync (staging sync) script is run ##
+## we include the sync to staging while installing WordPress Core to avoid blank sites ##
+## otherwise the staging site files/database would potentially display broken ##
 
-
-## UNCOMMENT AFTER STAGING AND DEV ARE WORKING ##
-## run ss-install-wordpress-config ##
-# if [[ ! -f "/var/www/html/wp-config.php" ]] || [[ ! -f "/var/www/html/staging/wp-config.php" ]] || [[ ! -f "/var/www/html/dev/wp-config.php" ]]; then 
-#    source /var/www/ss-install-wordpress-config
-# fi
+## run ss-sync-staging ##
+source "$PATH_SS_SYNC_STAGING"
 
 ####################################################################################################
 #### SS-Install-WordPress-Core: Purge Cache (WordPress Transients) #################################
@@ -368,22 +399,12 @@ rm "$TMP_WORDPRESS_ZIP"
 ####################################################################################################
 
 ## otherwise exit if script has run recently ##
-else 
-    echo -e ""
-    echo -e "${YELLOW}It appears this script has already run during the past several minutes, ${NOCOLOR}"
-    echo -e "${YELLOW}therefore it has exited without running (please try again later). ${NOCOLOR}"
-    echo -e ""
-fi
-
-####################################################################################################
-#### SS-Install-WordPress-Core: Touch Timestamp File (End Script) ##################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_WORDPRESS_CORE"
+# else
+ #   echo -e ""
+  #  echo -e "${YELLOW}It appears this script has already run during the past several minutes, ${NOCOLOR}"
+  #  echo -e "${YELLOW}therefore it has exited without running (please try again later). ${NOCOLOR}"
+  #  echo -e ""
+# fi
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
@@ -391,5 +412,15 @@ touch "$TIMESTAMP_SS_INSTALL_WORDPRESS_CORE"
 
 ## Ref: https://github.com/littlebizzy/throwaway-theme/blob/master/functions.php
 ## Ref: https://pressidium.com/blog/2020/wordpress-image-sizes-explained/
+## Ref: https://developer.wordpress.org/cli/commands/core/install/
+## Ref: https://www.linuxtweaks.in/how-to-install-wordpress-using-bash-script-and-wp-cli/
+## Ref: https://stackoverflow.com/questions/10062513/install-wordpress-using-bash-shell-without-visiting-wp-admin-install-php
+## Ref: https://serverascode.com/2014/06/22/automated-wordpress-database-deployment.html
+## Ref: https://web.archive.org/web/20140711110900/http://www.openlogic.com/wazi/bid/324425/How-to-install-WordPress-from-the-command-line
+## Ref: https://wordpress.org/support/article/how-to-install-wordpress/
+## Ref: https://stackoverflow.com/questions/6781225/how-do-i-check-if-a-directory-has-child-directories/6781343
+## Ref: https://www.cloudsavvyit.com/1081/check-a-value-in-a-mysql-database-from-a-linux-bash-script/
+## Ref: https://www.php.net/manual/en/features.commandline.options.php
+## Ref: https://stackoverflow.com/questions/33067909/bash-variable-under-a-mysql-query
 
 ## SS_EOF

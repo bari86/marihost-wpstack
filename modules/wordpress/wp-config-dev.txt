@@ -5,8 +5,8 @@
 /** mirror: https://mirrors.slickstack.io/modules/wordpress/wp-config-dev.txt ******************* */
 /** path: n/a (boilerplate) ********************************************************************* */
 /** destination: /var/www/html/dev/wp-config.php (after install) ******************************** */
-/** purpose: WordPress config file boilerplate for SlickStack dev sites (subdomain) ************* */
-/** module version: WordPress 5.7.x ************************************************************* */
+/** purpose: WordPress config file boilerplate for SlickStack dev site (subdomain) ************** */
+/** module version: WordPress 5.8.x ************************************************************* */
 /** sourced by: /var/www/html/dev/wp-settings.php *********************************************** */
 /** bash aliases: n/a (ss-install-wordpress-config) ********************************************* */
 /** ********************************************************************************************* */
@@ -17,19 +17,20 @@
 /** modify it via WP Admin using the Custom Functions plugin or directly via SFTP */
 
 /** ********************************************************************************************* */
-/** WP-Config: General SlickStack Settings ****************************************************** */
+/** WP-Config (Development): Include SlickStack Constants *************************************** */
 /** ********************************************************************************************* */
 
-/** below are some general settings that control SlickStack settings and basic features */
+/** below are some general constants that control SlickStack settings and basic features */
 /** they are set here (not functions.php) to prevent clients from changing them */
 
-define('SS_DASHBOARD', @SS_DASHBOARD); // ss = true
+// include ss-constants.php
+include_once('/var/www/meta/ss-constants.php');
 
 /** ********************************************************************************************* */
-/** WP-Config: MySQL Database Settings (Single Database Only) *********************************** */
+/** WP-Config (Development): Database Settings ************************************************** */
 /** ********************************************************************************************* */
 
-define('DB_NAME', '@DB_NAME'); // ss = wordpress
+define('DB_NAME', 'development'); // ss = development
 define('DB_USER', '@DB_USER'); // ss = *must be unique*
 define('DB_PASSWORD', '@DB_PASSWORD'); // ss = *must be unique*
 define('DB_HOST', '@DB_HOST'); // ss = 127.0.0.1
@@ -38,7 +39,14 @@ define('DB_COLLATE', '@DB_COLLATE'); // ss = (blank)
 $table_prefix = '@DB_PREFIX'; // ss = wp_
 
 /** ********************************************************************************************* */
-/** WP-Config: Domain (URI) + Path Settings ***************************************************** */
+/** WP-Config (Development): Environment Settings *********************************************** */
+/** ********************************************************************************************* */
+
+define('WP_ENVIRONMENT_TYPE', 'development');
+define('WP_LOCAL_DEV', false); // ss = false
+
+/** ********************************************************************************************* */
+/** WP-Config (Development): Domain + Path Settings ********************************************* */
 /** ********************************************************************************************* */
 
 /** force URI structure */
@@ -52,18 +60,17 @@ define('WP_LANG_DIR', '/var/www/html/dev/wp-content/languages'); // ss = /var/ww
 define('WP_TEMP_DIR', '/var/www/html/dev/wp-content/temp'); // ss = /var/www/html/dev/wp-content/temp
 define('UPLOADS', 'wp-content/uploads'); // ss = wp-content/uploads
 
-/** force HTTPS backend (additional Force HTTPS (MU plugin) settings below) */
+/** force HTTPS backend */
 define('FORCE_SSL_ADMIN', true); // ss = true
 define('FORCE_SSL_LOGIN', true); // ss = true
 
 /** ********************************************************************************************* */
-/** WP-Config: Cookie Settings (Single Site / Dev Subdomain) ************************************ */
+/** WP-Config (Development): Cookie Settings **************************************************** */
 /** ********************************************************************************************* */
 
 /** for single sites with a staging/dev subdomain the main domain controls cookies */
 /** but for Multisite networks an empty value is best for COOKIE_DOMAIN */
 
-/** optimize cookie paths */
 // define('COOKIE_DOMAIN', 'dev.@SITE_DOMAIN');
 // define('COOKIEPATH', dev.@SITE_DOMAIN . '/');
 // define('SITECOOKIEPATH', dev.@SITE_DOMAIN . '/');
@@ -87,13 +94,6 @@ define('NOBLOGREDIRECT', 'dev.@SITE_DOMAIN'); // ss = *must be unique*
 define('PATH_CURRENT_SITE', '/'); // ss = /
 define('SITE_ID_CURRENT_SITE', 1); // ss = 1
 define('BLOG_ID_CURRENT_SITE', 1); // ss = 1
-
-/** ********************************************************************************************* */
-/** WordPress Core: Staging + Development Settings ********************************************** */
-/** ********************************************************************************************* */
-
-define('WP_ENVIRONMENT_TYPE', 'development');
-define('WP_LOCAL_DEV', @WP_LOCAL_DEV); // ss = false (for production servers)
 
 /** ********************************************************************************************* */
 /** WP-Config: Debugging + Error Handling + Error Log Settings ********************************** */

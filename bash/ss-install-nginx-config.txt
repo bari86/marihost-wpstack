@@ -29,9 +29,12 @@ source /var/www/ss-functions
 
 ## A. Message (Begin)
 ## B. Cleanup Temporary Files
-## C. Generate OpenSSL Certificate
-## D. Install Nginx.conf
-## E. 
+## C. Retrieve Latest Maintenance.html
+## D. Generate OpenSSL Certificate
+## E. Generate Htpasswd File
+## F. Install Nginx.conf
+## G. Delete Old Server Blocks
+## H.
 
 ####################################################################################################
 #### A. SS-Install-Nginx-Config: Message (Begin Script) ############################################
@@ -59,7 +62,24 @@ rm /tmp/letsencrypt.conf*
 rm /tmp/openssl.conf*
 
 ####################################################################################################
-#### C. SS-Install-Nginx-Config: Generate OpenSSL Certificate ######################################
+#### C. SS-Install-Nginx-Config: Retrieve Latest Maintenance.html ##################################
+####################################################################################################
+
+## here we retrieve the latest default maintenance.html file (or use your own design) ##
+## this file is parsed by Nginx to enable maintenance mode via SlickStack ##
+
+## retrieve latest maintenance.html ##
+wget -O "$TMP_MAINTENANCE_HTML" "$MIRROR_MAINTENANCE_HTML"
+
+## install maintenance.html ##
+cp "$TMP_MAINTENANCE_HTML" "$PATH_MAINTENANCE_HTML"
+
+## reset permissions ##
+chown www-data:www-data "$PATH_MAINTENANCE_HTML"
+chmod 0444 "$PATH_MAINTENANCE_HTML" ## 0444 is enough
+
+####################################################################################################
+#### D. SS-Install-Nginx-Config: Generate OpenSSL Certificate ######################################
 ####################################################################################################
 
 ## here we generate slickstack.crt and slickstack.key as the default SSL for Nginx ##
@@ -69,7 +89,18 @@ rm /tmp/openssl.conf*
 source "$PATH_SS_ENCRYPT_OPENSSL"
 
 ####################################################################################################
-#### D. SS-Install-Nginx-Config: Install (Optimize) Nginx Config Files #############################
+#### E. SS-Install-Nginx-Config: Generate Htpasswd File ############################################
+####################################################################################################
+
+## null file contents ##
+cat /dev/null > /var/www/meta/.htpasswd
+
+## copy guest user credentials ##
+ENCRYPTED_GUEST_PASSWORD=$(openssl passwd -crypt "${GUEST_PASSWORD}")
+printf "${GUEST_USER}:${ENCRYPTED_GUEST_PASSWORD}\n" >> /var/www/meta/.htpasswd
+
+####################################################################################################
+#### F. SS-Install-Nginx-Config: Install Nginx.conf ################################################
 ####################################################################################################
 
 ## here we install an optimized Nginx config designed for high traffic and CloudFlare ##
@@ -332,12 +363,13 @@ fi
 cp "$TMP_NGINX_CONF" "$PATH_NGINX_CONF"
 
 ####################################################################################################
-#### SS-Install-Nginx-Config: Delete Old Server Blocks #############################################
+#### G. SS-Install-Nginx-Config: Delete Old Server Blocks #############################################
 ####################################################################################################
 
 ## here we delete any existing previous server blocks to avoid conflicts with Nginx ##
 ## if this step is not performed then Nginx could result in fatal errors ##
 
+## ADD CHECK FIRST THAT TEMP BLOCK FILES VALID ##
 ## delete server blocks ##
 rm /var/www/sites/*
 
@@ -381,6 +413,11 @@ if [[ "$DEV_SITE" == "true" ]]; then
         sed -i "s/@FCGI_CACHE/1/g" "$TMP_NGINX_BLOCK_DEVELOPMENT"
     else 
         sed -i "s/@FCGI_CACHE/0/g" "$TMP_NGINX_BLOCK_DEVELOPMENT"
+    fi
+    
+     ## password protect ##
+    if [[ "$DEV_SITE_PROTECT" != "true" ]]; then 
+        sed -i "/auth_basic/d" "$TMP_NGINX_BLOCK_DEVELOPMENT"
     fi
 
     ## copy files to destinations ##
@@ -429,6 +466,11 @@ if [[ "$STAGING_SITE" == "true" ]]; then
         sed -i "s/@FCGI_CACHE/0/g" "$TMP_NGINX_BLOCK_STAGING"
     fi
 
+    ## password protect ##
+    if [[ "$STAGING_SITE_PROTECT" != "true" ]]; then 
+        sed -i "/auth_basic/d" "$TMP_NGINX_BLOCK_STAGING"
+    fi
+    
     ## copy files to destinations ##
     cp "$TMP_NGINX_BLOCK_STAGING" "$PATH_NGINX_BLOCK_STAGING"
 
@@ -500,8 +542,8 @@ source "$PATH_SS_INSTALL_NGINX_OPENSSL"
 #### SS-Install-Nginx-Config: Restart Modules (Nginx) ##############################################
 ####################################################################################################
 
-## run ss-restart-services-nginx ##
-source "$PATH_SS_RESTART_SERVICES_NGINX"
+## run ss-restart-nginx ##
+source "$PATH_SS_RESTART_NGINX"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Generate Lets Encrypt Certificate (Via SS-Encrypt-Certbot) ###########
@@ -547,8 +589,8 @@ source "$PATH_SS_PERMS_NGINX_CONFIG"
 #### SS-Install-Nginx-Config: Restart Modules (Nginx) ##############################################
 ####################################################################################################
 
-## restart Nginx module ##
-source "$PATH_SS_RESTART_SERVICES_NGINX"
+## run ss-restart-nginx ##
+source "$PATH_SS_RESTART_NGINX"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Install WordPress Config (Via SS-Install-WordPress-Config) ###########
@@ -594,5 +636,10 @@ touch "$TIMESTAMP_SS_INSTALL_NGINX_CONFIG"
 ## Ref: https://discourse.roots.io/t/http-does-not-redirect-to-https-only-at-the-first-access/8669
 ## Ref: https://www.linode.com/docs/guides/how-to-configure-nginx/
 ## Ref: https://www.shellscript.sh/tips/pattern-substitution/
+## Ref: https://stackoverflow.com/questions/11618696/shell-write-variable-contents-to-a-file
+## Ref: https://coderwall.com/p/zvvgna/create-htpasswd-file-for-nginx-without-apache
+## Ref: https://www.tecmint.com/password-protect-web-directories-in-nginx/
+## Ref: https://www.web2generators.com/apache-tools/htpasswd-generator
+## Ref: https://www.mkssoftware.com/docs/man1/openssl_passwd.1.asp
 
 ## SS_EOF

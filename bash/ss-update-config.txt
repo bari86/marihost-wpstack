@@ -23,12 +23,35 @@ source /var/www/ss-functions
 
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
-
-SS_UPDATE_BUILD="AUG2021Q"
-VALIDATE_SS_CONFIG=$(grep 'EOF' "$PATH_SS_CONFIG") ## change to "$SS_EOF" later
+SS_UPDATE_BUILD="SEP2021LL"
 
 ####################################################################################################
-#### SS-Update: Message (Begin Script) #############################################################
+#### TABLE OF CONTENTS (SS-Update-Config) ##########################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Cleanup Temporary Files
+## D. Backup Current SS-Config File
+## E. Validate Current SS-Confing Before Proceeding
+## F. Ensure Undefined Options Do Not Exist Before Proceeding
+## G. Retrieve Latest SS-Config Boilerplate
+## H. Install Latest SS-Config Boilerplate (Copies Existing Settings)
+## I. Validate Latest SS-Config Boilerplate
+## J. Cleanup Temporary Files
+
+####################################################################################################
+#### A. SS-Update-Config: Touch Timestamp File #####################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_UPDATE_CONFIG"
+
+####################################################################################################
+#### B. SS-Update-Config: Message (Begin Script) ###################################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
@@ -39,37 +62,44 @@ echo -e "${PURPLE}Running ss-update-config: Updates ss-config file to latest boi
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
-#### SS-Update-Config: Cleanup Temporary Files #####################################################
+#### C. SS-Update-Config: Cleanup Temporary Files ##################################################
 ####################################################################################################
 
 ## delete tmp files ##
 rm "$TMP_SS_CONFIG"
 
 ####################################################################################################
-#### SS-Update-Config: Backup Current SS-Config File ###############################################
+#### D. SS-Update-Config: Backup Current SS-Config File ############################################
 ####################################################################################################
 
-## SNIPPET: ss-worker, ss-update-config
+## SNIPPET: ss-update-config, ss-worker
+## UPDATED: 11SEP2021
 
-## this snippet will duplicate your live ss-config file to the /var/www/meta/ folder ##
-## the timestamped .bak files will be cleaned up periodically by ss-clean ##
+## this will replicate your current ss-config file (and settings) to the backups dir ##
+## the older .bak files will be cleaned up periodically by ss-clean-files ##
 
 ## backup ss-config ##
-current_time=$(date "+%Y.%b.%d-%H:%M:%S")
-cp "$PATH_SS_CONFIG" /var/www/backups/config/ss-config.bak.$current_time
+CURRENT_TIME=$(date "+%Y.%b.%d-%H:%M:%S")
+cp /var/www/ss-config /var/www/backups/config/ss-config.bak.$CURRENT_TIME
 
 ####################################################################################################
-#### SS-Update: Ensure Undefined Options Do Not Exist Before Proceeding ############################
+#### E. SS-Update-Config: Validate Current SS-Confing Before Proceeding ############################
 ####################################################################################################
 
-## below snippet will warn you and exit if undefined ss-config options are found to exist ##
-## this way our team can be aware of bugs and avoid implementing unwanted options ##
+VALIDATE_SS_CONFIG=$(grep 'EOF' "$PATH_SS_CONFIG") ## change to "$SS_EOF" later
 
 ## validate ss-config ##
 if [[ -z "$VALIDATE_SS_CONFIG" ]]; then
     echo -e "${DARKRED}Exiting ss-update-config: Your current ss-config file is missing or corrupt so update was skipped... ${NOCOLOR}"
     exit 1
 fi
+
+####################################################################################################
+#### F. SS-Update-Config: Ensure Undefined Options Do Not Exist Before Proceeding ##################
+####################################################################################################
+
+## below snippet will warn you and exit if undefined ss-config options are found to exist ##
+## this way our team can be aware of bugs and avoid implementing unwanted options ##
 
 ## warn if placeholders exist ##
 SS_CONFIG_OPTION_PLACEHOLDER="$(grep -c '"@' /var/www/ss-config)"
@@ -79,7 +109,7 @@ if [[ "$SS_CONFIG_OPTION_PLACEHOLDER" -gt 0 ]]; then
 fi
 
 ####################################################################################################
-#### SS-Update-Config: Install Latest SS-Config Boilerplate (Replicates Existing Variables) ###############
+#### G. SS-Update-Config: Retrieve Latest SS-Config Boilerplate ####################################
 ####################################################################################################
 
 ## variables will only be copied over from the previous ss-config file if they are defined ##
@@ -97,7 +127,7 @@ if [[ "$SS_BUILD_LATEST" != "$SS_UPDATE_BUILD" ]]; then
 fi
 
 ####################################################################################################
-#### SS-Update: Install Latest SS-Config File (Safely Replicates Existing Variables) ###############
+#### H. SS-Update-Config: Install Latest SS-Config Boilerplate (Copies Existing Settings) ##########
 ####################################################################################################
 
 ## this will update the existing ss-config file to latest boilerplate from our mirrors ##
@@ -147,8 +177,14 @@ if [[ -n "$CLOUDFLARE_RECOMMENDED_SETTINGS" ]]; then
 sed -i "s|\(^CLOUDFLARE_RECOMMENDED_SETTINGS=\).*|CLOUDFLARE_RECOMMENDED_SETTINGS=\"$CLOUDFLARE_RECOMMENDED_SETTINGS\"|g" "$TMP_SS_CONFIG"
 fi
 
+## copy dev site settings ##
+if [[ -n "$DEV_SITE" ]]; then 
+sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"$DEV_SITE\"|g" "$TMP_SS_CONFIG"
+fi
 
-
+if [[ -n "$DEV_SITE_PROTECT" ]]; then 
+sed -i "s|\(^DEV_SITE_PROTECT=\).*|DEV_SITE_PROTECT=\"$DEV_SITE_PROTECT\"|g" "$TMP_SS_CONFIG"
+fi
 
 
 ## copy staging site settings ##
@@ -160,14 +196,13 @@ if [[ -n "$STAGING_SITE_PROTECT" ]]; then
 sed -i "s|\(^STAGING_SITE_PROTECT=\).*|STAGING_SITE_PROTECT=\"$STAGING_SITE_PROTECT\"|g" "$TMP_SS_CONFIG"
 fi
 
-
-## copy dev site settings ##
-if [[ -n "$DEV_SITE" ]]; then 
-sed -i "s|\(^DEV_SITE=\).*|DEV_SITE=\"$DEV_SITE\"|g" "$TMP_SS_CONFIG"
+## guest user login ##
+if [[ -n "$GUEST_USER" ]]; then 
+sed -i "s|\(^GUEST_USER=\).*|GUEST_USER=\"$GUEST_USER\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$DEV_SITE_PROTECT" ]]; then 
-sed -i "s|\(^DEV_SITE_PROTECT=\).*|DEV_SITE_PROTECT=\"$DEV_SITE_PROTECT\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$GUEST_PASSWORD" ]]; then 
+sed -i "s|\(^GUEST_PASSWORD=\).*|GUEST_PASSWORD=\"$GUEST_PASSWORD\"|g" "$TMP_SS_CONFIG"
 fi
 
 
@@ -823,15 +858,22 @@ sed -i "s|\(^OPCACHE_HUGE_CODE_PAGES=\).*|OPCACHE_HUGE_CODE_PAGES=\"$OPCACHE_HUG
 fi
 
 
+## new opcache stuff ##
 
+if [[ -n "$OPCACHE_PRELOAD" ]]; then
+sed -i "s|\(^OPCACHE_PRELOAD=\).*|OPCACHE_PRELOAD=\"$OPCACHE_PRELOAD\"|g" "$TMP_SS_CONFIG"
+fi
 
+if [[ -n "$OPCACHE_BLACKLIST_FILENAME" ]]; then
+sed -i "s|\(^OPCACHE_BLACKLIST_FILENAME=\).*|OPCACHE_BLACKLIST_FILENAME=\"$OPCACHE_BLACKLIST_FILENAME\"|g" "$TMP_SS_CONFIG"
+fi
 
 
 
 ## SS CORE SCRIPTS SETTINGS ##
 
 
-
+## ss-install-wordpress-core ##
 if [[ -n "$SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS" ]]; then
 sed -i "s|\(^SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS=\).*|SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS=\"$SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS\"|g" "$TMP_SS_CONFIG"
 fi
@@ -860,9 +902,29 @@ if [[ -n "$SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS" ]]; then
 sed -i "s|\(^SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS=\).*|SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS=\"$SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS\"|g" "$TMP_SS_CONFIG"
 fi
 
+## ss-clean-files ##
+if [[ -n "$SS_CLEAN_FILES_WORDPRESS_PLUGINS" ]]; then
+sed -i "s|\(^SS_CLEAN_FILES_WORDPRESS_PLUGINS=\).*|SS_CLEAN_FILES_WORDPRESS_PLUGINS=\"$SS_CLEAN_FILES_WORDPRESS_PLUGINS\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$SS_CLEAN_FILES_WORDPRESS_THEMES" ]]; then
+sed -i "s|\(^SS_CLEAN_FILES_WORDPRESS_THEMES=\).*|SS_CLEAN_FILES_WORDPRESS_THEMES=\"$SS_CLEAN_FILES_WORDPRESS_THEMES\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$SS_CLEAN_FILES_WORDPRESS_CONTENT" ]]; then
+sed -i "s|\(^SS_CLEAN_FILES_WORDPRESS_CONTENT=\).*|SS_CLEAN_FILES_WORDPRESS_CONTENT=\"$SS_CLEAN_FILES_WORDPRESS_CONTENT\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$SS_CLEAN_FILES_ROOT_PUBLIC" ]]; then
+sed -i "s|\(^SS_CLEAN_FILES_ROOT_PUBLIC=\).*|SS_CLEAN_FILES_ROOT_PUBLIC=\"$SS_CLEAN_FILES_ROOT_PUBLIC\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$SS_CLEAN_FILES_ROOT_PRIVATE" ]]; then
+sed -i "s|\(^SS_CLEAN_FILES_ROOT_PRIVATE=\).*|SS_CLEAN_FILES_ROOT_PRIVATE=\"$SS_CLEAN_FILES_ROOT_PRIVATE\"|g" "$TMP_SS_CONFIG"
+fi
 
 
-## ss-dump ##
+## ss-dump-database ##
 if [[ -n "$SS_DUMP_MYSQL_DB" ]]; then
 sed -i "s|\(^SS_DUMP_MYSQL_DB=\).*|SS_DUMP_MYSQL_DB=\"$SS_DUMP_MYSQL_DB\"|g" "$TMP_SS_CONFIG" ## deprecated
 fi
@@ -916,12 +978,12 @@ if [[ -n "$INTERVAL_SS_CHECK" ]]; then
 sed -i "s|\(^INTERVAL_SS_CHECK=\).*|INTERVAL_SS_CHECK=\"$INTERVAL_SS_CHECK\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_CLEAN_FILES" ]]; then
-sed -i "s|\(^INTERVAL_SS_CLEAN_FILES=\).*|INTERVAL_SS_CLEAN_FILES=\"$INTERVAL_SS_CLEAN_FILES\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_CLEAN_DATABASE" ]]; then
+sed -i "s|\(^INTERVAL_SS_CLEAN_DATABASE=\).*|INTERVAL_SS_CLEAN_DATABASE=\"$INTERVAL_SS_CLEAN_DATABASE\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_DOS2UNIX_FILES" ]]; then
-sed -i "s|\(^INTERVAL_SS_DOS2UNIX_FILES=\).*|INTERVAL_SS_DOS2UNIX_FILES=\"$INTERVAL_SS_DOS2UNIX_FILES\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_CLEAN_FILES" ]]; then
+sed -i "s|\(^INTERVAL_SS_CLEAN_FILES=\).*|INTERVAL_SS_CLEAN_FILES=\"$INTERVAL_SS_CLEAN_FILES\"|g" "$TMP_SS_CONFIG"
 fi
 
 if [[ -n "$INTERVAL_SS_DUMP_DATABASE" ]]; then
@@ -932,63 +994,20 @@ if [[ -n "$INTERVAL_SS_DUMP_FILES" ]]; then
 sed -i "s|\(^INTERVAL_SS_DUMP_FILES=\).*|INTERVAL_SS_DUMP_FILES=\"$INTERVAL_SS_DUMP_FILES\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_ENCRYPT" ]]; then
-sed -i "s|\(^INTERVAL_SS_ENCRYPT=\).*|INTERVAL_SS_ENCRYPT=\"$INTERVAL_SS_ENCRYPT\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_EMPTY_LOGS" ]]; then
+sed -i "s|\(^INTERVAL_SS_EMPTY_LOGS=\).*|INTERVAL_SS_EMPTY_LOGS=\"$INTERVAL_SS_EMPTY_LOGS\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_OPTIMIZE_DATABASE" ]]; then
-sed -i "s|\(^INTERVAL_SS_OPTIMIZE_DATABASE=\).*|INTERVAL_SS_OPTIMIZE_DATABASE=\"$INTERVAL_SS_OPTIMIZE_DATABASE\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_ENCRYPT_ACME" ]]; then
+sed -i "s|\(^INTERVAL_SS_ENCRYPT_ACME=\).*|INTERVAL_SS_ENCRYPT_ACME=\"$INTERVAL_SS_ENCRYPT_ACME\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_PERMS" ]]; then
-sed -i "s|\(^INTERVAL_SS_PERMS=\).*|INTERVAL_SS_PERMS=\"$INTERVAL_SS_PERMS\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_ENCRYPT_CERTBOT" ]]; then
+sed -i "s|\(^INTERVAL_SS_ENCRYPT_CERTBOT=\).*|INTERVAL_SS_ENCRYPT_CERTBOT=\"$INTERVAL_SS_ENCRYPT_CERTBOT\"|g" "$TMP_SS_CONFIG"
 fi
 
-if [[ -n "$INTERVAL_SS_PURGE" ]]; then
-sed -i "s|\(^INTERVAL_SS_PURGE=\).*|INTERVAL_SS_PURGE=\"$INTERVAL_SS_PURGE\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_REBOOT_MACHINE" ]]; then
-sed -i "s|\(^INTERVAL_SS_REBOOT_MACHINE=\).*|INTERVAL_SS_REBOOT_MACHINE=\"$INTERVAL_SS_REBOOT_MACHINE\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_REMOTE" ]]; then
-sed -i "s|\(^INTERVAL_SS_REMOTE=\).*|INTERVAL_SS_REMOTE=\"$INTERVAL_SS_REMOTE\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_RESET_PASSWORD" ]]; then
-sed -i "s|\(^INTERVAL_SS_RESET_PASSWORD=\).*|INTERVAL_SS_RESET_PASSWORD=\"$INTERVAL_SS_RESET_PASSWORD\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_RESTART_SERVICES" ]]; then
-sed -i "s|\(^INTERVAL_SS_RESTART_SERVICES=\).*|INTERVAL_SS_RESTART_SERVICES=\"$INTERVAL_SS_RESTART_SERVICES\"|g" "$TMP_SS_CONFIG"
-fi
-
-
-
-if [[ -n "$INTERVAL_SS_SCAN_MALWARE" ]]; then
-sed -i "s|\(^INTERVAL_SS_SCAN_MALWARE=\).*|INTERVAL_SS_SCAN_MALWARE=\"$INTERVAL_SS_SCAN_MALWARE\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_SYNC_STAGING" ]]; then
-sed -i "s|\(^INTERVAL_SS_SYNC_STAGING=\).*|INTERVAL_SS_SYNC_STAGING=\"$INTERVAL_SS_SYNC_STAGING\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_UPDATE" ]]; then
-sed -i "s|\(^INTERVAL_SS_UPDATE=\).*|INTERVAL_SS_UPDATE=\"$INTERVAL_SS_UPDATE\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_UPDATE_CONFIG" ]]; then
-sed -i "s|\(^INTERVAL_SS_UPDATE_CONFIG=\).*|INTERVAL_SS_UPDATE_CONFIG=\"$INTERVAL_SS_UPDATE_CONFIG\"|g" "$TMP_SS_CONFIG"
-fi
-
-if [[ -n "$INTERVAL_SS_UPDATE_PACKAGES" ]]; then
-sed -i "s|\(^INTERVAL_SS_UPDATE_PACKAGES=\).*|INTERVAL_SS_UPDATE_PACKAGES=\"$INTERVAL_SS_UPDATE_PACKAGES\"|g" "$TMP_SS_CONFIG"
-fi
-
-
-if [[ -n "$SS_INTERVAL_WORKER" ]]; then
-sed -i "s|\(^SS_INTERVAL_WORKER=\).*|SS_INTERVAL_WORKER=\"$SS_INTERVAL_WORKER\"|g" "$TMP_SS_CONFIG"
+if [[ -n "$INTERVAL_SS_ENCRYPT_OPENSSL" ]]; then
+sed -i "s|\(^INTERVAL_SS_ENCRYPT_OPENSSL=\).*|INTERVAL_SS_ENCRYPT_OPENSSL=\"$INTERVAL_SS_ENCRYPT_OPENSSL\"|g" "$TMP_SS_CONFIG"
 fi
 
 
@@ -1019,11 +1038,30 @@ if [[ -n "$INTERVAL_SS_INSTALL_UBUNTU_SSH" ]]; then
 sed -i "s|\(^INTERVAL_SS_INSTALL_UBUNTU_SSH=\).*|INTERVAL_SS_INSTALL_UBUNTU_SSH=\"$INTERVAL_SS_INSTALL_UBUNTU_SSH\"|g" "$TMP_SS_CONFIG"
 fi
 
+if [[ -n "$INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE" ]]; then
+sed -i "s|\(^INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE=\).*|INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE=\"$INTERVAL_SS_INSTALL_UBUNTU_SWAPFILE\"|g" "$TMP_SS_CONFIG"
+fi
+
 if [[ -n "$INTERVAL_SS_INSTALL_UBUNTU_USERS" ]]; then
 sed -i "s|\(^INTERVAL_SS_INSTALL_UBUNTU_USERS=\).*|INTERVAL_SS_INSTALL_UBUNTU_USERS=\"$INTERVAL_SS_INSTALL_UBUNTU_USERS\"|g" "$TMP_SS_CONFIG"
 fi
 
+if [[ -n "$INTERVAL_SS_INSTALL_UBUNTU_UTILS" ]]; then
+sed -i "s|\(^INTERVAL_SS_INSTALL_UBUNTU_UTILS=\).*|INTERVAL_SS_INSTALL_UBUNTU_UTILS=\"$INTERVAL_SS_INSTALL_UBUNTU_UTILS\"|g" "$TMP_SS_CONFIG"
+fi
 
+
+if [[ -n "$INTERVAL_SS_INSTALL_UFW_CONFIG" ]]; then
+sed -i "s|\(^INTERVAL_SS_INSTALL_UFW_CONFIG=\).*|INTERVAL_SS_INSTALL_UFW_CONFIG=\"$INTERVAL_SS_INSTALL_UFW_CONFIG\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_INSTALL_UFW_PACKAGES" ]]; then
+sed -i "s|\(^INTERVAL_SS_INSTALL_UFW_PACKAGES=\).*|INTERVAL_SS_INSTALL_UFW_PACKAGES=\"$INTERVAL_SS_INSTALL_UFW_PACKAGES\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_INSTALL_WORDPRESS_CLI" ]]; then
+sed -i "s|\(^INTERVAL_SS_INSTALL_WORDPRESS_CLI=\).*|INTERVAL_SS_INSTALL_WORDPRESS_CLI=\"$INTERVAL_SS_INSTALL_WORDPRESS_CLI\"|g" "$TMP_SS_CONFIG"
+fi
 
 if [[ -n "$INTERVAL_SS_INSTALL_WORDPRESS_CONFIG" ]]; then
 sed -i "s|\(^INTERVAL_SS_INSTALL_WORDPRESS_CONFIG=\).*|INTERVAL_SS_INSTALL_WORDPRESS_CONFIG=\"$INTERVAL_SS_INSTALL_WORDPRESS_CONFIG\"|g" "$TMP_SS_CONFIG"
@@ -1036,6 +1074,106 @@ fi
 if [[ -n "$INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS" ]]; then
 sed -i "s|\(^INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS=\).*|INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS=\"$INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS\"|g" "$TMP_SS_CONFIG"
 fi
+
+
+
+if [[ -n "$INTERVAL_SS_OPTIMIZE_DATABASE" ]]; then
+sed -i "s|\(^INTERVAL_SS_OPTIMIZE_DATABASE=\).*|INTERVAL_SS_OPTIMIZE_DATABASE=\"$INTERVAL_SS_OPTIMIZE_DATABASE\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_OPTIMIZE_FILES" ]]; then
+sed -i "s|\(^INTERVAL_SS_OPTIMIZE_FILES=\).*|INTERVAL_SS_OPTIMIZE_FILES=\"$INTERVAL_SS_OPTIMIZE_FILES\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+## perms intervals ##
+if [[ -n "$INTERVAL_SS_PERMS" ]]; then
+sed -i "s|\(^INTERVAL_SS_PERMS=\).*|INTERVAL_SS_PERMS=\"$INTERVAL_SS_PERMS\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+
+if [[ -n "$INTERVAL_SS_PURGE_NGINX" ]]; then
+sed -i "s|\(^INTERVAL_SS_PURGE_NGINX=\).*|INTERVAL_SS_PURGE_NGINX=\"$INTERVAL_SS_PURGE_NGINX\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_PURGE_OPCACHE" ]]; then
+sed -i "s|\(^INTERVAL_SS_PURGE_OPCACHE=\).*|INTERVAL_SS_PURGE_OPCACHE=\"$INTERVAL_SS_PURGE_OPCACHE\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_PURGE_REDIS" ]]; then
+sed -i "s|\(^INTERVAL_SS_PURGE_REDIS=\).*|INTERVAL_SS_PURGE_REDIS=\"$INTERVAL_SS_PURGE_REDIS\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_PURGE_TRANSIENTS" ]]; then
+sed -i "s|\(^INTERVAL_SS_PURGE_TRANSIENTS=\).*|INTERVAL_SS_PURGE_TRANSIENTS=\"$INTERVAL_SS_PURGE_TRANSIENTS\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+if [[ -n "$INTERVAL_SS_REBOOT_MACHINE" ]]; then
+sed -i "s|\(^INTERVAL_SS_REBOOT_MACHINE=\).*|INTERVAL_SS_REBOOT_MACHINE=\"$INTERVAL_SS_REBOOT_MACHINE\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+if [[ -n "$INTERVAL_SS_REMOTE_BACKUP" ]]; then
+sed -i "s|\(^INTERVAL_SS_REMOTE_BACKUP=\).*|INTERVAL_SS_REMOTE_BACKUP=\"$INTERVAL_SS_REMOTE_BACKUP\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+if [[ -n "$INTERVAL_SS_RESET_PASSWORD_SFTP" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESET_PASSWORD_SFTP=\).*|INTERVAL_SS_RESET_PASSWORD_SFTP=\"$INTERVAL_SS_RESET_PASSWORD_SFTP\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+if [[ -n "$INTERVAL_SS_RESTART_MYSQL" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESTART_MYSQL=\).*|INTERVAL_SS_RESTART_MYSQL=\"$INTERVAL_SS_RESTART_MYSQL\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_RESTART_NGINX" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESTART_NGINX=\).*|INTERVAL_SS_RESTART_NGINX=\"$INTERVAL_SS_RESTART_NGINX\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_RESTART_PHP" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESTART_PHP=\).*|INTERVAL_SS_RESTART_PHP=\"$INTERVAL_SS_RESTART_PHP\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_RESTART_REDIS" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESTART_REDIS=\).*|INTERVAL_SS_RESTART_REDIS=\"$INTERVAL_SS_RESTART_REDIS\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_RESTART_UFW" ]]; then
+sed -i "s|\(^INTERVAL_SS_RESTART_UFW=\).*|INTERVAL_SS_RESTART_UFW=\"$INTERVAL_SS_RESTART_UFW\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+if [[ -n "$INTERVAL_SS_SCAN_MALWARE" ]]; then
+sed -i "s|\(^INTERVAL_SS_SCAN_MALWARE=\).*|INTERVAL_SS_SCAN_MALWARE=\"$INTERVAL_SS_SCAN_MALWARE\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_SYNC_STAGING" ]]; then
+sed -i "s|\(^INTERVAL_SS_SYNC_STAGING=\).*|INTERVAL_SS_SYNC_STAGING=\"$INTERVAL_SS_SYNC_STAGING\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+if [[ -n "$INTERVAL_SS_UPDATE_CONFIG" ]]; then
+sed -i "s|\(^INTERVAL_SS_UPDATE_CONFIG=\).*|INTERVAL_SS_UPDATE_CONFIG=\"$INTERVAL_SS_UPDATE_CONFIG\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$INTERVAL_SS_UPDATE_MODULES" ]]; then
+sed -i "s|\(^INTERVAL_SS_UPDATE_MODULES=\).*|INTERVAL_SS_UPDATE_MODULES=\"$INTERVAL_SS_UPDATE_MODULES\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+if [[ -n "$SS_INTERVAL_WORKER" ]]; then
+sed -i "s|\(^SS_INTERVAL_WORKER=\).*|SS_INTERVAL_WORKER=\"$SS_INTERVAL_WORKER\"|g" "$TMP_SS_CONFIG"
+fi
+
+
 
 
 
@@ -1837,10 +1975,8 @@ if [[ "$SS_WORDPRESS_MU_PLUGINS" == "custom" || "$SS_MU_PLUGINS" == "custom" ]] 
 sed -i "s|\(^MU_PLUGIN_99_DIR=\).*|MU_PLUGIN_99_DIR=\"$MU_PLUGIN_99_DIR\"|g" "$TMP_SS_CONFIG"
 fi
 
-
-
 ####################################################################################################
-#### SS-Update-Config: Validate + Install Latest SS-Config Boilerplate #############################
+#### I. SS-Update-Config: Validate Latest SS-Config Boilerplate ####################################
 ####################################################################################################
 
 ## this snippet will ensure that the latest ss-config boilerplate appears intact ##
@@ -1853,27 +1989,16 @@ if [[ -n "$VALIDATE_TMP_SS_CONFIG" ]] && [[ -n "$DB_NAME_NOW" ]]; then
     cp "$TMP_SS_CONFIG" "$PATH_SS_CONFIG"
     chown root:root "$PATH_SS_CONFIG" ## must be root:root
     chmod 0700 "$PATH_SS_CONFIG" ## must be 0700
-    echo -e "${PURPLE}Exiting ss-update-config: Your ss-config file has been successfully updated to latest boilerplate... ${NOCOLOR}"
 else
     echo -e "${DARKRED}Exiting ss-update-config: The retrieved ss-config boilerplate appears corrupt so update was skipped... ${NOCOLOR}"
 fi
 
 ####################################################################################################
-#### SS-Update-Config: Cleanup Temporary Files #####################################################
+#### J. SS-Update-Config: Cleanup Temporary Files ##################################################
 ####################################################################################################
 
 ## delete tmp files ##
 rm "$TMP_SS_CONFIG"
-
-####################################################################################################
-#### SS-Update-Config: Touch Timestamp File (End Script) ###########################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_UPDATE_CONFIG"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
