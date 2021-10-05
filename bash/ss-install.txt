@@ -602,7 +602,7 @@ fi
 
 
 ## download latest versions ##
-wget -O /tmp/ss-functions https://raw.githubusercontent.com/littlebizzy/slickstack/master/bash/ss-functions.txt
+wget -O /tmp/ss-functions https://raw.githubusercontent.com/bari86/marihost-wpstack/master/bash/ss-functions.txt
 
 wget -O /tmp/ss-check https://raw.githubusercontent.com/littlebizzy/slickstack/master/bash/ss-check.txt
 
