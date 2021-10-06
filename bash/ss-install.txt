@@ -200,7 +200,7 @@ fi
 
 ## verify optimal Ubuntu version ##
 if [[ "${UBUNTU_VERSION}" != @(20.04|18.04) ]]; then
-    echo -e "${YELLOW}Exiting ss-install: SlickStack is designed for Ubuntu LTS (but this VPS is running ${UBUNTU_VERSION})... ${NOCOLOR}"
+    echo -e "${YELLOW}Exiting ss-install: MariHost is designed for Ubuntu LTS (but this VPS is running ${UBUNTU_VERSION})... ${NOCOLOR}"
     exit 1
 fi
 
@@ -215,7 +215,7 @@ fi
 ## ensure not running in docker/lxc/container ##
 if [[ -f /.dockerenv ]] || grep -Eq '(lxc|docker)' /proc/1/cgroup; then 
     echo -e ""
-    echo -e "${YELLOW}Exiting ss-install: It appears your server is running Docker or another container... but SlickStack requires normal Ubuntu LTS without containers. ${NOCOLOR}"
+    echo -e "${YELLOW}Exiting ss-install: It appears your server is running Docker or another container... but MariHost requires normal Ubuntu LTS without containers. ${NOCOLOR}"
     echo -e ""
     exit 1
 fi
@@ -976,7 +976,7 @@ fi
     
 ## confirm installation complete ##
 echo -e ""
-echo -e "${YELLOW}SlickStack install complete! Please note the sudo user and password above ${NOCOLOR}"
+echo -e "${YELLOW}MariHost install complete! Please note the sudo user and password above ${NOCOLOR}"
 echo -e "${YELLOW}to avoid being locked out of your new server (the root user is disabled). ${NOCOLOR}"
 echo -e "${YELLOW}Also, be sure to enable [Full SSL] mode in CloudFlare to avoid redirect ${NOCOLOR}"
 echo -e "${YELLOW}loops (we do not recommend enabling HSTS, however). For an extra boost, ${NOCOLOR}"
