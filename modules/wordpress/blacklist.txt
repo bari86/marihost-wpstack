@@ -945,7 +945,7 @@ optimole-wp ;; excessive api calls, bloated
 optimus ;; resource intensive, poor coding
 /options-manager/ ;; not maintained
 outtatimr ;; deprecated
-/oxygen/ ;; creates instability, content lock-in, theme-specific page builder, hijacks wp core
+
 p3-profiler ;; not maintained, serious errors
 page-bundle ;; database thrashing, no public changelog (By Pablo Cruz Digital)
 page-links-to ;; not maintained, poorly coded, bad practice (redirects should not conflict with permalink system/database)
