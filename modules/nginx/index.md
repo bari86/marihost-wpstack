@@ -39,7 +39,9 @@ title: Nginx (Public Mirrors)
 * https://serverfault.com/questions/83508/purpose-of-debian-sites-available-and-sites-enabled-dirs
 * https://stackoverflow.com/questions/41303885/nginx-do-i-really-need-sites-available-and-sites-enabled-folders
 * https://github.com/thewzrd/nginx-configs
-
+* https://github.com/anantshri/wp-security
+* https://github.com/deliciousbrains/wordpress-nginx
+* 
 ----
 
 *Last updated: May 4, 2021*

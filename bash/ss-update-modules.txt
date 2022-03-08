@@ -7,12 +7,12 @@
 #### path: /var/www/ss-update-modules ##############################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Updates and cleans up required Ubuntu packages including the Linux kernel ############
-#### module version: Ubuntu 20.04 LTS ##############################################################
-#### sourced by: ss-update #########################################################################
-#### bash aliases: ss update|upgrade packages, ss update|upgrade modules ###########################
+#### module version: Ubuntu 22.04 LTS ##############################################################
+#### sourced by: n/a ###############################################################################
+#### bash aliases: ss update|upgrade modules, ss update|upgrade packages ###########################
 ####################################################################################################
 
-## YOU CAN SAFELY RUN SS-UPDATE WITH NO CHANGES TO YOUR LEMP MODULE CONFIGURATION FILES ##
+## YOU CAN SAFELY RUN UPDATES WITH NO CHANGES TO YOUR LEMP MODULE CONFIGURATION FILES ##
 ## IN CASE YOU ACCIDENTALLY OVERWRITE CONFIG FILES SIMPLY RUN SS-INSTALL AGAIN ##
 
 ## source ss-config ##
@@ -24,6 +24,22 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
+#### TABLE OF CONTENTS (SS-Update-Modules) #########################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+
+####################################################################################################
+#### A. SS-Update-Modules: Touch Timestamp File ####################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_UPDATE_MODULES"
+
+####################################################################################################
 #### SS-Update-Packages: Message (Begin Script) ####################################################
 ####################################################################################################
 
@@ -31,7 +47,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-update-packages: Updates and cleans up required Ubuntu packages including the Linux kernel... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-update-modules: Updates and cleans up required Ubuntu packages including the Linux kernel... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -53,7 +69,7 @@ sleep "$SLEEP_MESSAGE_BEGIN"
 ## this ensures a recent backup exists in case any database corruption occurs ##
 
 ## run ss-dump-database ##
-source /var/www/ss-dump-database
+source "$PATH_SS_DUMP_DATABASE"
 
 ####################################################################################################
 #### SS-Update: Retrieve Latest SS-Check + SS-Worker (Core Bash Scripts) ###########################
@@ -82,7 +98,7 @@ source "$PATH_SS_INSTALL_UBUNTU_CRONTAB"
 ####################################################################################################
 
 ## uninstall expect (no longer used for ss-install-mysql) ##
-apt purge expect
+# apt purge expect
 
 ####################################################################################################
 #### SS-Update: Set Dpkg Basic Settings + Update Apt (Package) Cache ###############################
@@ -95,95 +111,44 @@ apt purge expect
 DEBIAN_FRONTEND=noninteractive dpkg --configure -a --force-confold
 
 ####################################################################################################
-#### SS-Install: Configure MySQL Users + Connections (Supports IPv4 + IPv6) ########################
-####################################################################################################
-
-## THIS IS REQUIRED BECAUSE NEW SS-CONFIG TEMPLATE SWITCHED TO 127.0.0.1 DATABASE HOST ##
-## delete/move/improve this snippet
-
-## prepare MySQL root password (suppresses MySQL security warnings) ##
-export MYSQL_PWD=$DB_PASSWORD_ROOT
-
-## create root user (required before granting privileges after MySQL 8.0) ##
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER 'root'@'localhost' IDENTIFIED BY '${DB_PASSWORD_ROOT}';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER 'root'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD_ROOT}';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER 'root'@'::1' IDENTIFIED BY '${DB_PASSWORD_ROOT}';"
-
-## grant root user all privileges on wordpress database (all connections) ##
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'root'@'localhost';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'root'@'127.0.0.1';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO 'root'@'::1';"
-
-## create database user as per ss-config ##
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER '${DB_USER}'@'localhost' IDENTIFIED BY '${DB_PASSWORD}';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER '${DB_USER}'@'127.0.0.1' IDENTIFIED BY '${DB_PASSWORD}';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "CREATE USER '${DB_USER}'@'::1' IDENTIFIED BY '${DB_PASSWORD}';"
-
-## grant database user all privileges on wordpress database only (all connections) ##
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';"
-mysql -uroot -p${DB_PASSWORD_ROOT} -e "GRANT ALL PRIVILEGES ON ${DB_NAME}.* TO '${DB_USER}'@'::1';"
-
-## flush MySQL privileges ##
-mysql --user=root --execute="FLUSH PRIVILEGES;"
-
-
-####################################################################################################
 #### SS-Update: Install CMS (WordPress, PrestaShop, MediaWiki, Etc) ################################
 ####################################################################################################
+
+## CHANGE THIS ...  ss-update-modules should no longer update/touch the CMS / CMS config files ... but perhaps 
+## related modules such as WP-CLI since no other way to update those
 
 ## SNIPPET: ss-install, ss-update
 
 ## this snippet fetches the latest stable version of WordPress from SlickStack mirrors ##
 ## major CMS releases (unpatched) are never considered stable for our purposes ##
     
-if [[ "$SS_APP" == "wordpress" || -z "$SS_APP"  ]]; then
-
-    ## run ss-install-wordpress-core ##
-    source "$PATH_SS_INSTALL_WORDPRESS_CORE"
-
-    ## here we retrieve latest wp-config.php boilerplate and customize per ss-config settings ##
-    ## you should never make changes directly to wp-config.php in SlickStack servers ##
-
-    ## run ss-install-wordpress-config ##
-    source "$PATH_SS_INSTALL_WORDPRESS_CONFIG"
-
-    ## this will install the designated MU plugins and also Custom Functions and Object Cache ##
-    ## with a few exceptions these can all be customized using ss-config settings ##
-
-    ## run ss-install-wordpress-mu-plugins ##
-    source "$PATH_SS_INSTALL_WORDPRESS_MU_PLUGINS"
+# if [[ "$SS_APP" == "wordpress" || -z "$SS_APP"  ]]; then
     
     ## run ss-install-wordpress-cli ##
-    source "$PATH_SS_INSTALL_WORDPRESS_CLI"
+    # source "$PATH_SS_INSTALL_WORDPRESS_CLI"
+    
+    # https://developer.wordpress.org/cli/commands/cli/update/ 
+    # wp cli update
 
-fi
+# fi
 
 ## this snippet fetches the latest stable version of PrestaShop from SlickStack mirrors ##
 ## major CMS releases (unpatched) are never considered stable for our purposes ##
 
-if [[ "$SS_APP" == "prestashop" ]]; then
+# if [[ "$SS_APP" == "prestashop" ]]; then
 
-    ## run ss-install-prestashop-core ##
-    source "$PATH_SS_INSTALL_PRESTASHOP_CORE"
+
     
-    ## run ss-install-prestashop-config ##
-    source "$PATH_SS_INSTALL_PRESTASHOP_CONFIG"
-    
-fi
+# fi
 
 ## this snippet fetches the latest stable version of MediaWiki from SlickStack mirrors ##
 ## major CMS releases (unpatched) are never considered stable for our purposes ##
 
-if [[ "$SS_APP" == "mediawiki" ]]; then
+# if [[ "$SS_APP" == "mediawiki" ]]; then
 
-    ## run ss-install-mediawiki-core ##
-    source "$PATH_SS_INSTALL_MEDIAWIKI_CORE"
+
     
-    ## run ss-install-mediawiki-config ##
-    source "$PATH_SS_INSTALL_MEDIAWIKI_CONFIG"
-    
-fi
+# fi
 
 ####################################################################################################
 #### SS-Update-Packages: Upgrade Ubuntu Packages + Linux Kernel ####################################
@@ -211,70 +176,6 @@ apt autoremove
 # apt autoclean
 
 ####################################################################################################
-#### SS-Update: Configure UFW Firewall + Set UFW Rules (In Case Apt Overwrites UFW Files) ##########
-####################################################################################################
-
-## at least one case reported where ss-update resulted in UFW config being overwritten ##
-## therefore we include this reinstallation of UFW to ensure no port lockouts ##
-
-## delete tmp files ##
-rm /tmp/ufw*
-rm /tmp/user*
-
-## install UFW firewall ##
-apt install ufw
-
-## set UFW rules ##
-ufw default deny incoming
-ufw default allow outgoing
-ufw allow $SSH_PORT
-ufw allow 80
-ufw allow 443
-ufw allow 6379
-
-## re-enable UFW Firewall (prevously disabled above) ##
-ufw --force enable
-echo "y" | ufw enable
-
-# retrieve latest versions ##
-wget -O /tmp/ufw http://mirrors.slickstack.io/ufw-firewall/ufw.txt
-wget -O /tmp/ufw.conf http://mirrors.slickstack.io/ufw-firewall/ufw-conf.txt
-wget -O /tmp/user.rules http://mirrors.slickstack.io/ufw-firewall/user-rules.txt
-
-if [[ -z "$SSH_PORT" ]]; then 
-    sed -i "s/@SSH_PORT/6969/g" /tmp/user.rules
-else 
-    sed -i "s/@SSH_PORT/${SSH_PORT}/g" /tmp/user.rules
-fi
-
-## copy files to their destinations ##
-cp /tmp/ufw /etc/default/ufw
-cp /tmp/ufw.conf /etc/ufw/ufw.conf
-cp /tmp/user.rules /etc/ufw/user.rules
-
-## reset permissions ##
-chown root:root /etc/default/ufw
-chown root:root /etc/ufw/ufw.conf
-chown root:root /etc/ufw/user.rules
-chmod 0664 /etc/default/ufw
-chmod 0664 /etc/ufw/ufw.conf
-chmod 0664 /etc/ufw/user.rules
-
-## delete tmp files ##
-rm /tmp/ufw*
-rm /tmp/user*
-
-####################################################################################################
-#### SS-Update: Reset Permissions (All Permissions) ################################################
-####################################################################################################
-
-## intuitively resets all file and user permissions across the entire SlickStack server ##
-## depending on the CMS installed it will also reset those permissions as well ##
-
-## run ss-perms ##
-# source /var/www/ss-perms
-
-####################################################################################################
 #### SS-Update-Packages: Restart Modules (All Modules) #############################################
 ####################################################################################################
 
@@ -292,16 +193,6 @@ source "$PATH_SS_RESTART_MYSQL"
 
 ## run ss-restart-redis ##
 source "$PATH_SS_RESTART_REDIS"
-
-####################################################################################################
-#### SS-Update-Modules: Touch Timestamp File (End Script) ##########################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_UPDATE_MODULES"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

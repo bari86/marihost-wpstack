@@ -7,8 +7,8 @@
 #### path: /var/www/ss-purge-transients ############################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Manually deletes all transients data from the WordPress wp_options table #############
-#### module version: MySQL 8.0.x + WordPress 5.5.x #################################################
-#### sourced by: ss-purge, ss core bash scripts ####################################################
+#### module version: MySQL 8.0.x + WordPress 5.8.x #################################################
+#### sourced by: ####################################################
 #### bash aliases: ss purge [clear] transients, ss purge [clear] wordpress [wp] transients #########
 ####################################################################################################
 
@@ -24,57 +24,87 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Purge-Transients: Message (Begin Script) ###################################################
+#### TABLE OF CONTENTS (SS-Purge-Transients) #######################################################
 ####################################################################################################
 
-## this is a simple message that announces to the shell the purpose of this bash script ##
-## it will only be noticed by sudo users who manually call ss core bash scripts ##
-
-## echo message ##
-echo -e "${PURPLE}Running ss-purge-transients: Manually deletes all transients data from the WordPress wp_options table... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
-
-####################################################################################################
-#### SS-Purge: Delete All Transients From MySQL Database ###########################################
-####################################################################################################
-
-## manually deletes all transients (temporary query cache data) from WordPress database ##
-## this is a more forceful approach than simply purging the Redis object cache ##
-
-## for MySQL 8.0 (Ubuntu 20.04) ##
-if [[ "${UBUNTU_VERSION}" = "20.04" || -z "${UBUNTU_VERSION}" ]]; then 
-    mysql --execute="DELETE FROM ${DB_NAME}.${DB_PREFIX}options WHERE option_name LIKE ('%\_transient\_%');"
-fi
-
-## for MySQL 5.7 (Ubuntu 18.04) ##
-if [[ "${UBUNTU_VERSION}" = "18.04" ]]; then
-     mysql_5.7 --execute="DELETE FROM ${DB_NAME}.${DB_PREFIX}options WHERE option_name LIKE ('%\_transient\_%');"
-fi
+## A. Begin Validation
+## B. Touch Timestamp File
+## C. Message (Begin Script)
+## D. Delete All Transients From MySQL Database
+## E. End Validation
 
 ####################################################################################################
-#### SS-Purge: Clear Cache (WordPress Transients) ##################################################
+#### A. Validate Proper Environment 
 ####################################################################################################
 
-## manually deletes all transients (temporary query cache data) from WordPress database ##
-## this is a more forceful approach than simply purging the Redis object cache ##
-
-# if [[ "$SS_APP" == "wordpress" || -z "$SS_APP"  ]]; then
-
-    ## run ss-purge-transients ##
- #   source /var/www/ss-purge-transients
-
-# fi
-
+if [[ "$SS_APP" == "wordpress" ]] || [[ -z "$SS_APP" ]]; then
 
 ####################################################################################################
-#### SS-Purge-Transients: Touch Timestamp File (End Script) ########################################
+#### B. SS-Purge-Transients: Touch Timestamp File ##################################################
 ####################################################################################################
 
 ## this is a dummy timestamp file that will remember the last time this script was run ##
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
-## script timestamp ##
-touch "$TIMESTAMP_SS_PURGE_TRANSIENTS"
+    ## script timestamp ##
+    touch "$TIMESTAMP_SS_PURGE_TRANSIENTS"
+
+####################################################################################################
+#### C. SS-Purge-Transients: Message (Begin Script) ################################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+    ## echo message ##
+    echo -e "${COLOR_INFO}Running ss-purge-transients: Manually deletes all transients data from the WordPress wp_options table... ${NOCOLOR}"
+    sleep "$SLEEP_MESSAGE_BEGIN"
+
+####################################################################################################
+#### D. SS-Purge-Transients: Delete All Transients From MySQL Database #############################
+####################################################################################################
+
+## manually deletes all transients (temporary query cache data) from WordPress database ##
+## this is a more forceful approach than simply purging the Redis object cache ##
+
+    ## mysql 8.0 (ubuntu 22.04) ##
+    if [[ "${UBUNTU_VERSION}" = "22.04" ]] || [[ -z "${UBUNTU_VERSION}" ]]; then 
+
+        if [[ -n $(mysql --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';") ]]; then
+    
+            mysql --execute="DELETE FROM ${DB_NAME}.${DB_PREFIX}options WHERE option_name LIKE ('%\_transient\_%');"
+    
+        fi
+    
+    fi
+
+    ## mysql 8.0 (ubuntu 20.04) ##
+    if [[ "${UBUNTU_VERSION}" = "20.04" ]]; then 
+
+        if [[ -n $(mysql --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';") ]]; then
+    
+            mysql --execute="DELETE FROM ${DB_NAME}.${DB_PREFIX}options WHERE option_name LIKE ('%\_transient\_%');"
+    
+        fi
+    
+    fi
+
+    ## mysql 5.7 (ubuntu 18.04) ##
+    if [[ "${UBUNTU_VERSION}" = "18.04" ]]; then
+
+        if [[ -n $(mysql_5.7 --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';") ]]; then
+    
+            mysql_5.7 --execute="DELETE FROM ${DB_NAME}.${DB_PREFIX}options WHERE option_name LIKE ('%\_transient\_%');"
+     
+        fi
+     
+    fi
+
+####################################################################################################
+#### E. SS-Purge-Transients #################################################
+####################################################################################################
+
+fi
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
@@ -95,5 +125,6 @@ touch "$TIMESTAMP_SS_PURGE_TRANSIENTS"
 ## Ref: https://pressjitsu.com/blog/transient-cache-alternatives/
 ## Ref: https://unix.stackexchange.com/questions/87258/delete-all-files-except-in-a-certain-subdirectory-with-find
 ## Ref: https://github.com/littlebizzy/slickstack/issues/57
+## Ref: https://stackoverflow.com/questions/5609620/show-tables-statement-with-multiple-like-values
 
 ## SS_EOF

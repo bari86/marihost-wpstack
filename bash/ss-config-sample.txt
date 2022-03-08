@@ -15,24 +15,24 @@
 ## AFTER CHANGING ANY SS-CONFIG SETTINGS BELOW YOU MUST RUN SS-INSTALL AGAIN ##
 
 ####################################################################################################
-#### SS-Config: Build Version (Checked By SS-Install) ##############################################
+#### SS-Config: Build Version ######################################################################
 ####################################################################################################
 
-## run ss-update if ss-config outdated (check the public mirror link for current build) ##
-## or copy and paste entire ss-config boilerplate before filling out the options ##
+## run ss-update-config if outdated (check the public mirror link for current build) ##
+## or copy mirror boilerplate to /var/www/ss-config and customize settings ##
 
-SS_BUILD="SEP2021MM"
+SS_BUILD="MAR2022D"
 
 ####################################################################################################
-#### SS-Config: Root User + Sudo User + SFTP User Settings #########################################
+#### SS-Config: User Settings (Root + Sudo + SFTP) #################################################
 ####################################################################################################
 
 ## write down your sudo password or you will be locked out of your server forever ##
-## after ss-install completes the root user will have no shell access ##
+## after ss-install finishes the root user will have no more shell access ##
 
-## ROOT_PASSWORD = [*must be unique*] choose something very strong as you won't use this ##
-## SUDO_USER = [*must be unique*] something that you can remember for shell logins ##
-## SUDO_PASSWORD = [*must be unique*] write this down because you will need it ##
+## ROOT_PASSWORD = [*must be unique*] something very strong (but you will not use this) ##
+## SUDO_USER = [*must be unique*] username that you can remember for SSH logins ##
+## SUDO_PASSWORD = [*must be unique*] something very strong (write it down) ##
 
 ROOT_PASSWORD="@ROOT_PASSWORD"
 SUDO_USER="@SUDO_USER"
@@ -42,7 +42,7 @@ SUDO_PASSWORD="@SUDO_PASSWORD"
 ## you can also use the SFTP user for remote backups (safer than sudo user) ##
 
 ## SFTP_USER = [*must be unique*] username that your client can login as via SFTP ##
-## SFTP_PASSWORD = [*must be unique*] something strong but not too complex or confusing ##
+## SFTP_PASSWORD = [*must be unique*] something very strong (for your client) ##
 
 SFTP_USER="@SFTP_USER"
 SFTP_PASSWORD="@SFTP_PASSWORD"
@@ -82,7 +82,7 @@ SITE_NOINDEX="@SITE_NOINDEX"
 ## using a remote MySQL database has not been extensively tested (use at your own risk) ##
 ## for security reasons choose a unique password for the MySQL root/admin user ##
 
-## DB_NAME = [production] sole production database (staging/development are hardcoded) ##
+## DB_NAME = [production] current production database (staging/development hardcoded) ##
 ## DB_USER = [example|etc] for easier management it can be the same as SFTP_USER ##
 ## DB_PASSWORD = [*must be unique*] something strong but not too complex or confusing ##
 ## DB_PASSWORD_ROOT = [*must be unique*] now only used for admin@127.0.0.1 ##
@@ -107,7 +107,7 @@ DB_COLLATE=""
 ## these settings are to control CloudFlare from the WP Admin for easier management ##
 ## our WordPress MU plugin uses these or your other plugins could use them too ##
 
-## CLOUDFLARE_API_KEY = [*must be unique*] find your API key in your CloudFlare account ##
+## CLOUDFLARE_API_KEY = [*must be unique*] the API key/token in your CloudFlare account ##
 ## CLOUDFLARE_API_EMAIL = [*must be unique*] the email address of your CloudFlare account ##
 
 CLOUDFLARE_API_KEY="@CLOUDFLARE_API_KEY"
@@ -148,20 +148,30 @@ GUEST_PASSWORD="@GUEST_PASSWORD"
 ## RCLONE_TYPE = [b2|dropbox|etc] choose a supported rclone cloud storage provider ##
 ## RCLONE_MODE = [copy|sync] copy avoids data loss but complicates restores ##
 ## RCLONE_REMOTE_PATH = [*must be unique*] storage path on your remote service ##
-## RCLONE_CLIENT_ID = [*must be unique*] might be account ID or application ID ##
+## RCLONE_CLIENT_ID = [*must be unique*] might be account key ID or application key ID ##
 ## RCLONE_CLIENT_SECRET = [*must be unique*] might be master key or application key ##
 ## RCLONE_USER = [*must be unique*] some services want to know your username ##
 ## RCLONE_PASSWORD = [*must be unique*] some services want to know your password ##
 ## RCLONE_TOKEN = [*must be unique*] usually a one-time token you must generate ##
+## RCLONE_BACKUP_PATH = [/var/www/|/var/www/backups/] select backups subfolder when you enable SS_DUMP_FILES ##
+## RCLONE_PARALLEL_TRANSFERS = [15|100|...] number of parallel transfers - more is faster ##
+## about parallel transfers: 1000 on 2c VPS = 200% CPU, 500 = 120% CPU, 100 = 10% CPU ##
+## WARNING: when you set parallel transfers high and have files that are big, it could crash your VPS. ##
+## when you have files over 5GB, it will chunk that data to 96MB and stores them in RAM. 96MB*transfers=RAM Usage ##
+## WARNING: "/var/www/" will exceed the free limit of 2500 daily Class C Transactions! 1 file/chunk makes 2 API calls ##
+## "/var/www/backups/" and SS_DUMP_FILES recommended ##
+## b2 Application key must have read and write permissions ##
 
-RCLONE_TYPE="b2" ## only b2 will be supported at first
-RCLONE_MODE="copy"
-RCLONE_REMOTE_PATH="/websites/example.com"
-RCLONE_CLIENT_ID=""
-RCLONE_CLIENT_SECRET=""
+RCLONE_TYPE="b2" ## only b2 supported for now
+RCLONE_MODE="copy" ## recommended to leave "copy" and use b2 lifecycle rules
+RCLONE_REMOTE_PATH="/bucketname/@SITE_DOMAIN"  ## for b2, use bucketname (and then subfolder)
+RCLONE_CLIENT_ID="" ## fill with b2 key ID
+RCLONE_CLIENT_SECRET="" ## fill with b2 key
 RCLONE_USER=""
 RCLONE_PASSWORD=""
 RCLONE_TOKEN=""
+RCLONE_BACKUP_PATH="/var/www/"
+RCLONE_PARALLEL_TRANSFERS="15" ## default 15 - recommended lower for big files
 
 ####################################################################################################
 ####################################################################################################
@@ -177,25 +187,36 @@ RCLONE_TOKEN=""
 ## only advanced users with sysadmin experience should mess around with these ##
 
 ####################################################################################################
-#### SS-Config: General SlickStack Settings ########################################################
+#### SS-Config: General Settings ###################################################################
 ####################################################################################################
 
-## SS_APP = [wordpress|bedrock|mysql] more options coming soon (send us your feedback) ##
-## SS_PILOT_FILE = [*must be unique] public file for easy multi-server management ##
+## SS_APP = [wordpress|mysql|magento] more options coming soon (send us your feedback) ##
+## SS_LANGUAGE = [en_US|de_DE|etc] affects minor features like skip cache slugs ##
 
-SS_APP="wordpress" ## only wordpress supported
+SS_APP="@SS_APP" ## only wordpress is stable
+SS_LANGUAGE="@SS_LANGUAGE" ## en_US best supported currently
+
+## SS_PILOT_FILE = [*must be unique*] secret Gist file for multi-server management ##
+## in the pilot file you can enter all variable of ss-config that you want to change ##
+## check the current version of ss-worker.txt on github to see what variables are already implemented ##
+## enter them VARIABLE_NAME="variable value" like seen here, one in each line ##
+## paste the full URL to your secret gist in this config or during the install ##
+## your ss-config will be updated on every ss-worker run (see the interval settings section below) ##
+## some updated settings may only be used when running ss-update or other specialized ss functions ##
+
 SS_PILOT_FILE="@SS_PILOT_FILE"
 
 ## SS_DATABASE_REMOTE = [false|true] skips MySQL install if true (remote database) ##
-## SS_REBOOT = [false|true] server will reboot automatically after ss-update runs ##
+## SS_OBJECT_CACHE = [true|false] most sites will benefit from object caching ##
 ## SS_SWAPFILE = [true|false] swapfile recommended for low-memory VM servers ##
-## SS_SWAPFILE_SIZE = [1G|2G|4G] usually same size as your RAM but not more than 4G ##
+## SS_SWAPFILE_SIZE = [auto|1G|2G|4G] usually same size as your RAM but less than 4G ##
 ## SS_TIMEZONE = [UTC|Greenwich|etc] almost nobody should have a reason to not use UTC ##
 
 SS_DATABASE_REMOTE="@SS_DATABASE_REMOTE"
-SS_REBOOT="false"
+SS_OBJECT_CACHE="true"
+SS_SYNC_STAGING="true" ## temp until SS Dashboard functional
 SS_SWAPFILE="true"
-SS_SWAPFILE_SIZE="2G"
+SS_SWAPFILE_SIZE="auto"
 SS_TIMEZONE="UTC"
 
 ## MODULE_PHP_CONFIG = [slickstack|default] use our boilerplate or package default ##
@@ -209,7 +230,7 @@ SS_TIMEZONE="UTC"
 ## SS_WORDPRESS_PLUGIN_BLACKLIST [true|false] enable or disable the plugin blacklist ##
 ## SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE [true|false] URL to your blacklist.txt ##
 
-SS_WORDPRESS_ADMIN_DASHBOARD="true"
+SS_WORDPRESS_ADMIN_DASHBOARD="@SS_WORDPRESS_ADMIN_DASHBOARD"
 SS_WORDPRESS_MU_PLUGINS="default"
 SS_WORDPRESS_PLUGIN_BLACKLIST="@SS_WORDPRESS_PLUGIN_BLACKLIST"
 SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE="https://raw.githubusercontent.com/littlebizzy/slickstack/master/modules/wordpress/blacklist.txt"
@@ -219,6 +240,8 @@ SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE="https://raw.githubusercontent.com/littlebi
 
 WHITELABEL_BRAND="SlickStack"
 WHITELABEL_HOMEPAGE="https://slickstack.io"
+WHITELABEL_SUPPORT_URL="https://example.com/support/"
+WHITELABEL_SUPPORT_EMAIL="support@example.com"
 
 ####################################################################################################
 #### SS-Config: SSL Settings (CSR Optional) ########################################################
@@ -276,9 +299,9 @@ WP_CRON_INTERVAL="quarter-hourly"
 ## WP_MULTISITE_SUBDOMAINS = [true|false] subdomains approach highly recommended ##
 ## WP_MULTISITE_DOMAIN_MAPPING = [false|true] hosting multiple TLD domains not recommended ##
 
-WP_MULTISITE="false" ## coming soon
-WP_MULTISITE_SUBDOMAINS="true"
-WP_MULTISITE_DOMAIN_MAPPING="false"
+WP_MULTISITE="@WP_MULTISITE_STATUS" ## experimental
+WP_MULTISITE_SUBDOMAINS="true" ## only subdomains supported
+WP_MULTISITE_DOMAIN_MAPPING="false" ## not supported yet
 
 ## for stability reasons several WP defined constants are hardcoded in wp-config.php ##
 ## you can define additional constants inside the /wp-content/functions.php ##
@@ -305,6 +328,10 @@ WP_ALLOW_UNFILTERED_UPLOADS="true"
 
 ## default Nginx settings assume that CloudFlare is in front of your origin VPS server ##
 ## this means that most settings are very liberal to allow for traffic scaling ##
+
+## NGINX_ACCESS_LOG = [false|true] only enable for brief testing otherwise disable ##
+
+NGINX_ACCESS_LOG="false"
 
 ## NGINX_HEADER_POWERED_BY = [SlickStack|etc] keep this or change to your super cool name ##
 ## NGINX_HEADER_STRICT_TRANSPORT_SECURITY = [max-age=15552000] only for experts ##
@@ -415,6 +442,8 @@ FCGI_TEMP_FILE_WRITE_SIZE="256k"
 ## SQL_NET_WRITE_TIMEOUT = [30|60|3600|etc] usually this should be fine at 60 seconds ##
 
 SQL_MODE="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"
+# SQL_MODE="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ALLOW_INVALID_DATES" better if works?
+
 SQL_MAX_ALLOWED_PACKET="1GB"
 SQL_CONNECT_TIMEOUT="60"
 SQL_WAIT_TIMEOUT="3600"
@@ -520,6 +549,7 @@ FPM_SYSTEMD_INTERVAL="10"
 ## WWW_PM_START_SERVERS = [2|etc] keeping this number small usually makes more sense ##
 ## WWW_PM_MIN_SPARE_SERVERS = [1|etc] keep this at 1 to maximize CPU efficiency ##
 ## WWW_PM_MAX_SPARE_SERVERS = [3|etc] should usually be greater than PM_START_SERVERS ##
+## WWW_PM_MAX_SPAWN_RATE = [32|etc]
 ## WWW_PM_PROCESS_IDLE_TIMEOUT = [10s|etc] keep it small to avoid CPU resource abuse ##
 ## WWW_PM_MAX_REQUESTS = [500|etc] usually can keep it big if other settings are sensible ##
 ## WWW_REQUEST_TERMINATE_TIMEOUT = [300|etc] backup timeout if IDLE_TIMEOUT not applied ##
@@ -532,6 +562,7 @@ WWW_PM_MAX_CHILDREN="20"
 WWW_PM_START_SERVERS="2"
 WWW_PM_MIN_SPARE_SERVERS="1"
 WWW_PM_MAX_SPARE_SERVERS="3"
+WWW_PM_MAX_SPAWN_RATE="32" ## PHP 8.1+
 WWW_PM_PROCESS_IDLE_TIMEOUT="10s"
 WWW_PM_MAX_REQUESTS="500"
 WWW_REQUEST_TERMINATE_TIMEOUT="300"
@@ -591,6 +622,12 @@ SS_DUMP_FILES_PRODUCTION="true"
 SS_DUMP_FILES_STAGING="false"
 SS_DUMP_FILES_DEVELOPMENT="false"
 
+## ss-install-nginx-config ##
+SS_INSTALL_NGINX_CONFIG_OVERWRITE_BLOCKS="true"
+
+## ss-install-php-packages ##
+SS_INSTALL_PHP_PACKAGES_PURGE_FIRST="false"
+
 ## ss-install-wordpress-core ##
 SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_PLUGINS="true"
 SS_INSTALL_WORDPRESS_CORE_DELETE_BUNDLED_THEMES="true"
@@ -614,6 +651,7 @@ SS_INSTALL_WORDPRESS_CORE_CLEANUP_OPTIONS="true"
 ## disable any given task by setting interval to random string (e.g. never) ##
 
 ## [often|regular|quarter-hourly|half-hourly|hourly|quarter-daily|half-daily|daily|half-weekly|weekly|half-monthly|monthly|sometimes] ##
+## often = 2min, regular = 5min, sometimes = 2months
 
 ## INTERVAL_SS_CHECK = [often|regular|quarter-hourly|half-hourly|hourly] ##
 ## INTERVAL_SS_CLEAN_DATABASE = [hourly|quarter-daily|half-daily|daily|half-weekly|weekly] ##
@@ -693,7 +731,7 @@ INTERVAL_SS_INSTALL_UFW_PACKAGES="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_CLI="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_CONFIG="never" ## default = never
 INTERVAL_SS_INSTALL_WORDPRESS_CORE="never" ## default = never
-INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS="daily" ## default = daily
+INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS="half-weekly" ## default = half-weekly
 INTERVAL_SS_OPTIMIZE_DATABASE="weekly" ## default = weekly
 INTERVAL_SS_OPTIMIZE_FILES="half-weekly" ## default = half-weekly
 INTERVAL_SS_PERMS="quarter-daily" ## default = quarter-daily
@@ -702,7 +740,7 @@ INTERVAL_SS_PURGE_OPCACHE="never" ## default = never
 INTERVAL_SS_PURGE_REDIS="never" ## default = never
 INTERVAL_SS_PURGE_TRANSIENTS="never" ## default = never
 INTERVAL_SS_REBOOT_MACHINE="never" ## default = never
-INTERVAL_SS_REMOTE_BACKUP="never" ## default = never (not functional yet)
+INTERVAL_SS_REMOTE_BACKUP="never" ## default = never
 INTERVAL_SS_RESET_PASSWORD_SFTP="never" ## default = never
 INTERVAL_SS_RESTART_MYSQL="never" ## default = never
 INTERVAL_SS_RESTART_NGINX="never" ## default = never
@@ -728,64 +766,37 @@ MU_PLUGIN_01_DIR="clear-caches"
 MU_PLUGIN_02_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/cloudflare.zip"
 MU_PLUGIN_02_DIR="cloudflare"
 
-MU_PLUGIN_03_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/dashboard-cleanup.zip"
-MU_PLUGIN_03_DIR="dashboard-cleanup"
+MU_PLUGIN_03_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/delete-expired-transients.zip"
+MU_PLUGIN_03_DIR="delete-expired-transients"
 
-MU_PLUGIN_04_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/delete-expired-transients.zip"
-MU_PLUGIN_04_DIR="delete-expired-transients"
+MU_PLUGIN_04_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-attachment-pages.zip"
+MU_PLUGIN_04_DIR="disable-attachment-pages"
 
-MU_PLUGIN_05_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-attachment-pages.zip"
-MU_PLUGIN_05_DIR="disable-attachment-pages"
+MU_PLUGIN_05_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-emojis.zip"
+MU_PLUGIN_05_DIR="disable-emojis"
 
-MU_PLUGIN_06_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-embeds.zip"
-MU_PLUGIN_06_DIR="disable-embeds"
+MU_PLUGIN_06_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-empty-trash.zip"
+MU_PLUGIN_06_DIR="disable-empty-trash"
 
-MU_PLUGIN_07_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-emojis.zip"
-MU_PLUGIN_07_DIR="disable-emojis"
+MU_PLUGIN_07_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-image-compression.zip"
+MU_PLUGIN_07_DIR="disable-image-compression"
 
-MU_PLUGIN_08_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-empty-trash.zip"
-MU_PLUGIN_08_DIR="disable-empty-trash"
+MU_PLUGIN_08_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-post-via-email.zip"
+MU_PLUGIN_08_DIR="disable-post-via-email"
 
-MU_PLUGIN_09_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-gutenberg.zip"
-MU_PLUGIN_09_DIR="disable-gutenberg"
+MU_PLUGIN_09_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-xml-rpc.zip"
+MU_PLUGIN_09_DIR="disable-xml-rpc"
 
-MU_PLUGIN_10_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-image-compression.zip"
-MU_PLUGIN_10_DIR="disable-image-compression"
+MU_PLUGIN_10_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-https.zip"
+MU_PLUGIN_10_DIR="force-https"
 
-MU_PLUGIN_11_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-post-via-email.zip"
-MU_PLUGIN_11_DIR="disable-post-via-email"
+MU_PLUGIN_11_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-strong-hashing.zip"
+MU_PLUGIN_11_DIR="force-strong-hashing"
 
-MU_PLUGIN_12_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-xml-rpc.zip"
-MU_PLUGIN_12_DIR="disable-xml-rpc"
+MU_PLUGIN_12_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/header-cleanup.zip"
+MU_PLUGIN_12_DIR="header-cleanup"
 
-MU_PLUGIN_13_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-https.zip"
-MU_PLUGIN_13_DIR="force-https"
-
-MU_PLUGIN_14_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-strong-hashing.zip"
-MU_PLUGIN_14_DIR="force-strong-hashing"
-
-MU_PLUGIN_15_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/header-cleanup.zip"
-MU_PLUGIN_15_DIR="header-cleanup"
-
-MU_PLUGIN_16_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/limit-heartbeat.zip"
-MU_PLUGIN_16_DIR="limit-heartbeat"
-
-MU_PLUGIN_17_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/minify-html.zip"
-MU_PLUGIN_17_DIR="minify-html"
-
-MU_PLUGIN_18_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/plugin-blacklist.zip"
-MU_PLUGIN_18_DIR="plugin-blacklist"
-
-MU_PLUGIN_19_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/virtual-robotstxt.zip"
-MU_PLUGIN_19_DIR="virtual-robotstxt"
-
-####################################################################################################
-#### Superuser (MU Plugin): Various Settings #######################################################
-####################################################################################################
-
-# SUPERUSER_LOGIN
-# SUPERUSER_PASSWORD
-# SUPERUSER_EMAIL
-# SUPERUSER_NICENAME
+MU_PLUGIN_13_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/plugin-blacklist.zip"
+MU_PLUGIN_13_DIR="plugin-blacklist"
 
 ## SS_EOF

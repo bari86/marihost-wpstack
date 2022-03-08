@@ -197,6 +197,11 @@ title: SlickStack (Public Mirrors)
 * https://shkspr.mobi/blog/2021/01/the-unreasonable-effectiveness-of-simple-html/
 * https://jvns.ca/blog/2021/01/23/firecracker--start-a-vm-in-less-than-a-second/
 * https://unixsheikh.com/articles/sqlite-the-only-database-you-will-ever-need-in-most-cases.html
+* https://mxb.dev/blog/the-return-of-the-90s-web/
+* https://www.gnu.org/philosophy/open-source-misses-the-point.html
+* https://einaregilsson.com/serverless-15-percent-slower-and-eight-times-more-expensive/
+* https://www.seroundtable.com/google-lsi-keywords-27970.html
+* https://medium.com/@kitze/github-stars-wont-pay-your-rent-8b348e12baed
 
 ----
 

@@ -7,8 +7,8 @@
 #### path: /var/www/ss-worker ######################################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Performs SlickStack maintenance tasks and retrieves the latest ss-check file #########
-#### module version: Ubuntu 20.04 LTS ##############################################################
-#### sourced by: ss core cron jobs, ss-install, ss-update, ss update ###############################
+#### module version: Ubuntu 22.04 LTS ##############################################################
+#### sourced by: ss-install, ss-update #############################################################
 #### bash aliases: ss worker #######################################################################
 ####################################################################################################
 
@@ -21,13 +21,13 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### TABLE OF CONTENTS #############################################################################
+#### TABLE OF CONTENTS (SS-Worker) #################################################################
 ####################################################################################################
 
 ## A. Touch Timestamp File
 ## B. Message (Begin Script)
 ## C. Cleanup Temporary Files
-## D. Backup Current SS-Config File
+## D. Backup Active SS-Config File
 ## E. Retrieve Latest SS-Check (Bash Script)
 
 ## E. Reset SlickStack Core Permissions
@@ -52,7 +52,7 @@ touch "$TIMESTAMP_SS_WORKER"
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-worker: Performs SlickStack maintenance tasks and retrieves the latest ss-check file... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-worker: Performs SlickStack maintenance tasks and retrieves the latest ss-check file... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -69,18 +69,18 @@ rm /tmp/blacklist*
 rm /tmp/maintenance.html*
 
 ####################################################################################################
-#### D. SS-Worker: Backup Current SS-Config File ###################################################
+#### D. SS-Worker: Backup Active SS-Config File ####################################################
 ####################################################################################################
-
-## SNIPPET: ss-update-config, ss-worker
-## UPDATED: 11SEP2021
 
 ## this will replicate your current ss-config file (and settings) to the backups dir ##
 ## the older .bak files will be cleaned up periodically by ss-clean-files ##
 
+## SNIPPET: ss-update-config, ss-worker
+## UPDATED: 08JAN2022
+
 ## backup ss-config ##
 CURRENT_TIME=$(date "+%Y.%b.%d-%H:%M:%S")
-cp /var/www/ss-config /var/www/backups/config/ss-config.bak.$CURRENT_TIME
+cp /var/www/ss-config /var/www/backups/config/ss-config.bak.${CURRENT_TIME}
 
 ####################################################################################################
 #### E. SS-Worker: Retrieve Latest SS-Check (Bash Script) ##########################################
@@ -96,113 +96,31 @@ wget -O "$TMP_SS_CHECK" "$MIRROR_SS_CHECK"
 cp "$TMP_SS_CHECK" "$PATH_SS_CHECK"
 
 ####################################################################################################
-#### SS-Worker: Validate Current WP-Config.php ##################################################
-####################################################################################################
-
-## this snippet will check to ensure wp-config.php exists and contains SS_EOF string ##
-## if not found then it will call script to reinstall the wp-config.php file ##
-
-## ensure wp-config.php intact (production) ##
-# if [[ -z "$VALIDATE_WP_CONFIG_PHP" ]]; then
-#    source /var/www/ss-install-wordpress-config
-# fi
-
-####################################################################################################
-#### SS-Worker: Retrieve Latest Custom Cron Job Boilerplates (If Not Exist) ########################
-####################################################################################################
-
-## this will retrieve and install boilerplates for custom cron jobs if none are found ##
-## you can then edit these files as needed and they will not be overwritten ##
-
-if [[ ! -f "/var/www/crons/custom/01-cron-often-custom" ]]; then
-    wget -O /tmp/01-cron-often-custom "$MIRROR_01_CRON_OFTEN_CUSTOM"
-    cp -n /tmp/01-cron-often-custom /var/www/crons/custom/01-cron-often-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/02-cron-regular-custom" ]]; then
-    wget -O /tmp/02-cron-regular-custom "$MIRROR_02_CRON_REGULAR_CUSTOM"
-    cp -n /tmp/02-cron-regular-custom /var/www/crons/custom/02-cron-regular-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/03-cron-quarter-hourly-custom" ]]; then
-    wget -O /tmp/03-cron-quarter-hourly-custom "$MIRROR_03_CRON_QUARTER_HOURLY_CUSTOM"
-    cp -n /tmp/03-cron-quarter-hourly-custom /var/www/crons/custom/03-cron-quarter-hourly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/04-cron-half-hourly-custom" ]]; then
-    wget -O /tmp/04-cron-half-hourly-custom "$MIRROR_04_CRON_HALF_HOURLY_CUSTOM"
-    cp -n /tmp/04-cron-half-hourly-custom /var/www/crons/custom/04-cron-half-hourly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/05-cron-hourly-custom" ]]; then
-    wget -O /tmp/05-cron-hourly-custom "$MIRROR_05_CRON_HOURLY_CUSTOM"
-    cp -n /tmp/05-cron-hourly-custom /var/www/crons/custom/05-cron-hourly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/06-cron-quarter-daily-custom" ]]; then
-    wget -O /tmp/06-cron-quarter-daily-custom "$MIRROR_06_CRON_QUARTER_DAILY_CUSTOM"
-    cp -n /tmp/06-cron-quarter-daily-custom /var/www/crons/custom/06-cron-quarter-daily-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/07-cron-half-daily-custom" ]]; then
-    wget -O /tmp/07-cron-half-daily-custom "$MIRROR_07_CRON_HALF_DAILY_CUSTOM"
-    cp -n /tmp/07-cron-half-daily-custom /var/www/crons/custom/07-cron-half-daily-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/08-cron-daily-custom" ]]; then
-    wget -O /tmp/08-cron-daily-custom "$MIRROR_08_CRON_DAILY_CUSTOM"
-    cp -n /tmp/08-cron-daily-custom /var/www/crons/custom/08-cron-daily-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/09-cron-half-weekly-custom" ]]; then
-    wget -O /tmp/09-cron-half-weekly-custom "$MIRROR_09_CRON_HALF_WEEKLY_CUSTOM"
-    cp -n /tmp/09-cron-half-weekly-custom /var/www/crons/custom/09-cron-half-weekly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/10-cron-weekly-custom" ]]; then
-    wget -O /tmp/10-cron-weekly-custom "$MIRROR_10_CRON_WEEKLY_CUSTOM"
-    cp -n /tmp/10-cron-weekly-custom /var/www/crons/custom/10-cron-weekly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/11-cron-half-monthly-custom" ]]; then
-    wget -O /tmp/11-cron-half-monthly-custom "$MIRROR_11_CRON_HALF_MONTHLY_CUSTOM"
-    cp -n /tmp/11-cron-half-monthly-custom /var/www/crons/custom/11-cron-half-monthly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/12-cron-monthly-custom" ]]; then
-    wget -O /tmp/12-cron-monthly-custom "$MIRROR_12_CRON_MONTHLY_CUSTOM"
-    cp -n /tmp/12-cron-monthly-custom /var/www/crons/custom/12-cron-monthly-custom
-fi
-
-if [[ ! -f "/var/www/crons/custom/13-cron-sometimes-custom" ]]; then
-    wget -O /tmp/13-cron-sometimes-custom "$MIRROR_13_CRON_SOMETIMES_CUSTOM"
-    cp -n /tmp/13-cron-sometimes-custom /var/www/crons/custom/13-cron-sometimes-custom
-fi
-
-####################################################################################################
 #### SS-Worker: Install Pilot File Variables #######################################################
 ####################################################################################################
 
+## this snippet retrieves the remote pilot file defined in ss-config and reads settings ##
+## it will replace old settings with pilot settings for multi-server management ##
+
 ## retrieve pilot file if defined ##
 if [[ -n "$SS_PILOT_FILE" ]]; then 
-rm /tmp/ss-pilot
-wget -O /tmp/ss-pilot "$SS_PILOT_FILE"
+    rm /tmp/ss-pilot
+    wget -O /tmp/ss-pilot "$SS_PILOT_FILE"
 
-PILOT_WHITELABEL_BRAND=$(source /tmp/ss-pilot; echo $WHITELABEL_BRAND)
-PILOT_WHITELABEL_HOMEPAGE=$(source /tmp/ss-pilot; echo $WHITELABEL_HOMEPAGE)
+    PILOT_WHITELABEL_BRAND=$(source /tmp/ss-pilot; echo $WHITELABEL_BRAND)
+    PILOT_WHITELABEL_HOMEPAGE=$(source /tmp/ss-pilot; echo $WHITELABEL_HOMEPAGE)
 
-## replace ss-config variables with pilot variables if exist ##
-if [[ -n "$PILOT_WHITELABEL_BRAND" ]]; then 
-sed -i "s|\(^WHITELABEL_BRAND=\).*|WHITELABEL_BRAND=\"$PILOT_WHITELABEL_BRAND\"|g" /var/www/ss-config
-fi
+    ## replace ss-config variables with pilot variables if exist ##
+    if [[ -n "$PILOT_WHITELABEL_BRAND" ]]; then 
+        sed -i "s|\(^WHITELABEL_BRAND=\).*|WHITELABEL_BRAND=\"$PILOT_WHITELABEL_BRAND\"|g" /var/www/ss-config
+    fi
 
-if [[ -n "$PILOT_WHITELABEL_HOMEPAGE" ]]; then 
-sed -i "s|\(^WHITELABEL_HOMEPAGE=\).*|WHITELABEL_HOMEPAGE=\"$PILOT_WHITELABEL_HOMEPAGE\"|g" /var/www/ss-config
-fi
+    if [[ -n "$PILOT_WHITELABEL_HOMEPAGE" ]]; then 
+        sed -i "s|\(^WHITELABEL_HOMEPAGE=\).*|WHITELABEL_HOMEPAGE=\"$PILOT_WHITELABEL_HOMEPAGE\"|g" /var/www/ss-config
+    fi
 
-rm /tmp/ss-pilot
+    rm /tmp/ss-pilot
 fi 
-
 
 ####################################################################################################
 #### SS-Worker: Install Latest SS-Constants.php Boilerplate ########################################
@@ -235,10 +153,10 @@ if [[ -z "$VALIDATE3_TMP_SS_CONSTANTS_PHP" ]]; then
 fi
 
     ## set SlickStack dashboard ##
-    if [[ -z "$SS_DASHBOARD" ]]; then 
-        sed -i "s/@SS_DASHBOARD/true/g" "$TMP_SS_CONSTANTS_PHP"
+    if [[ -z "$SS_WORDPRESS_ADMIN_DASHBOARD" ]]; then 
+        sed -i "s/@SS_WORDPRESS_ADMIN_DASHBOARD/true/g" "$TMP_SS_CONSTANTS_PHP"
     else 
-        sed -i "s/@SS_DASHBOARD/${SS_WORDPRESS_ADMIN_DASHBOARD}/g" "$TMP_SS_CONSTANTS_PHP"
+        sed -i "s/@SS_WORDPRESS_ADMIN_DASHBOARD/${SS_WORDPRESS_ADMIN_DASHBOARD}/g" "$TMP_SS_CONSTANTS_PHP"
     fi
     
 SYSTEM_SERVER_SOFTWARE=$(nginx -v |& sed 's#nginx version: nginx/##')
@@ -252,23 +170,7 @@ if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 SYSTEM_MYSQL_VERSION=$(mysql --version |& awk '{print $3}' | sed 's/,//g')
 fi
 
-LAST_TIMESTAMP_00_CRONTAB=$(stat -c %x "$TIMESTAMP_SS_INSTALL_UBUNTU_CRONTAB")
-LAST_TIMESTAMP_01_CRON_OFTEN=$(stat -c %x "$TIMESTAMP_01_CRON_OFTEN")
-LAST_TIMESTAMP_02_CRON_REGULAR=$(stat -c %x "$TIMESTAMP_02_CRON_REGULAR")
-LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY=$(stat -c %x "$TIMESTAMP_03_CRON_QUARTER_HOURLY")
-LAST_TIMESTAMP_04_CRON_HALF_HOURLY=$(stat -c %x "$TIMESTAMP_04_CRON_HALF_HOURLY")
-LAST_TIMESTAMP_05_CRON_HOURLY=$(stat -c %x "$TIMESTAMP_05_CRON_HOURLY")
-LAST_TIMESTAMP_06_CRON_QUARTER_DAILY=$(stat -c %x "$TIMESTAMP_06_CRON_QUARTER_DAILY")
-LAST_TIMESTAMP_07_CRON_HALF_DAILY=$(stat -c %x "$TIMESTAMP_07_CRON_HALF_DAILY")
-LAST_TIMESTAMP_08_CRON_DAILY=$(stat -c %x "$TIMESTAMP_08_CRON_DAILY")
-LAST_TIMESTAMP_09_CRON_HALF_WEEKLY=$(stat -c %x "$TIMESTAMP_09_CRON_HALF_WEEKLY")
-LAST_TIMESTAMP_10_CRON_WEEKLY=$(stat -c %x "$TIMESTAMP_10_CRON_WEEKLY")
-LAST_TIMESTAMP_11_CRON_HALF_MONTHLY=$(stat -c %x "$TIMESTAMP_11_CRON_HALF_MONTHLY")
-LAST_TIMESTAMP_12_CRON_MONTHLY=$(stat -c %x "$TIMESTAMP_12_CRON_MONTHLY")
-
-if [[ ! -f "$TIMESTAMP_13_CRON_SOMETIMES" ]]; then
-    LAST_TIMESTAMP_13_CRON_SOMETIMES=$(stat -c %x "$TIMESTAMP_13_CRON_SOMETIMES")
-fi
+####################################################################################################
 
 sed -i "s|@SS_BUILD|${SS_BUILD}|g" "$TMP_SS_CONSTANTS_PHP"
 
@@ -279,89 +181,7 @@ sed -i "s|@SS_WORDPRESS_PLUGIN_BLACKLIST|${SS_WORDPRESS_PLUGIN_BLACKLIST}|g" "$T
 sed -i "s|@WP_CRON_METHOD|${WP_CRON_METHOD}|g" "$TMP_SS_CONSTANTS_PHP"
 sed -i "s|@WP_CRON_INTERVAL|${WP_CRON_INTERVAL}|g" "$TMP_SS_CONSTANTS_PHP"
 
-if [[ -n "$LAST_TIMESTAMP_00_CRONTAB" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_00_CRONTAB|${LAST_TIMESTAMP_00_CRONTAB}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_00_CRONTAB|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
 
-if [[ -n "$LAST_TIMESTAMP_01_CRON_OFTEN" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_01_CRON_OFTEN|${LAST_TIMESTAMP_01_CRON_OFTEN}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_01_CRON_OFTEN|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_02_CRON_REGULAR" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_02_CRON_REGULAR|${LAST_TIMESTAMP_02_CRON_REGULAR}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_02_CRON_REGULAR|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY|${LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_04_CRON_HALF_HOURLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_04_CRON_HALF_HOURLY|${LAST_TIMESTAMP_04_CRON_HALF_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_04_CRON_HALF_HOURLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_05_CRON_HOURLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_05_CRON_HOURLY|${LAST_TIMESTAMP_05_CRON_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_05_CRON_HOURLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_06_CRON_QUARTER_DAILY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_06_CRON_QUARTER_DAILY|${LAST_TIMESTAMP_06_CRON_QUARTER_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_06_CRON_QUARTER_DAILY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_07_CRON_HALF_DAILY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_07_CRON_HALF_DAILY|${LAST_TIMESTAMP_07_CRON_HALF_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_07_CRON_HALF_DAILY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_08_CRON_DAILY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_08_CRON_DAILY|${LAST_TIMESTAMP_08_CRON_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_08_CRON_DAILY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_09_CRON_HALF_WEEKLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_09_CRON_HALF_WEEKLY|${LAST_TIMESTAMP_09_CRON_HALF_WEEKLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_09_CRON_HALF_WEEKLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_10_CRON_WEEKLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_10_CRON_WEEKLY|${LAST_TIMESTAMP_10_CRON_WEEKLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_10_CRON_WEEKLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_11_CRON_HALF_MONTHLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_11_CRON_HALF_MONTHLY|${LAST_TIMESTAMP_11_CRON_HALF_MONTHLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_11_CRON_HALF_MONTHLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_12_CRON_MONTHLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_12_CRON_MONTHLY|${LAST_TIMESTAMP_12_CRON_MONTHLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_12_CRON_MONTHLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_13_CRON_SOMETIMES" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_13_CRON_SOMETIMES|${LAST_TIMESTAMP_13_CRON_SOMETIMES}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_13_CRON_SOMETIMES|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
 
 sed -i "s|@SYSTEM_VENDOR|${SYSTEM_VENDOR}|g" "$TMP_SS_CONSTANTS_PHP"
 sed -i "s|@SYSTEM_VIRTUAL|${SYSTEM_VIRTUAL}|g" "$TMP_SS_CONSTANTS_PHP"
@@ -384,6 +204,23 @@ SYSTEM_PHP_EXTENSIONS=$(php -m | paste -s -d , | sed -e 's/,/, /g' | awk -F 'zli
 sed -i "s|@SYSTEM_PHP_VERSION|${SYSTEM_PHP_VERSION}|g" "$TMP_SS_CONSTANTS_PHP"
 sed -i "s|@SYSTEM_PHP_EXTENSIONS|${SYSTEM_PHP_EXTENSIONS}|g" "$TMP_SS_CONSTANTS_PHP"
 
+## sftp details ##
+sed -i "s|@SFTP_USER|${SFTP_USER}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@SFTP_PASSWORD|${SFTP_PASSWORD}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@SFTP_PORT|${SSH_PORT}|g" "$TMP_SS_CONSTANTS_PHP"
+
+## cloudflare api ##
+sed -i "s|@CLOUDFLARE_API_KEY|${CLOUDFLARE_API_KEY}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@CLOUDFLARE_API_EMAIL|${CLOUDFLARE_API_EMAIL}|g" "$TMP_SS_CONSTANTS_PHP"
+
+## whitelabel ##
+sed -i "s|@WHITELABEL_BRAND|${WHITELABEL_BRAND}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@WHITELABEL_HOMEPAGE|${WHITELABEL_HOMEPAGE}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@WHITELABEL_SUPPORT_URL|${WHITELABEL_SUPPORT_URL}|g" "$TMP_SS_CONSTANTS_PHP"
+sed -i "s|@WHITELABEL_SUPPORT_EMAIL|${WHITELABEL_SUPPORT_EMAIL}|g" "$TMP_SS_CONSTANTS_PHP"
+
+
+## validate and reinstall ##
 VALIDATE_TMP_SS_CONSTANTS_PHP=$(grep 'SS_EOF' "$TMP_SS_CONSTANTS_PHP")
 if [[ -n "$VALIDATE_TMP_SS_CONSTANTS_PHP" ]]; then
     cp "$TMP_SS_CONSTANTS_PHP" "$PATH_SS_CONSTANTS_PHP"
@@ -394,18 +231,20 @@ fi
 
 
 ####################################################################################################
-#### SS-Worker: Reset Permissions (SlickStack Core) #################################################
+#### SS-Worker: Reset Permissions (SlickStack) #####################################################
 ####################################################################################################
+
+## we hardcode this permissions reset snippet into some core scripts for redundancy ##
+## this ensures permissions are regularly fixed without any dependencies ##
 
 ## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS ##
 
-## SNIPPET: ss-check, ss-worker, ss core cron jobs
-
-## we hardcode this permissions reset snippet into all ss core scripts for redundancy ##
-## this ensures permissions are regularly fixed without requiring dependencies ##
+## SNIPPET: ss-worker, ss core cron jobs
+## UPDATED: 19FEB2022
 
 ## make directories ##
 mkdir /var/www
+mkdir /var/www/auth
 mkdir /var/www/backups
 mkdir /var/www/backups/config
 mkdir /var/www/backups/html
@@ -424,7 +263,27 @@ mkdir /var/www/html/.well-known
 mkdir /var/www/html/.well-known/acme-challenge
 mkdir /var/www/logs
 mkdir /var/www/meta
+mkdir /var/www/meta/timestamps
 mkdir /var/www/sites
+touch /var/www/meta/.htpasswd
+
+## if staging enabled
+if [[ "$STAGING_SITE" != "false" ]]; then 
+    mkdir /var/www/html/staging
+    mkdir /var/www/html/staging/.well-known
+    mkdir /var/www/html/staging/.well-known/acme-challenge
+    chown -R "${SFTP_USER}":www-data /var/www/html/staging/.well-known ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
+    chown -R "${SFTP_USER}":www-data /var/www/html/staging/.well-known/acme-challenge ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
+fi
+
+## if dev enabled
+if [[ "$DEV_SITE" != "false" ]]; then 
+    mkdir /var/www/html/dev
+    mkdir /var/www/html/dev/.well-known
+    mkdir /var/www/html/dev/.well-known/acme-challenge
+    chown -R "${SFTP_USER}":www-data /var/www/html/dev/.well-known ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
+    chown -R "${SFTP_USER}":www-data /var/www/html/dev/.well-known/acme-challenge ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
+fi
 
 ## user/group ownership ##
 chown root:root /var/www ## must be root:root
@@ -434,7 +293,7 @@ chown root:root /var/www/backups/mysql ## must be root:root
 chown root:root /var/www/backups/mysql/data ## must be root:root
 chown www-data:www-data /var/www/cache ## must be www-data:www-data
 chown www-data:www-data /var/www/cache/nginx ## must be www-data:www-data
-chown www-data:www-data /var/www/cache/opcache ## must be www-data:www-data
+chown www-data:www-data /var/www/cache/opcache ## must be www-data:www-data (PHP-FPM pool)
 chown root:root /var/www/cache/system ## must be root:root
 chown root:root /var/www/certs ## must be root:root
 chown root:root /var/www/certs/keys ## must be root:root
@@ -446,13 +305,14 @@ chown -R "${SFTP_USER}":www-data /var/www/html/.well-known ## accessed by server
 chown -R "${SFTP_USER}":www-data /var/www/html/.well-known/acme-challenge ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
 chown www-data:www-data /var/www/logs ## must be www-data:www-data
 chown www-data:www-data /var/www/meta ## must be www-data:www-data
+chown www-data:www-data /var/www/meta/.htpasswd ## must be www-data:www-data
 chown www-data:www-data /var/www/meta/ss-constants.php ## must be www-data:www-data
 chown root:root /var/www/ss* ## must be root:root
 
 ## linux permissions ##
 chmod 0755 /var/www ## must be 0755
-chmod 0775 /var/www/cache ## 6755 should also work
-chmod 0755 /var/www/cache/opcache ## 755 should also work
+chmod 0775 /var/www/cache ## 0755 should also work
+chmod 0755 /var/www/cache/opcache ## 0755 should work
 chmod 0755 /var/www/certs ## must be 0755
 chmod 0700 /var/www/certs/keys ## must be 0700
 chmod 0644 /var/www/certs/*.crt ## must be 0644
@@ -466,6 +326,7 @@ chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root can execute
 chmod 0755 /var/www/html/.well-known ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
 chmod 0775 /var/www/logs ## 6755 should also work
 chmod 0775 /var/www/meta ## 6755 should also work
+chmod 0644 /var/www/meta/.htpasswd ## 0644 seems enough
 chmod 0440 /var/www/meta/ss-constants.php
 chmod 0700 /var/www/ss* ## 0700 means only root can execute
 
@@ -478,15 +339,15 @@ chmod 0700 /var/www/ss* ## 0700 means only root can execute
 
 ## download latest blacklist (or custom blacklist) ##
 if [[ -z "$PLUGIN_BLACKLIST_SOURCE" ]] && [[ -z "$SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE" ]]; then 
-    wget -O /tmp/blacklist.txt "$MIRROR_BLACKLIST_TXT"
+    wget -O "$TMP_BLACKLIST_TXT" "$MIRROR_BLACKLIST_TXT"
 elif [[ -n "$PLUGIN_BLACKLIST_SOURCE" ]]; then
-    wget -O /tmp/blacklist.txt "$PLUGIN_BLACKLIST_SOURCE"
+    wget -O "$TMP_BLACKLIST_TXT" "$PLUGIN_BLACKLIST_SOURCE"
 elif [[ -n "$SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE" ]]; then
-    wget -O /tmp/blacklist.txt "$SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE"
+    wget -O "$TMP_BLACKLIST_TXT" "$SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE"
 fi
 
 ## copy file to wp-content directory ##
-cp /tmp/blacklist.txt /var/www/html/wp-content/blacklist.txt
+cp "$TMP_BLACKLIST_TXT" /var/www/html/wp-content/blacklist.txt
 
 ## reset permissions ##
 chown www-data:wordpress /var/www/html/wp-content/blacklist.txt ## change to www-data:www-data when ss-perms fixed
@@ -499,6 +360,22 @@ cat /dev/null > /var/www/html/dev/wp-content/blacklist.txt
 cat /dev/null > /var/www/html/staging/wp-content/blacklist.txt
 fi
 
+
+
+
+####################################################################################################
+## SS-Worker: Install Robots.txt File If Not Exists ##################
+####################################################################################################
+
+
+## download robots.txt ##
+if [[ ! -f "/var/www/html/robots.txt" ]]; then 
+    wget -O "$TMP_ROBOTS_TXT" "$MIRROR_ROBOTS_TXT"
+    cp "$TMP_ROBOTS_TXT" /var/www/html/robots.txt
+    chown www-data:www-data /var/www/html/robots.txt
+    chmod 0644 /var/www/html/wp-content/blacklist.txt
+fi
+
 ####################################################################################################
 #### H. SS-Worker: Install Ubuntu Swapfile (If Not Exists) #########################################
 ####################################################################################################
@@ -509,9 +386,9 @@ fi
 ## we include here because the swapfile is so helpful in maintaining stability ##
 
 ## run ss-install-ubuntu-swapfile ##
-if [[ ! -f "/var/www/cache/system/swapfile" ]]; then 
-    source "$PATH_SS_INSTALL_UBUNTU_SWAPFILE"
-fi
+# if [[ ! -f "/var/www/cache/system/swapfile" ]]; then 
+#    source "$PATH_SS_INSTALL_UBUNTU_SWAPFILE"
+# fi
 
 ####################################################################################################
 #### I. SS-Worker: Generate Lets Encrypt Certificate (If Not Exists) ###############################
@@ -559,24 +436,19 @@ fi
 #    source /var/www/ss-install-nginx-config
 # fi
 
-## fix ss-config settings ##
-# sed -i "s|## EOF|## SS_EOF|g" /var/www/ss-config
-# sed -i "s|@STAGING_SITE_STATUS|true|g" /var/www/ss-config
-# sed -i "s|@DEV_SITE_STATUS|true|g" /var/www/ss-config
-# sed -i "s|@DB_NAME|wordpress|g" /var/www/ss-config
-# sed -i "s|SS_MU_PLUGINS=|SS_WORDPRESS_MU_PLUGINS=|g" /var/www/ss-config
-
 ## temp fix to prevent staging/dev malware installs while we settle the ss-install-mysql-database new script
 rm /var/www/html/dev/wp-config-sample*
-# rm /var/www/html/dev/wp-admin/install.php
+rm /var/www/html/dev/wp-admin/install.php
 rm /var/www/html/staging/wp-config-sample*
 rm /var/www/html/staging/wp-admin/install.php
 
-
-## temp fix ##
+## for older servers ##
 sed -i "s|@SS_PILOT_FILE||g" /var/www/ss-config
-
 sed -i "s|@SS_WORDPRESS_PLUGIN_BLACKLIST|true|g" /var/www/ss-config
+sed -i "s|@WP_MULTISITE_STATUS|false|g" /var/www/ss-config
+sed -i "s|@SS_WORDPRESS_ADMIN_DASHBOARD|true|g" /var/www/ss-config
+sed -i "s|@SS_SWAPFILE_SIZE|2G|g" /var/www/ss-config
+sed -i "s|@SS_LANGUAGE|en_US|g" /var/www/ss-config
 
 
 ####################################################################################################

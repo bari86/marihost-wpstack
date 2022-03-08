@@ -27,11 +27,36 @@ source /var/www/ss-functions
 #### TABLE OF CONTENTS (SS-Sync-Staging) ###########################################################
 ####################################################################################################
 
+## A. Query Settings
 ## A. Touch Timestamp File
 ## B. Message (Begin Script)
 ## C. Import Production Database To Staging Database
 ## D. Copy All Relevant Files From Production To Staging
 ## E. Fix Any Hardcoded Links In Staging Theme Files
+
+
+### this script should probably also run ss-install-wp-config and ss-install-mu-plugins 
+## if not yet exists under staging folder and ss-install-mysql-database if not yet exists "staging"
+
+####################################################################################################
+#### A. Query Settings
+####################################################################################################
+
+## check if SlickStack dashboard staging.wp_options has paused this script before proceeding
+
+# select EmployeeName from DemoTable where isMarried=true;
+# ss_options_staging_sync_status=$(mysql -BNe "USE staging; SELECT EmployeeName FROM DemoTable WHERE id=1")
+# $sql = "SELECT 'id' FROM Users WHERE username='$name'";
+
+# if [[ $ss_options_staging_sync_status == "false" ]]; then
+#    echo -e "${COLOR_WARN}Exiting ss-sync-staging: Staging site sync is disabled in the SS dashboard so exiting now... ${NOCOLOR}"
+#    exit 1
+# fi
+
+if [[ "${SS_SYNC_STAGING}" == "false" ]]; then
+    echo -e "${COLOR_INFO}Exiting ss-sync-staging: Staging sync is disabled in ss-config so exiting the script now... ${NOCOLOR}"
+    exit 1
+fi
 
 ####################################################################################################
 #### A. SS-Sync-Staging: Touch Timestamp File ######################################################
@@ -51,8 +76,18 @@ touch "$TIMESTAMP_SS_SYNC_STAGING"
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-sync-staging: Syncs relevant files and database from production site to the staging site... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-sync-staging: Syncs relevant files and database from production site to the staging site... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
+
+
+
+####################################################################################################
+#### Run SS-Dump-Database (Conditional)
+####################################################################################################
+
+if [[ ! -f "/var/www/backups/mysql/production.sql" ]]; then
+    source "$PATH_SS_DUMP_DATABASE"
+fi
 
 ####################################################################################################
 #### C. SS-Sync-Staging: Import Production Database To Staging Database ############################
@@ -73,8 +108,14 @@ if [[ "$STAGING_SITE" == "true" ]]; then
     
     ## fix staging home and siteurl fields (no mass search/replace to avoid potential conflicts) ##
     if [[ "$SS_APP" == "wordpress" ]]; then
-        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN' WHERE option_name='home'";
-        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN' WHERE option_name='siteurl'";
+    
+        if [[ -n $(mysql --execute "SHOW TABLES FROM staging WHERE Tables_in_staging LIKE '${DB_PREFIX}options';") ]]; then
+        
+            mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN}' WHERE option_name='home'";
+            mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN}' WHERE option_name='siteurl'";
+    
+        fi
+        
     fi
     
 ####################################################################################################
@@ -169,5 +210,10 @@ fi
 ## Ref: https://gist.github.com/gmartellino/4692252
 ## Ref: https://stackoverflow.com/questions/6837061/mysqlimport-error-1045-access-denied
 ## Ref: https://community.localwp.com/t/database-empty-after-import-help/2820
+## Ref: https://swiftheadline.com/check-a-value-in-a-mysql-database-from-a-linux-bash-script-cloudsavvy-it/
+## Ref: https://www.cloudsavvyit.com/1081/check-a-value-in-a-mysql-database-from-a-linux-bash-script/
+## Ref: https://explainshell.com/explain?cmd=mysql+-BNe
+## Ref: https://www.tutorialspoint.com/mysql-query-to-fetch-only-a-single-field-on-the-basis-of-boolean-value-in-another-field
+## Ref: https://stackoverflow.com/questions/20878089/php-and-mysql-select-a-single-value
 
 ## SS_EOF

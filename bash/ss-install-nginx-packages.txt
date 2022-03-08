@@ -31,7 +31,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-nginx-core: Reinstalls the Nginx module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-nginx-core: Reinstalls the Nginx module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -91,8 +91,8 @@ source "$PATH_SS_PERMS_NGINX_PACKAGES"
 #### SS-Install-Nginx-Core: Restart Services (Nginx) ###############################################
 ####################################################################################################
 
-## restart Nginx module ##
-source "$PATH_SS_RESTART_SERVICES_NGINX"
+## run-ss-restart-nginx ##
+source "$PATH_SS_RESTART_NGINX"
 
 ####################################################################################################
 #### SS-Install-Nginx-Packages: Touch Timestamp File (End Script) ##################################

@@ -4,10 +4,10 @@
 #### mirror: https://mirrors.slickstack.io/modules/nginx/nginx-conf.txt ############################
 #### path: n/a (boilerplate) #######################################################################
 #### destination: /etc/nginx/nginx.conf (after install) ############################################
-#### purpose: Nginx main configuration file (server block configuration file is separate) ##########
+#### purpose: Nginx main configuration file (server block configuration files are separate) ########
 #### module version: Nginx 1.18.x ##################################################################
 #### sourced by: n/a ###############################################################################
-#### bash aliases: n/a #############################################################################
+#### bash aliases: n/a (ss-install-nginx-config) ###################################################
 ####################################################################################################
 
 ## NGINX OPTIMIZED FOR CLOUDFLARE AND TRAFFIC SCALING (NON-CLUSTERED HIGH TRAFFIC) ##
@@ -172,8 +172,8 @@ http {
 ## to improve scalability access_log is hardcode disabled to reduce CPU and disk usage ##
 ## error_log is hardcoded in conjunction with SlickStack error handling settings ##
     
-    access_log off;
-    error_log /var/www/logs/nginx.log crit;
+    access_log @NGINX_ACCESS_LOG;
+    error_log /var/www/logs/nginx-error.log crit;
     log_not_found off;
 
 ####################################################################################################
@@ -332,5 +332,6 @@ http {
 ## Ref: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Feature-Policy#Directives
 ## Ref: https://easyengine.io/tutorials/nginx/open-file-cache/
 ## Ref: https://blog.actorsfit.com/a?ID=01000-1f0b5137-4f05-41de-8164-e688304d89f0
+## Ref: https://easyengine.io/blog/why-we-never-use-varnish-with-nginx/
 
 ## SS_EOF

@@ -7,7 +7,7 @@
 #### path: /var/www/meta/.bashrc ###################################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Useful bash hacks i.e. SlickStack and WP-CLI aliases and pretty shell prompts ########
-#### module version: Ubuntu 20.04 LTS ##############################################################
+#### module version: Ubuntu 22.04 LTS ##############################################################
 #### sourced by: /home/SUDO_USER/.bashrc, /root/.bashrc ############################################
 #### bash aliases: n/a (ss-install-ubuntu-bash) ####################################################
 ####################################################################################################
@@ -289,6 +289,9 @@ function ss {
         command sudo bash /var/www/ss-encrypt-certbot
     elif [[ $@ == "install letsencrypt" ]]; then
         command sudo bash /var/www/ss-encrypt-certbot
+    elif [[ $@ == "install magento" ]]; then
+        command sudo bash /var/www/ss-install-magento-core
+        command sudo bash /var/www/ss-install-magento-config
     elif [[ $@ == "install magento config" ]]; then
         command sudo bash /var/www/ss-install-magento-config
     elif [[ $@ == "install magento core" ]]; then
@@ -373,9 +376,9 @@ function ss {
     elif [[ $@ == "install ssl" ]]; then
         command sudo bash /var/www/ss-install-nginx-ssl
     elif [[ $@ == "install swap" ]]; then
-        command sudo bash /var/www/ss-install-ubuntu-swap
+        command sudo bash /var/www/ss-install-ubuntu-swapfile
     elif [[ $@ == "install swapfile" ]]; then
-        command sudo bash /var/www/ss-install-ubuntu-swap
+        command sudo bash /var/www/ss-install-ubuntu-swapfile
     elif [[ $@ == "install ubuntu aliases" ]]; then
         command sudo bash /var/www/ss-install-ubuntu-bash
     elif [[ $@ == "install ubuntu bash" ]]; then
@@ -393,7 +396,7 @@ function ss {
     elif [[ $@ == "install ubuntu ssh" ]]; then
         command sudo bash /var/www/ss-install-ubuntu-ssh
     elif [[ $@ == "install ubuntu swap" ]]; then
-        command sudo bash /var/www/ss-install-ubuntu-swap
+        command sudo bash /var/www/ss-install-ubuntu-swapfile
     elif [[ $@ == "install ubuntu users" ]]; then
         command sudo bash /var/www/ss-install-ubuntu-users
     elif [[ $@ == "install ubuntu utils" ]]; then
@@ -414,6 +417,8 @@ function ss {
         command sudo bash /var/www/ss-install-wordpress-config
         command sudo bash /var/www/ss-install-wordpress-mu-plugins
         command sudo bash /var/www/ss-install-wordpress-cli
+    elif [[ $@ == "install utils" ]]; then
+        command sudo bash /var/www/ss-install-ubuntu-utils
     elif [[ $@ == "install wp" ]]; then
         command sudo bash /var/www/ss-install-wordpress-core
         command sudo bash /var/www/ss-install-wordpress-config
@@ -459,6 +464,8 @@ function ss {
         command sudo bash /var/www/ss-optimize-database
         command sudo bash /var/www/ss-optimize-files
     elif [[ $@ == "optimize database" ]]; then
+        command sudo bash /var/www/ss-optimize-database
+    elif [[ $@ == "optimize db" ]]; then
         command sudo bash /var/www/ss-optimize-database
     elif [[ $@ == "optimize files" ]]; then
         command sudo bash /var/www/ss-optimize-files
@@ -624,6 +631,12 @@ function ss {
         command sudo bash /var/www/ss-purge-transients
     elif [[ $@ == "purge wordpress transients cache" ]]; then
         command sudo bash /var/www/ss-purge-transients
+    elif [[ $@ == "push dev" ]]; then
+        command sudo bash /var/www/ss-push-dev
+    elif [[ $@ == "push development" ]]; then
+        command sudo bash /var/www/ss-push-development
+    elif [[ $@ == "push staging" ]]; then
+        command sudo bash /var/www/ss-push-staging
     elif [[ $@ == "reboot" ]]; then
         command sudo bash /var/www/ss-reboot-machine
     elif [[ $@ == "remote backup" ]]; then
@@ -682,6 +695,8 @@ function ss {
         command sudo bash /var/www/ss-sync-staging
     elif [[ $@ == "sync staging" ]]; then
         command sudo bash /var/www/ss-sync-staging
+    elif [[ $@ == "test openssl" ]]; then
+        openssl x509 -noout -text -in /var/www/certs/slickstack.crt
     elif [[ $@ == "update" ]]; then
         command sudo bash /var/www/ss-check
         command sudo bash /var/www/ss-worker
@@ -778,5 +793,7 @@ cd /var/www/
 ## Ref: https://forum.rclone.org/t/changing-default-location-of-rclone-conf/6698/4
 ## Ref: https://unix.stackexchange.com/questions/140602/how-do-i-start-all-shell-sessions-in-a-directory-other-than-home
 ## Ref: https://serverfault.com/questions/167416/how-can-i-automatically-change-directory-on-ssh-login
+## Ref: https://askubuntu.com/questions/27314/script-to-display-all-terminal-colors
+## Ref: https://unix.stackexchange.com/questions/124407/what-color-codes-can-i-use-in-my-bash-ps1-prompt
 
 ## SS_EOF

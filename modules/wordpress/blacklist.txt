@@ -5,7 +5,7 @@
 ;;;; path: /var/www/html/wp-content/blacklist.txt ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; destination: n/a (not a boilerplate) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; purpose: Plugin Blacklist configuration file (with related comments by LittleBizzy) ;;;;;;;;;;;
-;;;; module version: Plugin Blacklist 1.1.x + WordPress 5.7.x ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; module version: Plugin Blacklist 1.1.x + WordPress 5.9.x ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; sourced by: Plugin Blacklist (MU plugin) ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; bash aliases: n/a ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -496,10 +496,10 @@ digiproveblog ;; pointless
 /digits/ ;; creates instability, serious errors, resource intensive
 disable-attachment-pages ;; ss conflicts
 disable-attachment-pages-littlebizzy ;; ss conflicts
-disable-embeds ;; ss conflicts
-disable-embeds-littlebizzy ;; ss conflicts
-disable-emojis ;; ss conflicts
-disable-emojis-littlebizzy ;; ss conflicts
+;; disable-embeds ;; ss conflicts
+;; disable-embeds-littlebizzy ;; ss conflicts
+;; disable-emojis ;; ss conflicts
+;; disable-emojis-littlebizzy ;; ss conflicts
 disable-empty-trash ;; ss conflicts
 disable-empty-trash-littlebizzy ;; ss conflicts
 disable-image-compression ;; ss conflicts
@@ -740,6 +740,7 @@ hyper-cache-extended ;; ss conflicts
 hyperdb ;; ss conflicts
 icon-moon-font-add ;; no public changelog
 iire-social-icons ;; not maintained
+imagemagick-engine ;; ss conflicts
 images-lazyload-and-slideshow ;; not maintained
 image-optimizer-for-google-lighthouse ;; deprecated
 image-optimizer-wd ;; resource intensive, creates database junk
@@ -904,7 +905,7 @@ mythemeshop-theme-customizer ;; spyware company, serious errors, poor coding, be
 mywebtonet-performancestats ;; resource intensive
 native-lazyload ;; serious errors, creates instability, experimental software (By Google)
 native-emoji ;; bloated
-nazy-load ;; creates instability (overwrites paths, lazy load), auto-WebP (not a web standard yet), ss conflicts (By Gijo Varghese)
+nazy-load ;; creates instability (overwrites paths), ss conflicts (By Gijo Varghese)
 new-google-plus-badge ;; deprecated
 new-google-plus-badge-widget ;; deprecated
 news-ticker-tj ;; not maintained, serious errors
@@ -1043,7 +1044,7 @@ rc-site-map ;; bad practice (HTML sitemaps unnecessary)
 reachedge ;; serious errors (404 errors), poor coding, not maintained
 /react/ ;; not maintained
 react-and-share ;; bloated
-read-meter ;; pointless (by Brainstorm Force)
+read-meter ;; pointless (by Brainstorm Force)https://reclaimthenet.org/twitter-locked-out-grabien-media-account-for-quoting-a-congressman-andy-briggs/
 real-time-find-and-replace ;; thrashing, js hacks
 really-simple-ssl ;; bloated, ss conflicts, better options exist
 really-simple-twitter-feed-widget ;; deprecated
@@ -1051,7 +1052,7 @@ recaptcha-in-wp-comments-form ;; serious errors, not maintained (By Joan Miquel 
 /recent-tweets-widget/ ;; poor coding, serious errors, better options exist
 redirect-to-404 ;; not maintained
 /redirection/ ;; excessive logging
-redis-cache ;; ss conflicts
+;; redis-cache ;; ss conflicts (By Till Kruss)
 redis-http-cache ;; ss conflicts
 redis-https-cache ;; ss conflicts
 redis-object-cache ;; ss conflicts
@@ -1327,7 +1328,7 @@ ultimate-wp-reset ;; ss conflicts, potential data loss
 unlimited-elements-for-elementor ;; hacks third-party design products (By Unlimited Elements)
 unlist-posts ;; creates instability (by Brainstorm Force)
 update-alt-attribute ;; not maintained, creates instability (cannot be removed), bad practice
-updraftplus ;; bloated, unsafe local archive storage
+;; updraftplus ;; bloated, unsafe local archive storage
 uploadify ;; exploitable
 upress ;; vendor specific
 use-any-font ;; bad practice, creates instability, several conflicts with page builders etc
@@ -1359,8 +1360,8 @@ warm-cache ;; resource intensive, ss conflicts
 wc-password-strength-settings ;; exploitable, not maintained, serious errors, pointless (should be WP-level)
 we-minify-html ;; ss conflicts
 webcraftic-updates-manager ;; creates instability (blocks security updates)
-webp-converter-for-media ;; bloated, creates junk files, creates instability, bad practice (not a web standard yet), potential data loss
-webp-express ;; creates instability, generates junk files, not a web standard yet
+webp-converter-for-media ;; creates instability (changes file paths), potential data loss
+webp-express ;; creates instability (changes file paths), potential data loss
 webriti-smtp-mail ;; not maintained
 website-blacklist-monitor ;; pointless, should not be plugin
 webzunder ;; deprecated, not maintained
@@ -1679,14 +1680,13 @@ itsec_load_textdomain ;; iThemes Security
 ;; Message for soon to be disallowed plugins (multiple lines allowed)
 ;; This message will appear in the WordPress admin notices section
 [message future]
-The following plugins will (likely) be disallowed before June 2022 due to abandonment, performance issues, and/or bad practices... please consider finding alternatives:
+The following plugins will (likely) be disallowed before October 2022 due to abandonment, performance issues, and/or bad practices... please consider finding alternatives:
 
 ;; match any path (case insensitive)
 ;; for exact directory matches use slashes e.g. /revslider/
 [path future]
 wordpress-seo ;; spyware, spammy, cronyism, hijacks WP Admin, history of poor coding, bloated, excessive logging, excessive API calls (aka Yoast SEO)
 product-catalog-feed-pro ;; no public changelog, potential database thrashing?
-/popup-maker/ ;; serious errors, bloated, barely any functions unless you pay for multiple add-ons
 sendgrid-email-delivery-simplified ;; does not work as of Jan 2021, serious errors, not maintained (By SendGrid)
 baw-login-logout-menu ;; not maintained (By Juliobox)
 dps-columns-extension ;; not maintained (By Bill Erickson on GitHub)
@@ -1760,7 +1760,7 @@ easy-tables-vc ;; no public changelog, better options exist (By WP Bakery)
 googleanalytics ;; poor maintenance, bloated, excessive API calls, better options exist (By ShareThis)
 ajax-campaign-monitor-forms ;; not maintained (By Lee Willis)
 seo-ultimate ;; not maintained (By SEO Design Solutions)
-wp-add-custom-css ;; bad practice (loads per-page custom CSS instead of site-wide) By Daniele De Santis
+;; wp-add-custom-css ;; bad practice (loads per-page custom CSS instead of site-wide) By Daniele De Santis
 ;; contact-form-7 ;; bloated, bad practice (creates /js/ folder and ignores WP best practices, etc) will not blacklist for a long while tho
 Ebor-Framework ;; poor maintenance, no public changelog (By Tom Rhodes)
 ebor-framework ;; poor maintenance, no public changelog (By Tom Rhodes)
@@ -2073,7 +2073,7 @@ truconversion-connect ;; utility
 update-theme-and-plugins-from-zip-file ;; import/export
 users-customers-import-export-for-wp-woocommerce ;; import/export (By WebToffee)
 vc-templates-import-export ;; import/export
-vendidero-helper
+;; vendidero-helper ;; vendor updates (germanized pro for woocommerce vendidero.de)
 ;; video-user-manuals ;; utility
 what-the-file ;; utility
 widget-importer-exporter ;; import/export

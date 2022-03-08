@@ -29,7 +29,7 @@ server {
 }
 
 ####################################################################################################
-#### Server Block (Production): Canonical Domain (Single Website Only) #############################
+#### Server Block (Production): Canonical Domain (Single Website) ##################################
 ####################################################################################################
 
 ## CloudFlare ignores HTTP/2 from origin server but we enable in case of Lets Encrypt ##
@@ -45,22 +45,38 @@ server {
 	if ($http_host !~ "@SITE_DOMAIN|staging.@SITE_DOMAIN_EXCLUDING_WWW|dev.@SITE_DOMAIN_EXCLUDING_WWW") {
 	return 301	https://@SITE_DOMAIN$request_uri;
 	}
-    
+	
 ####################################################################################################
-#### Server Block (Production): Indexing + Public URI + Try Files Settings #########################
+#### Server Block (Production): Redirect Any AMP Requests ##########################################
 ####################################################################################################
 
-    ## redirect index.php to root ##
-    if ($request_uri ~* "^(.*/)index\.php$") {
-        return 301 $1;
-    }
-    
-    ## force trailing slash on */wp-admin requests ##
-    rewrite /wp-admin$ https://$host$uri/ permanent;
-    
-    ## try files order ##
-    location / {
+## this powerful snippet will redirect all the messy URLs created by AMP software ##
+## SlickStack does not support AMP for both stability and political reasons ##
+
+	## redirect /amp queries ##
+	rewrite ^(.*/)amp(.*)$ $1 permanent;
 	
+	## redirect ?amp queries ##
+	if ($query_string ~ "^(.*)amp(.*)$") {
+        	rewrite ^(.*)$ $uri? permanent;
+	}
+
+####################################################################################################
+#### Server Block (Production): Root Location Block ################################################
+####################################################################################################
+
+## below is the main location block that applies to pretty much the entire website ##
+## this includes site-wide rules for security, maintenance, and other purposes ##
+
+	## force trailing slash on */wp-admin requests ##
+	rewrite /wp-admin$ https://$host$uri/ permanent;
+		
+    	location / {
+    		## redirect index.php to root ##
+    		if ($request_uri ~* "^(.*/)index\.php$") {
+        		return 301 $1;
+    		}
+
 		## 503 error if maintenance file found in web root ##
 		if (-f /var/www/html/maintenance.html) {
 			return 503;
@@ -68,8 +84,15 @@ server {
   
         ## first try files, then directories, otherwise query index
         try_files $uri $uri/ /index.php?$args;
-	## force trailing slashes on urls (do not enable for bbPress/BuddyPress sites)
+	
+		## force trailing slashes on urls (do not enable for bbPress/BuddyPress sites)
         # rewrite ^([^.]*[^/])$ $1/ permanent;
+	
+		## block user enumeration
+    	if ( $query_string ~ "author=([0-9]*)" ) { 
+			return 403;
+		}
+		
     }
     
     ## hidden files (block access) ##
@@ -91,11 +114,11 @@ server {
     }
 
 ####################################################################################################
-#### Server Block: FastCGI Cache Settings ##########################################################
+#### Server Block (Production): FastCGI Cache Settings #############################################
 ####################################################################################################
 
-## several common URI patterns are configured to skip FastCGI caching to avoid conflicts ##
-## ensure your site follows correct URI spelling e.g. /cart and /checkout (etc) ##
+## several common patterns are configured to skip FastCGI caching to avoid conflicts ##
+## ensure your site uses correct URL spellings e.g. /cart and /checkout (etc) ##
 
     ## set to either 1/0 to skip fastcgi cache by default ##
     set $skip_cache @FCGI_CACHE;
@@ -110,11 +133,21 @@ server {
         set $skip_cache 1;
     }
     
-    ## sensitive wordpress urls should always skip the cache
+    ## ENGLISH - sensitive wordpress urls should always skip the cache
     if ($request_uri ~* "index.php|/account.*|/cart.*|/checkout.*|/contact.*|/dashboard.*|/login.*|/my-.*|/order.*|/profile.*|/register.*|/settings.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
         set $skip_cache 1;
     }
+
+    ## GERMAN - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/warenkorb.*|/kasse.*|/kontakt.*|/dashboard.*|/anmelden.*|/mein-.*|/bestellung.*|/profil.*|/registrieren.*|/einstellungen.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+        set $skip_cache 1;
+    }
     
+    ## POLISH - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/koszyk.*|/zamowienie.*|/kontakt.*|/dashboard.*|/login.*|/moje-.*|/zamowienie.*|/profil.*|/register.*|/ustawienia.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+    	set $skip_cache 1;
+    }
+
     ## do not cache RSS feeds or sitemaps (special 5 minute cache rule or something would be better in the future) ##
     if ($request_uri ~* "/feed/|sitemap(_index)?.xml") {
         set $skip_cache 1;
@@ -141,8 +174,11 @@ server {
     # }
 
 ####################################################################################################
-#### Server Block: PHP-FPM Routing + FastCGI Routing Settings ######################################
+#### Server Block (Production): PHP-FPM Routing Settings ###########################################
 ####################################################################################################
+
+## here are the infamous settings that allow Nginx and PHP to work together via FCGI ##
+## we also have to optimize cookies here too since working with WordPress ##
 
     location ~ \.php$ {
         set $rt_session "";
@@ -154,12 +190,9 @@ server {
                 set $rt_session "";
         }
 
-        ## include /etc/nginx/fastcgi_params for older nginx versions
         include /etc/nginx/fastcgi.conf;
         try_files $uri =404;
         fastcgi_split_path_info ^(.+\.php)(/.+)$;
-        ## fastcgi_pass unix:/var/run/php/php7.4-fpm.sock
-	## fastcgi_pass unix:/run/php/php7.4-fpm.sock;
 	fastcgi_pass 127.0.0.1:9000;
 	fastcgi_read_timeout 300;
         fastcgi_index index.php;
@@ -167,10 +200,8 @@ server {
         fastcgi_cache_valid 200 301 404 @CACHEVALID;
         fastcgi_cache_bypass $skip_cache;
         fastcgi_no_cache $skip_cache;
-        ## below line should not be needed
-        # include snippets/fastcgi-php.conf;
     }
-
+    
 ####################################################################################################
 #### Server Block (Production): WP-Login Settings (Rate Limiting) ##################################
 ####################################################################################################
@@ -195,9 +226,14 @@ server {
     	}
     
 ####################################################################################################
-#### Server Block: Adminer (phpMyAdmin) Settings ###################################################
+#### Server Block (Production): Adminer Settings ###################################################
 ####################################################################################################
-    
+
+## this snippet lets you load Adminer via the frontend (requires more repeat rules) ##
+## we include some basic rate limiting rules to avoid attacks on these URLs ##
+
+## NEEDS IMPROVEMENT ##
+
     location ^~ /adminer {
         ## limit access to one request per second per IP address
         limit_req zone=adminer burst=1 nodelay;
@@ -227,69 +263,19 @@ server {
     }
     
 ####################################################################################################
-#### Server Block: Staging URI Settings (Supports WP-Staging, Etc) #################################
+#### Server Block (Production): Dev/Staging Subdirectory Settings ##################################
 ####################################################################################################
     
-## staging sites are noindexed, FastCGI caching is disabled, and paths are hardcoded ## 
-## media files (uploads) are aliased to existing files from the production site ##
+## for security reasons the dev and staging sudirectories are redirected to subdomains ##
+## therefore any staging WordPress plugins cannot use these reserved paths ##
     
     location /staging/ {
-        ## first try files, then directories, otherwise query index ##
-        try_files $uri $uri/ /staging/index.php?$args;
-        ## tweak FastCGI Cache (needs to be improved with mild cache settings) ##
-        include /etc/nginx/fastcgi.conf;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-	fastcgi_pass 127.0.0.1:9000;
-        fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache off;
-	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
-	add_header X-Powered-By "SlickStack";
-        add_header Strict-Transport-Security "max-age=15552000" always; ## 180 days
-        add_header X-FastCGI-Cache $upstream_cache_status;
-        add_header X-Frame-Options SAMEORIGIN;
-        add_header X-Content-Type-Options nosniff;
-        add_header X-XSS-Protection "1; mode=block";
-        add_header Referrer-Policy "strict-origin-when-cross-origin";
-	add_header Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=(), display-capture=*, document-domain=*, encrypted-media=*, fullscreen=*, geolocation=(self), gyroscope=(), layout-animations=*, legacy-image-formats=*, magnetometer=(), microphone=(self), midi=(), oversized-images=*, payment=*, picture-in-picture=*, publickey-credentials-get=*, sync-xhr=*, usb=(), vibrate=(), wake-lock=(), xr-spatial-tracking=()";
-    }
-    
-    # location ~ ^/staging/wp-content/uploads/(.*) {
-    #    return 302             https://@DOMAIN/wp-content/uploads/$1;
-    # }
-    
-    location ^~ /staging/wp-content/uploads/ {
-        alias /var/www/html/wp-content/uploads/;
+        return 301	https://@SITE_DOMAIN;
     }
     
     location /dev/ {
-        ## first try files, then directories, otherwise query index ##
-        try_files $uri $uri/ /dev/index.php?$args;
-        ## tweak FastCGI Cache (needs to be improved with mild cache settings) ##
-        include /etc/nginx/fastcgi.conf;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-	fastcgi_pass 127.0.0.1:9000;
-        fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache off;
-	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
-	add_header X-Powered-By "SlickStack";
-        add_header Strict-Transport-Security "max-age=15552000" always; ## 180 days
-        add_header X-FastCGI-Cache $upstream_cache_status;
-        add_header X-Frame-Options SAMEORIGIN;
-        add_header X-Content-Type-Options nosniff;
-        add_header X-XSS-Protection "1; mode=block";
-        add_header Referrer-Policy "strict-origin-when-cross-origin";
-	add_header Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=(), display-capture=*, document-domain=*, encrypted-media=*, fullscreen=*, geolocation=(self), gyroscope=(), layout-animations=*, legacy-image-formats=*, magnetometer=(), microphone=(self), midi=(), oversized-images=*, payment=*, picture-in-picture=*, publickey-credentials-get=*, sync-xhr=*, usb=(), vibrate=(), wake-lock=(), xr-spatial-tracking=()";
+        return 301	https://@SITE_DOMAIN;
     }
-    
-    # location ~ ^/dev/wp-content/uploads/(.*) {
-    #    return 302             https://@DOMAIN/wp-content/uploads/$1;
-    # }
-    
-   # location ^~ /dev/wp-content/uploads/ {
-   #     alias /var/www/html/wp-content/uploads/;
-   # }
     
 ####################################################################################################
 #### Server Block (Production): Static Resource Settings ###########################################
@@ -303,10 +289,11 @@ server {
     }
 
 ####################################################################################################
-#### Server Block: Browser Resource (Render) Settings ##############################################
+#### Server Block (Production): Browser Rendering Settings #########################################
 ####################################################################################################
 
-## avoid render security errors in certain browsers e.g. Firefox/IE ##
+## avoids render security errors for cross-origin in certain browsers e.g. Firefox/IE ##
+## this pretty much tells browsers to stop being paranoid and load your fonts ##
 
     location ~* .(eot|ttf|ttc|otf|woff|woff2|svg|css|js)$ {
         add_header Access-Control-Allow-Origin "*";
@@ -314,31 +301,38 @@ server {
     }
     
 ####################################################################################################
-#### Server Block: Favicon Settings ################################################################
+#### Server Block (Production): Favicon Settings ###################################################
 ####################################################################################################
 
-## 204 error better than 404 error if not found ##
+## the favicon file is annoying and old-fashioned but still something we must optimize ##
+## issuing a 204 error is better (and faster) than a 404 error if not found ##
 
     location = /favicon.ico {
         try_files $uri =204;
     }
     
 ####################################################################################################
-#### Server Block: Robots.txt Settings (Optimized For Virtual Robots.txt MU Plugin) ################
+#### Server Block (Production): Robots.txt Settings ################################################
 ####################################################################################################
-    
+
+## messing up robots.txt rules is one of the most common issues with WordPress sites ##
+## if possible use a virtual one to avoid data loss and ridiculous rulesets ##
+
     location = /robots.txt {
-        ## first try files, then directories, otherwise query index ##
+        ## try files, then directories, otherwise query index ##
         try_files $uri $uri/ /index.php?$args;
 	allow all;
     }
     
 ####################################################################################################
-#### Server Block: Ads.txt Settings (Optimized For Virtual Ads.txt MU Plugin) ######################
+#### Server Block (Production): Ads.txt Settings ###################################################
 ####################################################################################################
-    
+
+## just like robots.txt the ads.txt file can be generated within WordPress itself ##
+## if possible use a virtual one to avoid data loss and ridiculous rulesets ##
+
     location = /ads.txt {
-        ## first try files, then directories, otherwise query index ##
+        ## try files, then directories, otherwise query index ##
         try_files $uri $uri/ /index.php?$args;
 	allow all;
     }
@@ -457,6 +451,10 @@ server {
   location @maintenance {
        rewrite ^(.*)$ /maintenance.html break;
   }
+  
+  
+  
+
 
 
 ####################################################################################################
@@ -520,5 +518,15 @@ server {
 ## Ref: https://serverfault.com/questions/325485/nginx-how-to-prevent-an-exactly-named-ssl-server-block-from-acting-as-the-catch
 ## Ref: https://serverfault.com/questions/496371/nested-locations-nginx
 ## Ref: https://stackoverflow.com/questions/37902544/nginx-sucessfully-password-protects-php-files-but-then-prompts-you-to-download
+## Ref: https://jerrybanfield.com/removing-amp-wordpress/
+## Ref: https://www.kevinleary.net/preventing-possible-attempt-enumerate-users-solved/
+## Ref: https://stackoverflow.com/questions/40785507/nginx-rewrite-url-containing-amp-to-remove-amp-from-the-end
+## Ref: https://geekflare.com/redirect-amp-page-to-non-amp/
+## Ref: https://sandervolbeda.com/redirect-old-amp-url/
+## Ref: https://stackoverflow.com/questions/40810219/nginx-301-redirect-with-query-string/40810818
+## Ref: https://stackoverflow.com/questions/43812339/redirect-301-nginx-with-query-string-amp-amp-nginx-redirect
+## Ref: https://wordpress.org/support/topic/how-to-drop-amp-and-redirect-all-amp-version-to-normal-url/
+## Ref: https://stackoverflow.com/questions/48708361/nginx-request-uri-vs-uri/48709976
+## Ref: https://www.linuxbabe.com/nginx/setup-nginx-fastcgi-cache
 
 ## SS_EOF

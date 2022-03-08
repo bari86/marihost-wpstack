@@ -40,13 +40,13 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-mysql-packages: Reinstalls the MySQL module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-mysql-packages: Reinstalls the MySQL module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 
 
 if [[ "$SS_DATABASE_REMOTE" == "true" ]]; then
-    echo -e "${YELLOW}Exiting ss-install-mysql-packages: Your ss-config indicates a remote database so we will skip MySQL install... ${NOCOLOR}"
+    echo -e "${COLOR_WARN}Exiting ss-install-mysql-packages: Your ss-config indicates a remote database so we will skip MySQL install... ${NOCOLOR}"
     exit 1
 fi
 
@@ -59,7 +59,13 @@ fi
 ## then we proceed with purge/cleanup of MySQL packages to pepare a clean install ##
 
 ## stop MySQL ##
-/etc/init.d/mysql* stop
+
+# /etc/init.d/mysql* stop
+
+if [[ -f "/etc/init.d/mysql" ]]; then
+sudo /etc/init.d/mysql* stop
+fi
+
 sleep 15s
 
 ## kill any remaining MySQL processes ##
@@ -117,21 +123,21 @@ if [[ "$SS_DATABASE_REMOTE" != "true" ]]; then
 
     ## mysql-server-8.1 (Ubuntu 22.04 LTS) ##
     if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then 
-        echo -e "${PURPLE}Running ss-install-mysql-packages: Ubuntu LTS 22.04 detected so proceeding with MySQL 8.1 installation... ${NOCOLOR}"
+        # echo -e "${COLOR_INFO}Running ss-install-mysql-packages: Ubuntu LTS 22.04 detected so proceeding with MySQL 8.1 installation... ${NOCOLOR}"
         sleep "$SLEEP_MESSAGE_BEGIN"
         apt install mysql-server-8.1
     fi
 
     ## mysql-server-8.0 (Ubuntu 20.04 LTS) ##
     if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then 
-        echo -e "${PURPLE}Running ss-install-mysql-packages: Ubuntu LTS 20.04 detected so proceeding with MySQL 8.0 installation... ${NOCOLOR}"
+        # echo -e "${COLOR_INFO}Running ss-install-mysql-packages: Ubuntu LTS 20.04 detected so proceeding with MySQL 8.0 installation... ${NOCOLOR}"
         sleep "$SLEEP_MESSAGE_BEGIN"
         apt install mysql-server-8.0
     fi
 
     ## mysql-server-5.7 (Ubuntu 18.04 LTS) ##
     if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
-        echo -e "${PURPLE}Running ss-install-mysql-packages: Ubuntu LTS 18.04 detected so proceeding with MySQL 5.7 installation... ${NOCOLOR}"
+        # echo -e "${COLOR_INFO}Running ss-install-mysql-packages: Ubuntu LTS 18.04 detected so proceeding with MySQL 5.7 installation... ${NOCOLOR}"
         sleep "$SLEEP_MESSAGE_BEGIN"
         apt install mysql-server-5.7
     fi
@@ -379,5 +385,6 @@ touch "$TIMESTAMP_SS_INSTALL_MYSQL_PACKAGES"
 ## Ref: https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
 ## Ref: https://vettabase.com/blog/the-risks-of-mysql-release-policy/
 ## Ref: https://tldp.org/LDP/abs/html/comparison-ops.html
+## Ref: https://forum.virtualmin.com/t/why-mysql-and-not-mariadb-on-ubuntu-20-04-virtualmin/107232/1
 
 ## SS_EOF

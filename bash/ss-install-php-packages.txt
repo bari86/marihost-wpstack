@@ -31,7 +31,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-php-packages: Reinstalls the PHP-FPM module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-php-packages: Reinstalls the PHP-FPM module Ubuntu packages and extensions (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -41,15 +41,19 @@ sleep "$SLEEP_MESSAGE_BEGIN"
 ## here we first purge any existing PHP packages and then reinstall PHP-FPM from scratch ##
 ## this approach is safe and helps avoid any conflicts between package versions ##
 
-## purge packages ##
-apt purge ^php
+if [[ "$SS_INSTALL_PHP_PACKAGES_PURGE_FIRST" == "true" ]]; then
 
-## delete any leftover PHP files (disable for now because apt will not create these files if it notices the php directory exists already) ##
-# rm /etc/php*
+    ## purge packages ##
+    apt purge ^php
 
-## cleanup any outdated packages and system files ##
-apt autoremove
-apt autoclean
+    ## delete any leftover PHP files (disable for now because apt will not create these files if it notices the php directory exists already) ##
+    # rm /etc/php*
+
+    ## cleanup any outdated packages and system files ##
+    apt autoremove
+    apt autoclean
+
+fi
 
 ## update repo cache ##
 apt update
@@ -79,7 +83,8 @@ if [[ "${UBUNTU_VERSION}" == "20.04" ]] && [[ -n "$PHP_EXTENSIONS" ]]; then
             apt install $PHP_EXTENSIONS_NOW
         else
             echo -e "${PURPLE}Running ss-install-php-packages: Mismatch with PHP extension versions in ss-config so installing 7.4 defaults... ${NOCOLOR}"
-            apt install php7.4-fpm php7.4-bcmath php7.4-curl php7.4-gd php7.4-imagick php7.4-json php7.4-mbstring php7.4-mysql php7.4-soap php7.4-sqlite3 php7.4-xml php7.4-zip
+            ## cannot include these directly (part of other packages): hash,libxml,openssl,pcre,pdo_mysql,sodium ##
+            apt install php7.4-fpm php7.4-bcmath php7.4-ctype php7.4-curl php7.4-dom php7.4-fileinfo php7.4-gd php7.4-iconv php7.4-intl php7.4-imagick php7.4-json php7.4-mbstring php7.4-mysql php7.4-simplexml php7.4-soap php7.4-sockets php7.4-sqlite3 php7.4-xml php7.4-xmlwriter php7.4-xsl php7.4-zip
         fi
 fi
 

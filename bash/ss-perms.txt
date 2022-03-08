@@ -8,7 +8,7 @@
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Resets all file and user permissions across the entire SlickStack server #############
 #### module version: Ubuntu 20.04 LTS ##############################################################
-#### sourced by: ss core cron jobs, ss-install, ss-update-modules ##################################
+#### sourced by: ss-install, ss-update-modules #####################################################
 #### bash aliases: ss perms, ss reset perms ########################################################
 ####################################################################################################
 
@@ -21,14 +21,31 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Perms: Message (Begin Script) ##############################################################
+#### TABLE OF CONTENTS (SS-Perms) ##################################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+
+####################################################################################################
+#### A. SS-Perms: Touch Timestamp File #############################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_PERMS"
+
+####################################################################################################
+#### B. SS-Perms: Message (Begin Script) ###########################################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-perms: Resets all file and user permissions across the entire SlickStack server... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-perms: Resets all file and user permissions across the entire SlickStack server... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -257,16 +274,6 @@ source "$PATH_SS_PERMS_UFW_PACKAGES"
 source "$PATH_SS_PERMS_UFW_CONFIG"
 
 ####################################################################################################
-#### SS-Perms: Touch Timestamp File (End Script) ###################################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_PERMS"
-
-####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
 ####################################################################################################
 
@@ -297,5 +304,6 @@ touch "$TIMESTAMP_SS_PERMS"
 ## Ref: https://askubuntu.com/questions/23009/why-crontab-scripts-are-not-working
 ## Ref: https://unix.stackexchange.com/questions/358112/permissions-error-with-wordpress
 ## Ref: https://webinoly.com/support/975/chown-problem?show=975
+## Ref: https://unix.stackexchange.com/questions/118085/transform-a-directory-into-file-or-a-file-into-directory
 
 ## SS_EOF

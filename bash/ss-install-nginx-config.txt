@@ -8,7 +8,7 @@
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls the Nginx module config files based on ss-config (idempotent) #############
 #### module version: Nginx 1.18.x ##################################################################
-#### sourced by: ss-install-nginx, ss-encrypt-certbot, ss-encrypt-openssl ##########################
+#### sourced by: ss-install ##########################
 #### bash aliases: ss install nginx config #########################################################
 ####################################################################################################
 
@@ -44,7 +44,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-nginx-config: Reinstalls the Nginx module config files based on ss-config (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-nginx-config: Reinstalls the Nginx module config files based on ss-config (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -115,6 +115,15 @@ if [[ "$SITE_NOINDEX" == "true" ]]; then
 else 
     sed -i "/#@NOINDEX# /d" "$TMP_NGINX_CONF"
 fi
+
+## access log ##
+if [[ -z "$NGINX_ACCESS_LOG" ]]; then 
+    sed -i "s/@NGINX_ACCESS_LOG/off/g" "$TMP_NGINX_CONF"
+else 
+    sed -i "s|@NGINX_ACCESS_LOG|/var/www/logs/nginx-access.log|g" "$TMP_NGINX_CONF"
+fi
+
+
 
 ## FastCGI (FCGI) Cache Settings
 
@@ -421,7 +430,9 @@ if [[ "$DEV_SITE" == "true" ]]; then
     fi
 
     ## copy files to destinations ##
+    if [[ "$SS_INSTALL_NGINX_CONFIG_OVERWRITE_BLOCKS" != "false" ]]; then 
     cp "$TMP_NGINX_BLOCK_DEVELOPMENT" "$PATH_NGINX_BLOCK_DEVELOPMENT"
+    fi
 
 fi
 
@@ -472,12 +483,14 @@ if [[ "$STAGING_SITE" == "true" ]]; then
     fi
     
     ## copy files to destinations ##
+    if [[ "$SS_INSTALL_NGINX_CONFIG_OVERWRITE_BLOCKS" != "false" ]]; then 
     cp "$TMP_NGINX_BLOCK_STAGING" "$PATH_NGINX_BLOCK_STAGING"
+    fi
 
 fi
 
 ####################################################################################################
-#### SlickStack: Install Nginx Servers Blocks (Supports Single Sites + Multisite) ##################
+#### SS-Install-Nginx-Config: Install Nginx Server Block (Production) ##################
 ####################################################################################################
 
 ## here we install the Nginx server block for production (default) site no matter what ##
@@ -485,14 +498,16 @@ fi
 
 ## download latest server block boilerplate (single site / Multisite) ##
 if [[ "$WP_MULTISITE" == "true" ]]; then 
-    wget -O /tmp/default "$MIRROR_SERVER_BLOCK_WP_MULTISITE"
-    # elif [[ "$WP_MULTISITE" == "true" ]] && [[ "$WP_MULTISITE_SUBDOMAINS" == "false" ]]; then 
+    wget -O /tmp/default "$MIRROR_NGINX_BLOCK_PRODUCTION_MULTISITE"
+elif [[ "$WP_MULTISITE" == "true" ]] && [[ "$WP_MULTISITE_SUBDOMAINS" == "false" ]]; then 
+    wget -O /tmp/default "$MIRROR_NGINX_BLOCK_PRODUCTION_MULTISITE_SUBDIRECTORIES"
 else 
     wget -O /tmp/default "$MIRROR_NGINX_BLOCK_PRODUCTION"
 fi
 
 ## replace site variables ##
-    SITE_DOMAIN_EXCLUDING_WWW=$(echo "${SITE_DOMAIN/www./}")
+
+SITE_DOMAIN_EXCLUDING_WWW=$(echo "${SITE_DOMAIN/www./}")
     
 sed -i "s/@SITE_DOMAIN_EXCLUDING_WWW/${SITE_DOMAIN_EXCLUDING_WWW}/g" /tmp/default
 sed -i "s/@SITE_DOMAIN_INCLUDING_WWW/${SITE_DOMAIN_INCLUDING_WWW}/g" /tmp/default
@@ -520,11 +535,10 @@ else
     sed -i "s/@FCGI_CACHE/0/g" /tmp/default
 fi
 
-## copy files to destinations ##
-# cp /tmp/default /etc/nginx/sites-available/default
-cp /tmp/default /etc/nginx/sites-available/${SITE_DOMAIN}
-# cp /tmp/default /var/www/sites/${SITE_DOMAIN}
-cp /tmp/default "$PATH_NGINX_BLOCK_PRODUCTION"
+    ## copy files to destinations ##
+    if [[ "$SS_INSTALL_NGINX_CONFIG_OVERWRITE_BLOCKS" != "false" ]]; then 
+        cp /tmp/default "$PATH_NGINX_BLOCK_PRODUCTION"
+    fi
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Temporarily Activate OpenSSL ####################
@@ -641,5 +655,6 @@ touch "$TIMESTAMP_SS_INSTALL_NGINX_CONFIG"
 ## Ref: https://www.tecmint.com/password-protect-web-directories-in-nginx/
 ## Ref: https://www.web2generators.com/apache-tools/htpasswd-generator
 ## Ref: https://www.mkssoftware.com/docs/man1/openssl_passwd.1.asp
+## Ref: https://linuxize.com/post/nginx-log-files/
 
 ## SS_EOF

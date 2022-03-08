@@ -26,6 +26,27 @@ server {
 	root			/var/www/html/staging;
 	auth_basic		"Restricted Content";
 	auth_basic_user_file	/var/www/meta/.htpasswd;
+	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
+	
+	## mirror production media files to staging URLs ##
+	location ^~ /wp-content/uploads/ {
+        	alias /var/www/html/wp-content/uploads/;
+    	}
+
+####################################################################################################
+#### Server Block (Staging): Redirect Any AMP Requests #############################################
+####################################################################################################
+
+## this powerful snippet will redirect all the messy URLs created by AMP software ##
+## SlickStack does not support AMP for both stability and political reasons ##
+
+	## redirect /amp queries ##
+	rewrite ^(.*/)amp(.*)$ $1 permanent;
+	
+	## redirect ?amp queries ##
+	if ($query_string ~ "^(.*)amp(.*)$") {
+        	rewrite ^(.*)$ $uri? permanent;
+	}
 
 ####################################################################################################
 #### Server Block (Staging): Indexing + Public URI + Try Files Settings ############################
@@ -85,9 +106,19 @@ server {
         set $skip_cache 1;
     }
     
-    ## sensitive wordpress urls should always skip the cache
+    ## ENGLISH - sensitive wordpress urls should always skip the cache
     if ($request_uri ~* "index.php|/account.*|/cart.*|/checkout.*|/contact.*|/dashboard.*|/login.*|/my-.*|/order.*|/profile.*|/register.*|/settings.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
         set $skip_cache 1;
+    }
+
+    ## GERMAN - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/warenkorb.*|/kasse.*|/kontakt.*|/dashboard.*|/anmelden.*|/mein-.*|/bestellung.*|/profil.*|/registrieren.*|/einstellungen.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+        set $skip_cache 1;
+    }
+    
+    ## POLISH - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/koszyk.*|/zamowienie.*|/kontakt.*|/dashboard.*|/login.*|/moje-.*|/zamowienie.*|/profil.*|/register.*|/ustawienia.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+    	set $skip_cache 1;
     }
     
     ## do not cache RSS feeds or sitemaps (special 5 minute cache rule or something would be better in the future) ##
@@ -284,10 +315,13 @@ server {
     }
     
 ####################################################################################################
-#### Server Block (Staging): Deny Access To Install.php ###################
+#### Server Block (Staging): Deny Access To WordPress Installer ####################################
 ####################################################################################################
     
-    ## install script ##
+## SlickStack blocks access to the staging WordPress installer to avoid hacking etc ##
+## staging sites should populate their data using ss-sync-staging only ##
+    
+    ## block install script ##
     location = /wp-admin/install.php {
 	deny all;
     }

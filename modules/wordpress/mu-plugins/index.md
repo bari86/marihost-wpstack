@@ -6,22 +6,19 @@ title: MU (Must-Use) Plugins (Public Mirrors)
 
 ----
 
-### Live Files (Plugins By LittleBizzy)
+### Module Files
 
 *Live configuration files and boilerplates used by current SlickStack installation that may be altered by LittleBizzy or Ubuntu for better performance.*
 
-#### Required MU (Must-Use) Plugins
+#### Required MU Plugins
 
 * [autoloader.txt](autoloader.txt)
 * [custom-functions.zip](custom-functions.zip)
 * [xxx-notices.txt](xxx-notices.txt)
 * [xxx-staging.txt](xxx-staging.txt)
+* [redis-cache](redis-cache.zip)
 
-#### Required Drop-In Plugins
-
-* [object-cache.txt](object-cache.txt)
-
-#### Default MU (Must-Use) Plugins (Optional)
+#### Optional MU Plugins
 
 * [clear-caches.zip](clear-caches.zip)
 * [cloudflare.zip](cloudflare.zip)
@@ -35,144 +32,17 @@ title: MU (Must-Use) Plugins (Public Mirrors)
 * [disable-image-compression.zip](disable-image-compression.zip)
 * [disable-post-via-email.zip](disable-post-via-email.zip)
 * [disable-xml-rpc.zip](disable-xml-rpc.zip)
-* [error-log-monitor.zip](error-log-monitor.zip)
 * [force-https.zip](force-https.zip)
 * [force-strong-hashing.zip](force-strong-hashing.zip)
 * [header-cleanup.zip](header-cleanup.zip)
 * [limit-heartbeat.zip](limit-heartbeat.zip)
-* [maintenance-mode.zip](maintenance-mode.zip)
 * [minify-html.zip](minify-html.zip)
 * [plugin-blacklist.zip](plugin-blacklist.zip)
-* [server-status.zip](server-status.zip)
-* [sftp-details.zip](sftp-details.zip)
 * [virtual-robotstxt.zip](virtual-robotstxt.zip)
 
-#### Staging MU (Must-Use) Plugins (Optional)
+#### Staging MU Plugins
 
 * [disable-default-runner.zip](disable-default-runner.zip)
-
-### Original Files
-
-*Raw files from the vendor’s original release (e.g. official repo), not altered by other providers, included for reference and documentation purposes.*
-
-#### autoloader.php
-
-* [autoloader-1.2.1.txt](autoloader-1.2.1.txt)
-* [autoloader-1.2.0.txt](autoloader-1.2.0.txt)
-* [autoloader-1.1.0.txt](autoloader-1.1.0.txt)
-* [autoloader-1.0.0.txt](autoloader-1.0.0.txt)
-
-#### custom-functions.zip
-
-* [custom-functions-1.0.0.zip](custom-functions-1.0.0.zip)
-
-----
-
-#### object-cache.php
-
-* [object-cache-1.2.2.txt](object-cache-1.2.2.txt)
-* [object-cache-1.2.1.txt](object-cache-1.2.1.txt)
-* [object-cache-1.2.0.txt](object-cache-1.2.0.txt)
-
-----
-
-#### clear-caches.zip
-
-* (coming soon)
-
-#### cloudflare.zip
-
-* (coming soon)
-
-#### dashboard-cleanup.zip
-
-* (coming soon)
-
-#### delete-expired-transients.zip
-
-* (coming soon)
-
-#### disable-attachment-pages.zip
-
-* (coming soon)
-
-#### disable-embeds.zip
-
-* (coming soon)
-
-#### disable-emojis.zip
-
-* (coming soon)
-
-#### disable-empty-trash.zip
-
-* (coming soon)
-
-#### disable-gutenberg.zip
-
-* (coming soon)
-
-#### disable-image-compression.zip
-
-* (coming soon)
-
-#### disable-post-via-email.zip
-
-* (coming soon)
-
-#### disable-xml-rpc.zip
-
-* (coming soon)
-
-#### error-log-monitor.zip
-
-* (coming soon)
-
-#### force-https.zip
-
-* (coming soon)
-
-#### force-strong-hashing.zip
-
-* (coming soon)
-
-#### header-cleanup.zip
-
-* (coming soon)
-
-#### limit-heartbeat.zip
-
-* (coming soon)
-
-#### maintenance-mode.zip
-
-* (coming soon)
-
-#### minify-html.zip
-
-* (coming soon)
-
-#### plugin-blacklist.zip
-
-* (coming soon)
-
-#### server-status.zip
-
-* (coming soon)
-
-#### sftp-details.zip
-
-* (coming soon)
-
-#### virtual-robotstxt.zip
-
-* (coming soon)
-
-----
-
-#### object-cache.php (Pressjitsu)
-
-* [pj-object-cache-1.0.txt](pj-object-cache-1.0.txt)
 
 ### Related Links
 
@@ -194,4 +64,4 @@ title: MU (Must-Use) Plugins (Public Mirrors)
 
 ----
 
-*Last updated: Nov 1, 2020*
+*Last updated: Jan 11, 2022*

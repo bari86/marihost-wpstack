@@ -52,7 +52,7 @@ touch "$TIMESTAMP_SS_INSTALL_PHP_CONFIG"
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-php-config: Reinstalls the PHP-FPM module config files based on ss-config (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-php-config: Reinstalls the PHP-FPM module config files based on ss-config (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -385,6 +385,13 @@ else
     sed -i "s/@WWW_PM_MAX_SPARE_SERVERS/${WWW_PM_MAX_SPARE_SERVERS}/g" /tmp/www.conf
 fi
 
+## pool max spawn rate ##
+if [[ -z "$WWW_PM_MAX_SPAWN_RATE" ]]; then 
+    sed -i "s/@WWW_PM_MAX_SPAWN_RATE/32/g" /tmp/www.conf
+else 
+    sed -i "s/@WWW_PM_MAX_SPAWN_RATE/${WWW_PM_MAX_SPAWN_RATE}/g" /tmp/www.conf
+fi
+
 ## pool process idle timeout ##
 if [[ -z "$WWW_PM_PROCESS_IDLE_TIMEOUT" ]]; then 
     sed -i "s/@WWW_PM_PROCESS_IDLE_TIMEOUT/10s/g" /tmp/www.conf
@@ -455,8 +462,8 @@ source "$PATH_SS_PERMS_PHP_CONFIG"
 #### SS-Install-PHP-Config: Restart Services (PHP-FPM) #############################################
 ####################################################################################################
 
-## restart services ##
-source "$PATH_SS_RESTART_SERVICES_PHP"
+## run ss-restart-php ##
+source "$PATH_SS_RESTART_PHP"
 
 ####################################################################################################
 #### SS-Install-PHP-Config: Cleanup Temporary Files ################################################

@@ -7,8 +7,8 @@
 #### path: /var/www/ss-install-wordpress-config ####################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls WordPress module (CMS) config files based on ss-config (idempotent) #######
-#### module version: WordPress 5.6.x ###############################################################
-#### sourced by: ss-install, ss-install-nginx-config, ss install wordpress #########################
+#### module version: WordPress 5.8.x ###############################################################
+#### sourced by: ss-install, ss-install-nginx-config ###############################################
 #### bash aliases: ss install wordpress config, ss install wp config ###############################
 ####################################################################################################
 
@@ -57,7 +57,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-install-wordpress-config: Reinstalls WordPress module (CMS) config files based on ss-config (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-wordpress-config: Reinstalls WordPress module (CMS) config files based on ss-config (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -79,84 +79,17 @@ rm "$TMP_WORDPRESS_CONFIG_DEV"
 wget -O "$TMP_SS_CONSTANTS_PHP" "$MIRROR_SS_CONSTANTS_PHP"
 
     ## set SlickStack dashboard ##
-    if [[ -z "$SS_DASHBOARD" ]]; then 
-        sed -i "s/@SS_DASHBOARD/true/g" "$TMP_SS_CONSTANTS_PHP"
+    if [[ -z "$SS_WORDPRESS_ADMIN_DASHBOARD" ]]; then 
+        sed -i "s/@SS_WORDPRESS_ADMIN_DASHBOARD/true/g" "$TMP_SS_CONSTANTS_PHP"
     else 
-        sed -i "s/@SS_DASHBOARD/${SS_DASHBOARD}/g" "$TMP_SS_CONSTANTS_PHP"
+        sed -i "s/@SS_WORDPRESS_ADMIN_DASHBOARD/${SS_WORDPRESS_ADMIN_DASHBOARD}/g" "$TMP_SS_CONSTANTS_PHP"
     fi
     
 SYSTEM_SERVER_SOFTWARE=$(nginx -v |& sed 's#nginx version: nginx/##')
 SYSTEM_MYSQL_SIZE=$(du -sh /var/lib/mysql |& sed 's#/var/lib/mysql##')
 SYSTEM_MYSQL_VERSION=$(mysql --version |& awk '{print $3}')
 
-LAST_TIMESTAMP_00_CRONTAB=$(stat -c %x "$TIMESTAMP_SS_INSTALL_UBUNTU_CRONTAB")
-LAST_TIMESTAMP_01_CRON_OFTEN=$(stat -c %x "$TIMESTAMP_01_CRON_OFTEN")
-LAST_TIMESTAMP_02_CRON_REGULAR=$(stat -c %x "$TIMESTAMP_02_CRON_REGULAR")
-LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY=$(stat -c %x "$TIMESTAMP_03_CRON_QUARTER_HOURLY")
-LAST_TIMESTAMP_04_CRON_HALF_HOURLY=$(stat -c %x "$TIMESTAMP_04_CRON_HALF_HOURLY")
-LAST_TIMESTAMP_05_CRON_HOURLY=$(stat -c %x "$TIMESTAMP_05_CRON_HOURLY")
-LAST_TIMESTAMP_06_CRON_QUARTER_DAILY=$(stat -c %x "$TIMESTAMP_06_CRON_QUARTER_DAILY")
-LAST_TIMESTAMP_07_CRON_HALF_DAILY=$(stat -c %x "$TIMESTAMP_07_CRON_HALF_DAILY")
-LAST_TIMESTAMP_08_CRON_DAILY=$(stat -c %x "$TIMESTAMP_08_CRON_DAILY")
-LAST_TIMESTAMP_09_CRON_HALF_WEEKLY=$(stat -c %x "$TIMESTAMP_09_CRON_HALF_WEEKLY")
-LAST_TIMESTAMP_10_CRON_WEEKLY=$(stat -c %x "$TIMESTAMP_10_CRON_WEEKLY")
-LAST_TIMESTAMP_11_CRON_HALF_MONTHLY=$(stat -c %x "$TIMESTAMP_11_CRON_HALF_MONTHLY")
-LAST_TIMESTAMP_12_CRON_MONTHLY=$(stat -c %x "$TIMESTAMP_12_CRON_MONTHLY")
 
-if [[ ! -f "$TIMESTAMP_13_CRON_SOMETIMES" ]]; then
-    LAST_TIMESTAMP_13_CRON_SOMETIMES=$(stat -c %x "$TIMESTAMP_13_CRON_SOMETIMES")
-fi
-
-sed -i "s|@SS_BUILD|${SS_BUILD}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@SS_PLUGIN_BLACKLIST|${SS_PLUGIN_BLACKLIST}|g" "$TMP_SS_CONSTANTS_PHP"
-
-sed -i "s|@WP_CRON_METHOD|${WP_CRON_METHOD}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@WP_CRON_INTERVAL|${WP_CRON_INTERVAL}|g" "$TMP_SS_CONSTANTS_PHP"
-
-sed -i "s|@LAST_TIMESTAMP_00_CRONTAB|${LAST_TIMESTAMP_00_CRONTAB}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_01_CRON_OFTEN|${LAST_TIMESTAMP_01_CRON_OFTEN}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_02_CRON_REGULAR|${LAST_TIMESTAMP_02_CRON_REGULAR}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY|${LAST_TIMESTAMP_03_CRON_QUARTER_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_04_CRON_HALF_HOURLY|${LAST_TIMESTAMP_04_CRON_HALF_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_05_CRON_HOURLY|${LAST_TIMESTAMP_05_CRON_HOURLY}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_06_CRON_QUARTER_DAILY|${LAST_TIMESTAMP_06_CRON_QUARTER_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-sed -i "s|@LAST_TIMESTAMP_07_CRON_HALF_DAILY|${LAST_TIMESTAMP_07_CRON_HALF_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-
-if [[ -n "$LAST_TIMESTAMP_08_CRON_DAILY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_08_CRON_DAILY|${LAST_TIMESTAMP_08_CRON_DAILY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_08_CRON_DAILY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_09_CRON_HALF_WEEKLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_09_CRON_HALF_WEEKLY|${LAST_TIMESTAMP_09_CRON_HALF_WEEKLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_09_CRON_HALF_WEEKLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_10_CRON_WEEKLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_10_CRON_WEEKLY|${LAST_TIMESTAMP_10_CRON_WEEKLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_10_CRON_WEEKLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_11_CRON_HALF_MONTHLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_11_CRON_HALF_MONTHLY|${LAST_TIMESTAMP_11_CRON_HALF_MONTHLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_11_CRON_HALF_MONTHLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_12_CRON_MONTHLY" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_12_CRON_MONTHLY|${LAST_TIMESTAMP_12_CRON_MONTHLY}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_12_CRON_MONTHLY|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
-
-if [[ -n "$LAST_TIMESTAMP_13_CRON_SOMETIMES" ]]; then 
-    sed -i "s|@LAST_TIMESTAMP_13_CRON_SOMETIMES|${LAST_TIMESTAMP_13_CRON_SOMETIMES}|g" "$TMP_SS_CONSTANTS_PHP"
-else 
-    sed -i "s|@LAST_TIMESTAMP_13_CRON_SOMETIMES|UNKNOWN|g" "$TMP_SS_CONSTANTS_PHP"
-fi
 
 
 sed -i "s|@SYSTEM_VENDOR|${SYSTEM_VENDOR}|g" "$TMP_SS_CONSTANTS_PHP"
@@ -193,32 +126,28 @@ fi
 ## you should never make changes directly to wp-config.php on SlickStack servers ##
 
 ## retrieve latest boilerplate (production) ##
-wget -O "$TMP_WP_CONFIG_PHP" "$MIRROR_WP_CONFIG_PHP"
+if [[ "$WP_MULTISITE" == "true" ]] && [[ "$WP_MULTISITE_SUBDOMAINS" != "false" ]]; then 
+wget -O "$TMP_WP_CONFIG_PHP" "$MIRROR_WP_CONFIG_PHP_PRODUCTION_MULTISITE_SUBDOMAINS"
+else
+wget -O "$TMP_WP_CONFIG_PHP" "$MIRROR_WP_CONFIG_PHP_PRODUCTION_SINGLE_SITE"
+fi
 
-## set multisite subdomains ##
 ## THIS MUST COME BEFORE WP_MULTISITE REPLACEMENTS OTHERWISE IT WILL BE OVERWRITTEN ##
 ## in the future fix this to have a more unique set of placeholders ##
 
-if [[ -z "$WP_MULTISITE_SUBDOMAINS" ]]; then 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WP_CONFIG_PHP"
+## set multisite subdomains ##
+if [[ "$WP_MULTISITE_SUBDOMAINS" == "false" ]]; then 
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/false/g" "$TMP_WP_CONFIG_PHP"
 else 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/${WP_MULTISITE_SUBDOMAINS}/g" "$TMP_WP_CONFIG_PHP"
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WP_CONFIG_PHP"
 fi
 
 ## set multisite ##
-if [[ -z "$WP_MULTISITE" ]]; then 
-    sed -i "s/@WP_MULTISITE/false/g" "$TMP_WP_CONFIG_PHP"
-else 
-    sed -i "s/@WP_MULTISITE/${WP_MULTISITE}/g" "$TMP_WP_CONFIG_PHP"
-fi
-
-## multisite ##
 if [[ "$WP_MULTISITE" == "true" ]]; then 
     sed -i "s/@WP_MULTISITE/true/g" "$TMP_WP_CONFIG_PHP"
 else 
     sed -i "s/@WP_MULTISITE/false/g" "$TMP_WP_CONFIG_PHP"
 fi
-
 
 ## set wp cron (always disabled in wp-config for staging and dev sites in slickstack servers) ##
 if [[ "$WP_CRON_METHOD" == "server" ]]; then 
@@ -352,7 +281,6 @@ fi
 VALIDATE_TMP_WP_CONFIG_PHP=$(grep 'SS_EOF' "$TMP_WP_CONFIG_PHP")
 if [[ -n "$VALIDATE_TMP_WP_CONFIG_PHP" ]]; then
    cp "$TMP_WP_CONFIG_PHP" "$PATH_WP_CONFIG_PHP"
-   echo -e "${PURPLE}Continue ss-install-wordpress-config: Installation of the wp-config.php file appears to have been successful... ${NOCOLOR}"
 else
     echo -e "${RED}wp config temp file for production damaged so not installing... ${NOCOLOR}"
 fi
@@ -372,20 +300,13 @@ wget -O "$TMP_WORDPRESS_CONFIG_STAGING" "$MIRROR_WP_CONFIG_STAGING"
 ###### WP Multisite settings ########
 
 ## set multisite subdomains ##
-if [[ -z "$WP_MULTISITE_SUBDOMAINS" ]]; then 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WORDPRESS_CONFIG_STAGING"
+if [[ "$WP_MULTISITE_SUBDOMAINS" == "false" ]]; then 
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/false/g" "$TMP_WORDPRESS_CONFIG_STAGING"
 else 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/${WP_MULTISITE_SUBDOMAINS}/g" "$TMP_WORDPRESS_CONFIG_STAGING"
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WORDPRESS_CONFIG_STAGING"
 fi
 
 ## set multisite ##
-if [[ -z "$WP_MULTISITE" ]]; then 
-    sed -i "s/@WP_MULTISITE/false/g" "$TMP_WORDPRESS_CONFIG_STAGING"
-else 
-    sed -i "s/@WP_MULTISITE/${WP_MULTISITE}/g" "$TMP_WORDPRESS_CONFIG_STAGING"
-fi
-
-## multisite ##
 if [[ "$WP_MULTISITE" == "true" ]]; then 
     sed -i "s/@WP_MULTISITE/true/g" "$TMP_WORDPRESS_CONFIG_STAGING"
 else 
@@ -517,20 +438,13 @@ wget -O "$TMP_WORDPRESS_CONFIG_DEV" "$MIRROR_WP_CONFIG_DEV"
 ###### WP Multisite settings ########
 
 ## set multisite subdomains ##
-if [[ -z "$WP_MULTISITE_SUBDOMAINS" ]]; then 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WORDPRESS_CONFIG_DEV"
+if [[ "$WP_MULTISITE_SUBDOMAINS" == "false" ]]; then 
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/false/g" "$TMP_WORDPRESS_CONFIG_DEV"
 else 
-    sed -i "s/@WP_MULTISITE_SUBDOMAINS/${WP_MULTISITE_SUBDOMAINS}/g" "$TMP_WORDPRESS_CONFIG_DEV"
+    sed -i "s/@WP_MULTISITE_SUBDOMAINS/true/g" "$TMP_WORDPRESS_CONFIG_DEV"
 fi
 
 ## set multisite ##
-if [[ -z "$WP_MULTISITE" ]]; then 
-    sed -i "s/@WP_MULTISITE/false/g" "$TMP_WORDPRESS_CONFIG_DEV"
-else 
-    sed -i "s/@WP_MULTISITE/${WP_MULTISITE}/g" "$TMP_WORDPRESS_CONFIG_DEV"
-fi
-
-## multisite ##
 if [[ "$WP_MULTISITE" == "true" ]]; then 
     sed -i "s/@WP_MULTISITE/true/g" "$TMP_WORDPRESS_CONFIG_DEV"
 else 
@@ -647,31 +561,41 @@ cp "$TMP_WORDPRESS_CONFIG_DEV" /var/www/html/dev/wp-config.php
 fi
 
 ####################################################################################################
-#### SS-Install-WordPress-Config: Fix Site Domains (Modify Database Options) #######################
+#### SS-Install-WordPress-Config: Modify Site Domains In Database ##################################
 ####################################################################################################
-
-## SNIPPET: ss-install-wordpress-config, ss-install-wordpress-core
-## UPDATED: 19SEP2021
 
 ## here we manually fix certain fields in the database to ensure proper functionality ##
 ## this fix required for WP Multisite (wp-config.php enough for single sites) ##
 
-if [[ "$SS_APP" == "wordpress" ]]; then 
+## SNIPPET: ss-install-wordpress-config, ss-install-wordpress-core
+## UPDATED: 17FEB2022
 
-    ## production ##
-    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='home'";
-    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://$SITE_DOMAIN' WHERE option_name='siteurl'";
+## production ##
+if [[ -n $(mysql --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';") ]]; then
+    
+    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://${SITE_DOMAIN}' WHERE option_name='home'";
+    mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://${SITE_DOMAIN}' WHERE option_name='siteurl'";
+    
+fi
 
-    ## staging ##
-    if [[ "$STAGING_SITE" == "true" ]]; then 
-        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='home'";
-        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='siteurl'";
+## staging ##
+if [[ "$STAGING_SITE" == "true" ]]; then 
+    
+    if [[ -n $(mysql --execute "SHOW TABLES FROM staging WHERE Tables_in_staging LIKE '${DB_PREFIX}options';") ]]; then
+    
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='home'";
+        mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='siteurl'";
     fi
+    
+fi
 
-    ## development ##
-    if [[ "$DEV_SITE" == "true" ]]; then 
-        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='home'";
-        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.$SITE_DOMAIN_EXCLUDING_WWW' WHERE option_name='siteurl'";
+## development ##
+if [[ "$DEV_SITE" == "true" ]]; then 
+    
+    if [[ -n $(mysql --execute "SHOW TABLES FROM development WHERE Tables_in_development LIKE '${DB_PREFIX}options';") ]]; then
+    
+        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='home'";
+        mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='siteurl'";
     fi
 
 fi
@@ -702,13 +626,6 @@ source "$PATH_SS_PERMS_WORDPRESS_CONFIG"
 
 ## run ss-purge-opcache ##
 source "$PATH_SS_PURGE_OPCACHE"
-
-####################################################################################################
-#### SS-Install-WordPress-Config: Purge Cache (Redis) ##############################################
-####################################################################################################
-
-## run ss-purge-redis ##
-source "$PATH_SS_PURGE_REDIS"
 
 ####################################################################################################
 #### SS-Install-WordPress-Config: Cleanup Temporary Files ##########################################
@@ -750,5 +667,6 @@ touch "$TIMESTAMP_SS_INSTALL_WORDPRESS_CONFIG"
 ## Ref: https://superuser.com/questions/393812/supresss-the-no-such-file-or-directory-message-from-find
 ## Ref: https://stackoverflow.com/questions/45575021/find-suppress-no-such-file-or-directory-errors
 ## Ref: https://github.com/littlebizzy/slickstack/issues/100
+## Ref: https://www.mysqltutorial.org/mysql-show-tables/
 
 ## SS_EOF

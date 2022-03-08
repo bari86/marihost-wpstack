@@ -24,7 +24,25 @@ server {
 	listen				[::]:443 ssl http2;
 	server_name			dev.@SITE_DOMAIN_EXCLUDING_WWW;
 	root 				/var/www/html/dev;
-    
+	auth_basic		"Restricted Content";
+	auth_basic_user_file	/var/www/meta/.htpasswd;
+	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
+	
+####################################################################################################
+#### Server Block (Development): Redirect Any AMP Requests #########################################
+####################################################################################################
+
+## this powerful snippet will redirect all the messy URLs created by AMP software ##
+## SlickStack does not support AMP for both stability and political reasons ##
+
+	## redirect /amp queries ##
+	rewrite ^(.*/)amp(.*)$ $1 permanent;
+	
+	## redirect ?amp queries ##
+	if ($query_string ~ "^(.*)amp(.*)$") {
+        	rewrite ^(.*)$ $uri? permanent;
+	}
+
 ####################################################################################################
 #### Server Block: Indexing + Public URI + Try Files Settings ######################################
 ####################################################################################################
@@ -43,9 +61,6 @@ server {
         try_files $uri $uri/ /index.php?$args;
 	## force trailing slashes on urls (do not enable for bbPress/BuddyPress sites)
         # rewrite ^([^.]*[^/])$ $1/ permanent;
-	## password protect ##
-	auth_basic "Restricted Content";
-        auth_basic_user_file /var/www/meta/.htpasswd;
     }
     
     ## hidden files (block access) ##
@@ -86,9 +101,19 @@ server {
         set $skip_cache 1;
     }
     
-    ## sensitive wordpress urls should always skip the cache
+    ## ENGLISH - sensitive wordpress urls should always skip the cache
     if ($request_uri ~* "index.php|/account.*|/cart.*|/checkout.*|/contact.*|/dashboard.*|/login.*|/my-.*|/order.*|/profile.*|/register.*|/settings.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
         set $skip_cache 1;
+    }
+
+    ## GERMAN - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/warenkorb.*|/kasse.*|/kontakt.*|/dashboard.*|/anmelden.*|/mein-.*|/bestellung.*|/profil.*|/registrieren.*|/einstellungen.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+        set $skip_cache 1;
+    }
+    
+    ## POLISH - sensitive wordpress urls should always skip the cache
+    if ($request_uri ~* "index.php|/konto.*|/koszyk.*|/zamowienie.*|/kontakt.*|/dashboard.*|/login.*|/moje-.*|/zamowienie.*|/profil.*|/register.*|/ustawienia.*|/view.*|/wc-api.*|/wp-admin.*|wp-.*.php") {
+    	set $skip_cache 1;
     }
     
     ## do not cache RSS feeds or sitemaps (special 5 minute cache rule or something would be better in the future) ##
@@ -200,71 +225,6 @@ server {
         fastcgi_index index.php;
         fastcgi_cache off;
     }
-    
-####################################################################################################
-#### Server Block: Staging URI Settings (Supports WP-Staging, Etc) #################################
-####################################################################################################
-    
-## staging sites are noindexed, FastCGI caching is disabled, and paths are hardcoded ## 
-## media files (uploads) are aliased to existing files from the production site ##
-    
-    location /staging/ {
-        ## first try files, then directories, otherwise query index ##
-        try_files $uri $uri/ /staging/index.php?$args;
-        ## tweak FastCGI Cache (needs to be improved with mild cache settings) ##
-        include /etc/nginx/fastcgi.conf;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-	fastcgi_pass 127.0.0.1:9000;
-        fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache off;
-	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
-	add_header X-Powered-By "SlickStack";
-        add_header Strict-Transport-Security "max-age=15552000" always; ## 180 days
-        add_header X-FastCGI-Cache $upstream_cache_status;
-        add_header X-Frame-Options SAMEORIGIN;
-        add_header X-Content-Type-Options nosniff;
-        add_header X-XSS-Protection "1; mode=block";
-        add_header Referrer-Policy "strict-origin-when-cross-origin";
-	add_header Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=(), display-capture=*, document-domain=*, encrypted-media=*, fullscreen=*, geolocation=(self), gyroscope=(), layout-animations=*, legacy-image-formats=*, magnetometer=(), microphone=(self), midi=(), oversized-images=*, payment=*, picture-in-picture=*, publickey-credentials-get=*, sync-xhr=*, usb=(), vibrate=(), wake-lock=(), xr-spatial-tracking=()";
-    }
-    
-    # location ~ ^/staging/wp-content/uploads/(.*) {
-    #    return 302             https://@DOMAIN/wp-content/uploads/$1;
-    # }
-    
-    location ^~ /staging/wp-content/uploads/ {
-        alias /var/www/html/wp-content/uploads/;
-    }
-    
-    location /dev/ {
-        ## first try files, then directories, otherwise query index ##
-        try_files $uri $uri/ /dev/index.php?$args;
-        ## tweak FastCGI Cache (needs to be improved with mild cache settings) ##
-        include /etc/nginx/fastcgi.conf;
-        fastcgi_split_path_info ^(.+\.php)(/.+)$;
-	fastcgi_pass 127.0.0.1:9000;
-        fastcgi_read_timeout 300;
-        fastcgi_index index.php;
-        fastcgi_cache off;
-	add_header X-Robots-Tag "noindex, nofollow, nosnippet, noarchive";
-	add_header X-Powered-By "SlickStack";
-        add_header Strict-Transport-Security "max-age=15552000" always; ## 180 days
-        add_header X-FastCGI-Cache $upstream_cache_status;
-        add_header X-Frame-Options SAMEORIGIN;
-        add_header X-Content-Type-Options nosniff;
-        add_header X-XSS-Protection "1; mode=block";
-        add_header Referrer-Policy "strict-origin-when-cross-origin";
-	add_header Permissions-Policy "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=(), display-capture=*, document-domain=*, encrypted-media=*, fullscreen=*, geolocation=(self), gyroscope=(), layout-animations=*, legacy-image-formats=*, magnetometer=(), microphone=(self), midi=(), oversized-images=*, payment=*, picture-in-picture=*, publickey-credentials-get=*, sync-xhr=*, usb=(), vibrate=(), wake-lock=(), xr-spatial-tracking=()";
-    }
-    
-    # location ~ ^/dev/wp-content/uploads/(.*) {
-    #    return 302             https://@DOMAIN/wp-content/uploads/$1;
-    # }
-    
-   # location ^~ /dev/wp-content/uploads/ {
-   #     alias /var/www/html/wp-content/uploads/;
-   # }
     
 ####################################################################################################
 #### Server Block: Static Resource Settings (Expiration Headers) ###################################
@@ -386,10 +346,13 @@ server {
     }
 
 ####################################################################################################
-#### Server Block (Development): Deny Access To Install.php ###################
+#### Server Block (Development): Deny Access To WordPress Installer ################################
 ####################################################################################################
     
-    ## install script ##
+## SlickStack blocks access to the development WordPress installer to avoid hacking etc ##
+## dev sites populate their minimum wp_options by ss-install-wordpress-core ##
+    
+    ## block install script ##
     location = /wp-admin/install.php {
 	deny all;
     }

@@ -7,7 +7,7 @@
 #### path: /var/www/ss-delete-database #############################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Forcefully deletes the entire MySQL database chosen (production, staging, dev) #######
-#### module version: n/a ###########################################################################
+#### module version: Ubuntu 22.04 LTS ##############################################################
 #### sourced by: n/a ###############################################################################
 #### bash aliases: ss delete database, ss delete db ################################################
 ####################################################################################################
@@ -21,6 +21,23 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
+#### TABLE OF CONTENTS (SS-Delete-Database) ########################################################
+####################################################################################################
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+
+####################################################################################################
+#### A. SS-Delete-Database: Touch Timestamp File ###################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "$TIMESTAMP_SS_DELETE_DATABASE"
+
+####################################################################################################
 #### SS-Delete-Files: Message (Begin Script) #######################################################
 ####################################################################################################
 
@@ -28,7 +45,7 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${PURPLE}Running ss-delete-database: Forcefully deletes the entire MySQL database chosen (production, staging, dev)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-delete-database: Forcefully deletes the entire MySQL database chosen (production, staging, dev)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
@@ -45,16 +62,6 @@ then
 else
     exit 1
 fi
-
-####################################################################################################
-#### SS-Delete-Database: Touch Timestamp File (End Script) #########################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_DELETE_DATABASE"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
