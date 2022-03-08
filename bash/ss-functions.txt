@@ -514,7 +514,7 @@ MIRROR_OBJECT_CACHE_PHP="https://raw.githubusercontent.com/littlebizzy/slickstac
 MIRROR_PLUGIN_BLACKLIST_ZIP="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/plugin-blacklist.zip"
 MIRROR_REDIS_CACHE_ZIP="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/redis-cache.zip"
 MIRROR_VIRTUAL_ROBOTSTXT_ZIP="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/virtual-robotstxt.zip"
-MIRROR_XXX_COMMON_PHP="https://raw.githubusercontent.com/littlebizzy/slickstack/master/modules/wordpress/mu-plugins/xxx-common.txt"
+MIRROR_XXX_COMMON_PHP="https://raw.githubusercontent.com/bari86/marihost-wpstack/master/modules/wordpress/mu-plugins/xxx-common.txt"
 
 ## wordpress mu plugins - staging (mirror 02) ##
 MIRROR_DISABLE_EMAILS_ZIP="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-emails.zip"
