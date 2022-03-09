@@ -2,7 +2,7 @@
 
 ####################################################################################################
 #### author: SlickStack ############################################################################
-#### link: https://slickstack.io ###################################################################
+#### fork: MariHost WPStack ########################################################################
 #### mirror: https://mirrors.slickstack.io/bash/ss-config-sample.txt ###############################
 #### path: /var/www/ss-config-sample (for reference only) ##########################################
 #### destination: /var/www/ss-config (can be configured by ss-install wizard or manually) ##########
@@ -233,15 +233,15 @@ SS_TIMEZONE="UTC"
 SS_WORDPRESS_ADMIN_DASHBOARD="@SS_WORDPRESS_ADMIN_DASHBOARD"
 SS_WORDPRESS_MU_PLUGINS="default"
 SS_WORDPRESS_PLUGIN_BLACKLIST="@SS_WORDPRESS_PLUGIN_BLACKLIST"
-SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE="https://raw.githubusercontent.com/littlebizzy/slickstack/master/modules/wordpress/blacklist.txt"
+SS_WORDPRESS_PLUGIN_BLACKLIST_SOURCE="https://raw.githubusercontent.com/bari86/marihost-wpstack/master/modules/wordpress/blacklist.txt"
 
 ## whitelabeling allows agencies to replace all SlickStack branding with their own ##
 ## this is useful for running your own web hosting business or otherwise ##
 
-WHITELABEL_BRAND="SlickStack"
-WHITELABEL_HOMEPAGE="https://slickstack.io"
-WHITELABEL_SUPPORT_URL="https://example.com/support/"
-WHITELABEL_SUPPORT_EMAIL="support@example.com"
+WHITELABEL_BRAND="MariHost"
+WHITELABEL_HOMEPAGE="https://marihost.com"
+WHITELABEL_SUPPORT_URL="https://marihost.com/support"
+WHITELABEL_SUPPORT_EMAIL="support@marihost.com"
 
 ####################################################################################################
 #### SS-Config: SSL Settings (CSR Optional) ########################################################
@@ -339,7 +339,7 @@ NGINX_ACCESS_LOG="false"
 ## NGINX_HEADER_PERMISSIONS_POLICY = [*bleeding edge*] a very new and evolving header ##
 ## NGINX_HEADER_FEATURE_POLICY = [*bleeding edge*] a very new and evolving header ##
 
-NGINX_HEADER_POWERED_BY="SlickStack"
+NGINX_HEADER_POWERED_BY="MariHost"
 NGINX_HEADER_STRICT_TRANSPORT_SECURITY="max-age=15552000" ## 180 days
 NGINX_HEADER_REFERRER_POLICY="strict-origin-when-cross-origin"
 NGINX_HEADER_PERMISSIONS_POLICY="accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=(), display-capture=*, document-domain=*, encrypted-media=*, fullscreen=*, geolocation=(self), gyroscope=(), layout-animations=*, legacy-image-formats=*, magnetometer=(), microphone=(self), midi=(), oversized-images=*, payment=*, picture-in-picture=*, publickey-credentials-get=*, sync-xhr=*, usb=(), vibrate=(), wake-lock=(), xr-spatial-tracking=()"
