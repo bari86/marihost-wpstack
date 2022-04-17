@@ -41,7 +41,7 @@ source /var/www/ss-functions
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_MYSQL_DATABASE"
+touch "${TIMESTAMP_SS_INSTALL_MYSQL_DATABASE}"
 
 ####################################################################################################
 #### B. SS-Install-MySQL-Database: Message (Begin Script) ##########################################
@@ -52,11 +52,10 @@ touch "$TIMESTAMP_SS_INSTALL_MYSQL_DATABASE"
 
 ## echo message ##
 echo -e "${COLOR_INFO}Running ss-install-mysql-database: Reinstalls the MySQL database and required users to access the database... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
+sleep "${SLEEP_MESSAGE_BEGIN}"
 
 if [[ "$SS_DATABASE_REMOTE" == "true" ]]; then
     echo -e "${YELLOW}Exiting ss-install-mysql-database: Your ss-config indicates a remote database so we will skip MySQL install... ${NOCOLOR}"
-    exit 1
 fi
 
 ####################################################################################################
@@ -68,17 +67,96 @@ fi
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then 
     ## mysql_secure_installation (alternative) via root@localhost ##
-    sudo mysql -e "UNINSTALL COMPONENT 'file://component_validate_password';" ## not installed by default on MySQL 8.0.x
-    sudo mysql -e "UNINSTALL PLUGIN validate_password;" ## not installed by default on MySQL 8.0.x
-    sudo mysql -e "DELETE FROM mysql.user WHERE user='';"
-    sudo mysql -e "DELETE FROM mysql.user WHERE user='root' AND host NOT IN ('localhost', '127.0.0.1', '::1');"
-    sudo mysql -e "DELETE FROM mysql.user WHERE user='admin' AND host NOT IN ('localhost', '127.0.0.1', '::1');"
-    sudo mysql -e "DROP DATABASE IF EXISTS test;"
+    # ss_mysql_8.0 -e "UNINSTALL COMPONENT 'file://component_validate_password';" ## not installed by default on MySQL 8.0.x
+    # ss_mysql_8.0 -e "UNINSTALL PLUGIN validate_password;" ## not installed by default on MySQL 8.0.x
+    ss_mysql_8.0 -e "DELETE FROM mysql.user WHERE user='';"
+    ss_mysql_8.0 -e "DELETE FROM mysql.user WHERE user='root' AND host NOT IN ('localhost', '127.0.0.1', '::1');"
+    ss_mysql_8.0 -e "DELETE FROM mysql.user WHERE user='admin' AND host NOT IN ('localhost', '127.0.0.1', '::1');"
+    ss_mysql_8.0 -e "DROP DATABASE IF EXISTS test;"
 fi
 
 ####################################################################################################
 #### D. SS-Install-MySQL-Database: Configure Database + Users + Privileges #########################
 ####################################################################################################
+
+
+## 22.04 ##
+
+## we use root@localhost (auth_socket) and user@127.0.0.1 (TCP) for WordPress database ##
+## the superuser admin@127.0.0.1 is also created to be used for i.e. Adminer ##
+
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+
+    ## create databases ##
+    ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+
+    if [[ "${DEV_SITE}" == "true" ]]; then
+        ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS development;"
+    fi
+    
+    if [[ "${STAGING_SITE}" == "true" ]]; then
+        ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS staging;"
+    fi
+
+    ## create admin superuser (can be used with Adminer) ##
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+
+    ## grant admin superuser all privileges on all databases (localhost/IPv4/IPv6) ##
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'127.0.0.1' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'::1' WITH GRANT OPTION;"
+
+    ## create limited user for WordPress database ##
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+
+    ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';"
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'::1';"
+
+    if [[ "${DEV_SITE}" == "true" ]]; then
+        ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'::1';"
+    fi
+
+    if [[ "${STAGING_SITE}" == "true" ]]; then
+        ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'::1';"
+    fi
+
+    ## install auth_socket plugin ##
+    # ss_mysql_8.0 -e "INSTALL PLUGIN auth_socket SONAME 'auth_socket.so';" ## exists now by default
+
+    ## create sudo@localhost user via auth_socket ##
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO '${SUDO_USER}'@'localhost' WITH GRANT OPTION;"
+
+    ## ensure root@localhost user is using auth_socket ##
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
+    
+    ## flush privileges ##
+    ss_mysql_8.0 -e "FLUSH PRIVILEGES;"
+
+fi
+
+
 
 ## 20.04 ##
 
@@ -88,71 +166,71 @@ fi
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
 
     ## create databases ##
-    sudo mysql -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
+    ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 
     if [[ "${DEV_SITE}" == "true" ]]; then
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS development;"
+        ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS development;"
     fi
     
     if [[ "${STAGING_SITE}" == "true" ]]; then
-        sudo mysql -e "CREATE DATABASE IF NOT EXISTS staging;"
+        ss_mysql_8.0 -e "CREATE DATABASE IF NOT EXISTS staging;"
     fi
 
     ## create admin superuser (can be used with Adminer) ##
-    sudo mysql -e "ALTER USER IF EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
-    sudo mysql -e "ALTER USER IF EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
-    sudo mysql -e "ALTER USER IF EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'admin'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD_ROOT}';"
 
     ## grant admin superuser all privileges on all databases (localhost/IPv4/IPv6) ##
-    sudo mysql -e "GRANT ALL ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;"
-    sudo mysql -e "GRANT ALL ON *.* TO 'admin'@'127.0.0.1' WITH GRANT OPTION;"
-    sudo mysql -e "GRANT ALL ON *.* TO 'admin'@'::1' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'localhost' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'127.0.0.1' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'admin'@'::1' WITH GRANT OPTION;"
 
     ## create limited user for WordPress database ##
-    sudo mysql -e "ALTER USER IF EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
-    sudo mysql -e "ALTER USER IF EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
-    sudo mysql -e "ALTER USER IF EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'127.0.0.1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${DB_USER}'@'::1' IDENTIFIED WITH caching_sha2_password BY '${DB_PASSWORD}';"
 
     ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
-    sudo mysql -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
-    sudo mysql -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';"
-    sudo mysql -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'::1';"
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'localhost';"
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'127.0.0.1';"
+    ss_mysql_8.0 -e "GRANT ALL ON ${DB_NAME}.* TO '${DB_USER}'@'::1';"
 
     if [[ "${DEV_SITE}" == "true" ]]; then
         ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'localhost';"
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'127.0.0.1';"
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'::1';"
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_8.0 -e "GRANT ALL ON development.* TO '${DB_USER}'@'::1';"
     fi
 
     if [[ "${STAGING_SITE}" == "true" ]]; then
         ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'localhost';"
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'127.0.0.1';"
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'::1';"
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_8.0 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'::1';"
     fi
 
     ## install auth_socket plugin ##
-    sudo mysql -e "INSTALL PLUGIN auth_socket SONAME 'auth_socket.so';"
+    # ss_mysql_8.0 -e "INSTALL PLUGIN auth_socket SONAME 'auth_socket.so';" ## exists now by default
 
     ## create sudo@localhost user via auth_socket ##
-    sudo mysql -e "ALTER USER IF EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
-    sudo mysql -e "GRANT ALL ON *.* TO '${SUDO_USER}'@'localhost' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS '${SUDO_USER}'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO '${SUDO_USER}'@'localhost' WITH GRANT OPTION;"
 
     ## ensure root@localhost user is using auth_socket ##
-    sudo mysql -e "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
-    sudo mysql -e "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
-    sudo mysql -e "GRANT ALL ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
+    ss_mysql_8.0 -e "ALTER USER IF EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED WITH auth_socket BY '';"
+    ss_mysql_8.0 -e "GRANT ALL ON *.* TO 'root'@'localhost' WITH GRANT OPTION;"
     
     ## flush privileges ##
-    sudo mysql -e "FLUSH PRIVILEGES;"
+    ss_mysql_8.0 -e "FLUSH PRIVILEGES;"
 
 fi
 
@@ -204,16 +282,16 @@ ss_mysql_5.7 -e "CREATE DATABASE IF NOT EXISTS ${DB_NAME};"
 
     if [[ "${DEV_SITE}" == "true" ]]; then
         ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'localhost';"
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'127.0.0.1';"
-        sudo mysql -e "GRANT ALL ON development.* TO '${DB_USER}'@'::1';"
+        ss_mysql_5.7 -e "GRANT ALL ON development.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_5.7 -e "GRANT ALL ON development.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_5.7 -e "GRANT ALL ON development.* TO '${DB_USER}'@'::1';"
     fi
 
     if [[ "${STAGING_SITE}" == "true" ]]; then
         ## grant limited user privileges on WordPress database only (localhost/IPv4/IPv6) ##
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'localhost';"
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'127.0.0.1';"
-        sudo mysql -e "GRANT ALL ON staging.* TO '${DB_USER}'@'::1';"
+        ss_mysql_5.7 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'localhost';"
+        ss_mysql_5.7 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'127.0.0.1';"
+        ss_mysql_5.7 -e "GRANT ALL ON staging.* TO '${DB_USER}'@'::1';"
     fi
 
     ## install auth_socket plugin ##
@@ -239,7 +317,7 @@ fi
 ####################################################################################################
 
 ## run ss-perms-mysql-database ##
-source "$PATH_SS_PERMS_MYSQL_DATABASE"
+source "${PATH_SS_PERMS_MYSQL_DATABASE}"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
@@ -336,5 +414,7 @@ source "$PATH_SS_PERMS_MYSQL_DATABASE"
 ## Ref: https://unix.stackexchange.com/questions/47584/in-a-bash-script-using-the-conditional-or-in-an-if-statement
 ## Ref: https://vettabase.com/blog/the-risks-of-mysql-release-policy/
 ## Ref: https://tldp.org/LDP/abs/html/comparison-ops.html
+## Ref: https://ostechnix.com/change-authentication-method-for-mysql-root-user-in-ubuntu/
+## Ref: https://www.percona.com/blog/2018/01/24/mysql-8-0-4-rc-beware-auth_socket-users/
 
 ## SS_EOF

@@ -74,9 +74,18 @@ rm "$TMP_WORDPRESS_CONFIG_DEV"
 ####################################################################################################
 
 ## SNIPPET: ss-worker, ss-install-wordpress-config
+## UPDATED: 04APR2022
 
-## retrieve latest ss-constants.php boilerplate ##
-wget -O "$TMP_SS_CONSTANTS_PHP" "$MIRROR_SS_CONSTANTS_PHP"
+## retrieve ss-constants.php boilerplate ##
+ss_wget_fast -O "${TMP_SS_CONSTANTS_PHP}" "${MIRROR_SS_CONSTANTS_PHP}"
+VALIDATE_TMP_SS_CONSTANTS_PHP=$(grep 'SS_EOF' "${TMP_SS_CONSTANTS_PHP}" 2> /dev/null)
+if [[ -z "${VALIDATE_TMP_SS_CONSTANTS_PHP}" ]]; then
+    ss_wget_slow -O "${TMP_SS_CONSTANTS_PHP}" "${MIRROR2_SS_CONSTANTS_PHP}"
+fi
+VALIDATE2_TMP_SS_CONSTANTS_PHP=$(grep 'SS_EOF' "${TMP_SS_CONSTANTS_PHP}" 2> /dev/null)
+if [[ -z "${VALIDATE2_TMP_SS_CONSTANTS_PHP}" ]]; then
+    ss_wget_slow -O "${TMP_SS_CONSTANTS_PHP}" "${MIRROR3_SS_CONSTANTS_PHP}"
+fi
 
     ## set SlickStack dashboard ##
     if [[ -z "$SS_WORDPRESS_ADMIN_DASHBOARD" ]]; then 
@@ -117,6 +126,17 @@ if [[ -n "$VALIDATE_TMP_SS_CONSTANTS_PHP" ]]; then
     chown www-data:www-data "$PATH_SS_CONSTANTS_PHP"
     chmod 0440 "$PATH_SS_CONSTANTS_PHP" ## 0440 (read-only)
 fi 
+
+####################################################################################################
+
+####################################################################################################
+
+## run this because ss-constants.php has some temp fixes to replaced @placeholders ##
+
+## run ss-worker ##
+source "$PATH_SS_WORKER"
+
+## remove this after above snippet synced with snippet in ss-worker
 
 ####################################################################################################
 #### C. SS-Install-WordPress-Config: Install WP-Config.php (Production) ############################
@@ -330,7 +350,7 @@ sed -i "s/@OBJECT_CACHE/false/g" "$TMP_WORDPRESS_CONFIG_STAGING"
 
 
 ## replace domain placeholders ##
-sed -i "s#@SITE_DOMAIN#${SITE_DOMAIN}#g" "$TMP_WORDPRESS_CONFIG_STAGING"
+sed -i "s#@SITE_DOMAIN#${SITE_DOMAIN_EXCLUDING_WWW}#g" "$TMP_WORDPRESS_CONFIG_STAGING"
 sed -i "s/@SITE_TLD/${SITE_TLD}/g" "$TMP_WORDPRESS_CONFIG_STAGING"
 
 ## replace SFTP Details placeholders ##
@@ -468,7 +488,7 @@ sed -i "s/@OBJECT_CACHE/false/g" "$TMP_WORDPRESS_CONFIG_DEV"
 
 
 ## replace domain placeholders ##
-sed -i "s#@SITE_DOMAIN#${SITE_DOMAIN}#g" "$TMP_WORDPRESS_CONFIG_DEV"
+sed -i "s#@SITE_DOMAIN#${SITE_DOMAIN_EXCLUDING_WWW}#g" "$TMP_WORDPRESS_CONFIG_DEV"
 sed -i "s/@SITE_TLD/${SITE_TLD}/g" "$TMP_WORDPRESS_CONFIG_DEV"
 
 ## replace SFTP Details placeholders ##
@@ -568,10 +588,10 @@ fi
 ## this fix required for WP Multisite (wp-config.php enough for single sites) ##
 
 ## SNIPPET: ss-install-wordpress-config, ss-install-wordpress-core
-## UPDATED: 17FEB2022
+## UPDATED: 28MAR2022
 
 ## production ##
-if [[ -n $(mysql --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';") ]]; then
+if [[ -n $(mysql --execute "SHOW TABLES FROM ${DB_NAME} WHERE Tables_in_${DB_NAME} LIKE '${DB_PREFIX}options';" 2> /dev/null) ]]; then
     
     mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://${SITE_DOMAIN}' WHERE option_name='home'";
     mysql --execute="UPDATE ${DB_NAME}.${DB_PREFIX}options SET option_value='https://${SITE_DOMAIN}' WHERE option_name='siteurl'";
@@ -581,7 +601,7 @@ fi
 ## staging ##
 if [[ "$STAGING_SITE" == "true" ]]; then 
     
-    if [[ -n $(mysql --execute "SHOW TABLES FROM staging WHERE Tables_in_staging LIKE '${DB_PREFIX}options';") ]]; then
+    if [[ -n $(mysql --execute "SHOW TABLES FROM staging WHERE Tables_in_staging LIKE '${DB_PREFIX}options';" 2> /dev/null) ]]; then
     
         mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='home'";
         mysql --execute="UPDATE staging.${DB_PREFIX}options SET option_value='https://staging.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='siteurl'";
@@ -592,7 +612,7 @@ fi
 ## development ##
 if [[ "$DEV_SITE" == "true" ]]; then 
     
-    if [[ -n $(mysql --execute "SHOW TABLES FROM development WHERE Tables_in_development LIKE '${DB_PREFIX}options';") ]]; then
+    if [[ -n $(mysql --execute "SHOW TABLES FROM development WHERE Tables_in_development LIKE '${DB_PREFIX}options';" 2> /dev/null) ]]; then
     
         mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='home'";
         mysql --execute="UPDATE development.${DB_PREFIX}options SET option_value='https://dev.${SITE_DOMAIN_EXCLUDING_WWW}' WHERE option_name='siteurl'";

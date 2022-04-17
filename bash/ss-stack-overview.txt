@@ -6,9 +6,9 @@
 #### mirror: https://mirrors.slickstack.io/bash/ss-stack-overview.txt ##############################
 #### path: /var/www/ss-stack-overview ##############################################################
 #### destination: n/a (not a boilerplate) ##########################################################
-#### purpose: Displays a brief overview of critical settings (domains, users, passwords, etc) ######
-#### module version: Ubuntu 20.04 LTS ##############################################################
-#### sourced by: ss-install, ss-update #############################################################
+#### purpose: Displays a summary of critical SlickStack settings (passwords, domains, etc) #########
+#### module version: Ubuntu 22.04 LTS ##############################################################
+#### sourced by: ss-install, ss-update-modules #####################################################
 #### bash aliases: ss overview, ss status, ss summary ##############################################
 ####################################################################################################
 
@@ -21,123 +21,160 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Overview: Message (Begin Script) ###########################################################
+#### TABLE OF CONTENTS (SS-Stack-Overview) #########################################################
 ####################################################################################################
 
-## this is a simple message that announces to the shell the purpose of this bash script ##
-## it will only be noticed by sudo users who manually call ss core bash scripts ##
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
 
-## echo message ##
-echo -e "${COLOR_INFO}Running ss-overview: Displays a brief overview of critical settings (domains, users, passwords, etc)... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
-
-####################################################################################################
-#### SS-Overview: Display Critical SlickStack Settings #############################################
-####################################################################################################
-
-## the shell will echo the most important ss-config settings (and beyond) currently used ##
-## this allows you to easily copy/paste for your records or for your clients ##
-
-## display critical ss-config variables ##
-echo -e ""
-echo -e "${LIGHTGRAY}###########################################################################${NOCOLOR}"
-echo -e "${LIGHTGRAY}#### Congrats! Here are your current MariHost settings: #################${NOCOLOR}"
-echo -e "${LIGHTGRAY}###########################################################################${NOCOLOR}"
-echo -e ""
-echo -e "${LIGHTGRAY}MariHost build: ${LIGHTGREEN}${BOLD}$SS_BUILD${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}IPv4: ${LIGHTGREEN}${BOLD}$SYSTEM_IPV4_ADDRESS${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}IPv6: ${LIGHTGREEN}${BOLD}$SYSTEM_IPV6_ADDRESS${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Site TLD: ${LIGHTGREEN}${BOLD}$SITE_TLD${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Site domain: ${LIGHTGREEN}${BOLD}https://$SITE_DOMAIN${NOCOLOR}"
-echo -e "${LIGHTGRAY}Site noindex: ${LIGHTGREEN}${BOLD}$SITE_NOINDEX${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Staging site: ${LIGHTGREEN}${BOLD}$STAGING_SITE${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Dev site: ${LIGHTGREEN}${BOLD}$DEV_SITE${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Sudo user: ${LIGHTGREEN}${BOLD}$SUDO_USER${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}Sudo password: ${LIGHTGREEN}${BOLD}$SUDO_PASSWORD${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}SFTP user: ${LIGHTGREEN}${BOLD}$SFTP_USER${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}SFTP password: ${LIGHTGREEN}${BOLD}$SFTP_PASSWORD${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}SSH/SFTP port: ${LIGHTGREEN}${BOLD}$SSH_PORT${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}SSH keys: ${LIGHTGREEN}${BOLD}$SSH_KEYS${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB name: ${LIGHTGREEN}${BOLD}$DB_NAME${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB user: ${LIGHTGREEN}${BOLD}$DB_USER${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB user password: ${LIGHTGREEN}${BOLD}$DB_PASSWORD${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB admin user: ${LIGHTGREEN}${BOLD}admin@127.0.0.1${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB admin user password: ${LIGHTGREEN}${BOLD}$DB_PASSWORD_ROOT${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB host: ${LIGHTGREEN}${BOLD}$DB_HOST${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}DB prefix: ${LIGHTGREEN}${BOLD}$DB_PREFIX${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}WP Multisite: ${LIGHTGREEN}${BOLD}$WP_MULTISITE${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}WP Multisite subdomains: ${LIGHTGREEN}${BOLD}$WP_MULTISITE_SUBDOMAINS${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}WP Multisite domain mapping: ${LIGHTGREEN}${BOLD}$WP_MULTISITE_DOMAIN_MAPPING${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}CloudFlare API key: ${LIGHTGREEN}${BOLD}$CLOUDFLARE_API_KEY${NORMAL}${NOCOLOR}"
-echo -e "${LIGHTGRAY}CloudFlare API email: ${LIGHTGREEN}${BOLD}$CLOUDFLARE_API_EMAIL${NORMAL}${NOCOLOR}"
-echo -e ""
-echo -e "${YELLOW}NOTICE: On new SS installs the SFTP user/password is the admin user for your dev site (subdomain) WordPress login. ${NORMAL}${NOCOLOR}"
-echo -e ""
-echo -e "${YELLOW}Pro tip: Use the bash alias ${BGYELLOW}ss${NORMAL}${YELLOW} to save keystrokes on CLI commands! ${NORMAL}${NOCOLOR}"
-echo -e "${YELLOW}Type the word ${BGYELLOW}bash${NORMAL}${YELLOW} and hit ENTER to load a new shell session.${NORMAL}${NOCOLOR}"
-echo -e ""
-
-if [[ "$SSH_KEYS" == "true" ]] && [[ -f "$PATH_SSH_PRIVATE_KEY_FILE" ]]; then
-    echo -e ""
-    echo -e "${YELLOW}Below is your private SSH key (copy to your local computer): ${NOCOLOR}"
-    echo -e ""
-    cat "$PATH_SSH_PRIVATE_KEY_FILE"
-    echo -e ""
-    echo -e "${YELLOW}This private key file (id_rsa) will be deleted on next cleanup cycle... COPY IT NOW before it disappears! ${NOCOLOR}"
-fi
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Display Critical SlickStack Settings
+## D. Display SSH Key (One Time Only)
 
 ####################################################################################################
-#### SS-Overview: Notify If Newer SlickStack Build Exists ##########################################
-####################################################################################################
-
-## below we briefly inspect the latest ss-config template from official SlickStack mirrors ##
-## if it appears that the local server is outdated then a message with appear here ##
-
-## delete leftover files ##
-rm /tmp/ss-config*
-
-## retrieve latest version of ss-config-sample ##
-wget -qO /tmp/ss-config http://mirrors.slickstack.io/ss-config-sample.txt
-
-## warn if placeholders exist ##
-SS_CONFIG_OPTION_PLACEHOLDER="$(grep -c '"@' /var/www/ss-config)"
-if [[ "$SS_CONFIG_OPTION_PLACEHOLDER" -gt 0 ]]; then
-    echo -e ""
-    echo -e "${LIGHTRED}Your ss-config file contains \"@...\" placeholders. Please input values for ${NOCOLOR}"
-    echo -e "${LIGHTRED}all incomplete option fields, and then run ss-overview again.${NOCOLOR}"
-    echo -e ""
-fi
-
-## ensure latest (retrieved) ss-config build matches current ss-update build ##
-SS_BUILD_LATEST=$(source /tmp/ss-config; echo $SS_BUILD)
-if [[ "$SS_BUILD_LATEST" != "$SS_BUILD" ]]; then
-    echo -e ""
-    echo -e "${YELLOW}It appears that a newer SlickStack build is available! We recommend you ${NOCOLOR}"
-    echo -e "${YELLOW}run ss-update to benefit from the latest features and patches.${NOCOLOR}"
-    echo -e ""
-fi
-
-## warning in case of sub-subdomains in use ##
-if [[ $SITE_DOMAIN = *.*.*.* ]]; then
-    echo -e ""
-    echo -e "${YELLOW}It appears your site is a sub-subdomain so CloudFlare's free SSL will not ${NOCOLOR}"
-    echo -e "${YELLOW}resolve (please either upgrade to Cloudflare's premium SSL options, or ${NOCOLOR}"
-    echo -e "${YELLOW}otherwise use Let's Encrypt SSL on this server).${NOCOLOR}"
-    echo -e ""
-fi
-
-## delete leftover files ##
-rm /tmp/ss-config*
-
-####################################################################################################
-#### SS-Stack-Overview: Touch Timestamp File (End Script) ##########################################
+#### A. SS-Stack-Overview: Touch Timestamp File ####################################################
 ####################################################################################################
 
 ## this is a dummy timestamp file that will remember the last time this script was run ##
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-touch "$TIMESTAMP_SS_STACK_OVERVIEW"
+touch "${TIMESTAMP_SS_STACK_OVERVIEW}"
+
+####################################################################################################
+#### B. SS-Stack-Overview: Message (Begin Script) ##################################################
+####################################################################################################
+
+## this is a simple message that announces to the shell the purpose of this bash script ##
+## it will only be noticed by sudo users who manually call ss core bash scripts ##
+
+## echo message ##
+echo -e "${COLOR_INFO}Running ss-stack-overview: Displays a summary of critical SlickStack settings (passwords, domains, etc)... ${NOCOLOR}"
+sleep "${SLEEP_MESSAGE_BEGIN}"
+
+####################################################################################################
+#### C. SS-Stack-Overview: Display Critical SlickStack Settings ####################################
+####################################################################################################
+
+## the shell will echo the most important ss-config settings (and beyond) currently used ##
+## this allows you to easily copy/paste for your records or for your clients ##
+
+## summary variables ##
+SUMMARY_SS_BUILD="${COLOR_INFO}#### ${LIGHTGRAY}MariHost build: ${LIGHTGREEN}${SS_BUILD} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SS_BUILD_TRIM=${SUMMARY_SS_BUILD::120}
+SUMMARY_IPV4="${COLOR_INFO}#### ${LIGHTGRAY}IPv4: ${LIGHTGREEN}${SYSTEM_IPV4_ADDRESS} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_IPV4_TRIM=${SUMMARY_IPV4::120}
+SUMMARY_IPV6="${COLOR_INFO}#### ${LIGHTGRAY}IPv6: ${LIGHTGREEN}${SYSTEM_IPV6_ADDRESS} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_IPV6_TRIM=${SUMMARY_IPV6::120}
+SUMMARY_SITE_TLD="${COLOR_INFO}#### ${LIGHTGRAY}Site TLD: ${LIGHTGREEN}${SITE_TLD} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SITE_TLD_TRIM=${SUMMARY_SITE_TLD::120}
+SUMMARY_SITE_DOMAIN="${COLOR_INFO}#### ${LIGHTGRAY}Site domain: ${LIGHTGREEN}https://${SITE_DOMAIN} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SITE_DOMAIN_TRIM=${SUMMARY_SITE_DOMAIN::120}
+SUMMARY_SITE_NOINDEX="${COLOR_INFO}#### ${LIGHTGRAY}Site noindex: ${LIGHTGREEN}${SITE_NOINDEX} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SITE_NOINDEX_TRIM=${SUMMARY_SITE_NOINDEX::120}
+SUMMARY_SUDO_USER="${COLOR_INFO}#### ${LIGHTGRAY}Sudo user: ${LIGHTGREEN}${SUDO_USER} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SUDO_USER_TRIM=${SUMMARY_SUDO_USER::120}
+SUMMARY_SUDO_PASSWORD="${COLOR_INFO}#### ${LIGHTGRAY}Sudo password: ${LIGHTGREEN}${SUDO_PASSWORD} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SUDO_PASSWORD_TRIM=${SUMMARY_SUDO_PASSWORD::120}
+SUMMARY_SFTP_USER="${COLOR_INFO}#### ${LIGHTGRAY}SFTP user: ${LIGHTGREEN}${SFTP_USER} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SFTP_USER_TRIM=${SUMMARY_SFTP_USER::120}
+SUMMARY_SFTP_PASSWORD="${COLOR_INFO}#### ${LIGHTGRAY}SFTP password: ${LIGHTGREEN}${SFTP_PASSWORD} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SFTP_PASSWORD_TRIM=${SUMMARY_SFTP_PASSWORD::120}
+SUMMARY_SSH_PORT="${COLOR_INFO}#### ${LIGHTGRAY}SSH/SFTP port: ${LIGHTGREEN}${SSH_PORT} ${COLOR_INFO}${FILLER} ${NOCOLOR}"
+SUMMARY_SSH_PORT_TRIM=${SUMMARY_SSH_PORT::120}
+
+## display critical slickstack settings ##
+# echo -e ""
+# echo -e "${COLOR_WARN}Congrats! Here are your active MariHost settings: ${NOCOLOR}"
+echo -e ""
+echo -e "${COLOR_INFO}################################################################################${NOCOLOR}"
+echo -e "${SUMMARY_SS_BUILD_TRIM}"
+echo -e "${SUMMARY_IPV4_TRIM}"
+echo -e "${SUMMARY_IPV6_TRIM}"
+echo -e "${SUMMARY_SITE_TLD_TRIM}"
+echo -e "${SUMMARY_SITE_DOMAIN_TRIM}"
+echo -e "${SUMMARY_SITE_NOINDEX_TRIM}"
+echo -e "${SUMMARY_SUDO_USER_TRIM}"
+echo -e "${SUMMARY_SUDO_PASSWORD_TRIM}"
+echo -e "${SUMMARY_SFTP_USER_TRIM}"
+echo -e "${SUMMARY_SFTP_PASSWORD_TRIM}"
+echo -e "${SUMMARY_SSH_PORT_TRIM}"
+echo -e "${LIGHTGRAY}SSH keys: ${LIGHTGREEN}${SSH_KEYS} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Staging site: ${LIGHTGREEN}${STAGING_SITE} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Dev site: ${LIGHTGREEN}${DEV_SITE} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Guest user: ${LIGHTGREEN}${GUEST_USER} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Guest password: ${LIGHTGREEN}${GUEST_PASSWORD} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database name: ${LIGHTGREEN}${DB_NAME} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database user: ${LIGHTGREEN}${DB_USER} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database user password: ${LIGHTGREEN}${DB_PASSWORD} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database admin user: ${LIGHTGREEN}admin@127.0.0.1 ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database admin user password: ${LIGHTGREEN}${DB_PASSWORD_ROOT} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database host: ${LIGHTGREEN}${DB_HOST} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Database prefix: ${LIGHTGREEN}${DB_PREFIX} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}WP Multisite: ${LIGHTGREEN}${WP_MULTISITE} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}WP Multisite subdomains: ${LIGHTGREEN}${WP_MULTISITE_SUBDOMAINS} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}WP Multisite domain mapping: ${LIGHTGREEN}${WP_MULTISITE_DOMAIN_MAPPING} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}CloudFlare API key: ${LIGHTGREEN}${CLOUDFLARE_API_KEY} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}CloudFlare API email: ${LIGHTGREEN}${CLOUDFLARE_API_EMAIL} ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Swapfile: ${LIGHTGREEN}$ ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Crontab: ${LIGHTGREEN}$ ${NOCOLOR}"
+echo -e "${LIGHTGRAY}OpenSSL status: ${LIGHTGREEN}$ ${NOCOLOR}"
+echo -e "${LIGHTGRAY}Lets Encrypt status: ${LIGHTGREEN}$ ${NOCOLOR}"
+
+####################################################################################################
+#### D. SS-Stack-Overview: Display Urgent Notes #########################################
+####################################################################################################
+
+echo -e ""
+echo -e "${COLOR_WARN}NOTE: The SFTP user/password is the default login for WP Admin on dev/staging ${NOCOLOR}"
+echo -e "${COLOR_WARN}and production unless otherwise configured. Use the bash alias ss to save ${NOCOLOR}"
+echo -e "${COLOR_WARN}keystrokes (type ss help for a full list of commands). If this is the first ${NOCOLOR}"
+echo -e "${COLOR_WARN}time you installed SlickStack on this server, type the word bash below and ${NOCOLOR}"
+echo -e "${COLOR_WARN}hit ENTER to reload this bash session and activate these shortcuts! ${NOCOLOR}"
+echo -e ""
+
+####################################################################################################
+#### E. SS-Stack-Overview: Display SSH Key (One Time Only) #########################################
+####################################################################################################
+
+## for ease of use this snippet will diplay the generated SSH private key one time only ##
+## users are expected to copy and paste this somewhere safe (advanced users only) ##
+
+if [[ "${SSH_KEYS}" == "true" ]] && [[ -f "${PATH_SSH_PRIVATE_KEY_FILE}" ]]; then
+    echo -e ""
+    echo -e "${COLOR_WARN}Below is your private SSH key (copy to your local computer): ${NOCOLOR}"
+    echo -e ""
+    cat "${PATH_SSH_PRIVATE_KEY_FILE}"
+    echo -e ""
+    echo -e "${COLOR_WARN}This private key file (id_rsa) will be deleted on next cleanup cycle... COPY IT NOW before it disappears! ${NOCOLOR}"
+fi
+
+####################################################################################################
+#### SS-Stack-Overview: Notify If Newer SlickStack Build Exists ####################################
+####################################################################################################
+
+## below we briefly inspect the latest ss-config template from official SlickStack mirrors ##
+## if it appears that the local server is outdated then a message with appear here ##
+
+## delete leftover files ##
+# rm /tmp/ss-config*
+
+## retrieve latest version of ss-config-sample ##
+# ss_wget_slow -O /tmp/ss-config http://mirrors.slickstack.io/ss-config-sample.txt
+
+## fix this after fixing wget thing above ##
+## ensure latest (retrieved) ss-config build matches current ss-update build ##
+# SS_BUILD_LATEST=$(source /tmp/ss-config; echo $SS_BUILD)
+# if [[ "$SS_BUILD_LATEST" != "$SS_BUILD" ]]; then
+ #   echo -e ""
+ #   echo -e "${YELLOW}It appears that a newer SlickStack build is available! We recommend you ${NOCOLOR}"
+ #   echo -e "${YELLOW}run ss-update to benefit from the latest features and patches.${NOCOLOR}"
+ #   echo -e ""
+# fi
+
+## delete leftover files ##
+rm /tmp/ss-config*
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

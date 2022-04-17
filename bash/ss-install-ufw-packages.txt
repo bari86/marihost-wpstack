@@ -24,6 +24,16 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
+#### SS-Install-UFW-Packages: Touch Timestamp File #################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+touch "${TIMESTAMP_SS_INSTALL_UFW_PACKAGES}"
+
+####################################################################################################
 #### SS-Install-UFW-Core: Message (Begin Script) ###################################################
 ####################################################################################################
 
@@ -31,8 +41,22 @@ source /var/www/ss-functions
 ## it will only be noticed by sudo users who manually call ss core bash scripts ##
 
 ## echo message ##
-echo -e "${COLOR_INFO}Running ss-install-ufw: Reinstalls the entire UFW firewall module for SlickStack servers (idempotent)... ${NOCOLOR}"
+echo -e "${COLOR_INFO}Running ss-install-ufw-packages: Reinstalls the entire UFW firewall module for SlickStack servers (idempotent)... ${NOCOLOR}"
 sleep "$SLEEP_MESSAGE_BEGIN"
+
+####################################################################################################
+#### SS-Install-UFW-Packages: Update Existing Packages #############################################
+####################################################################################################
+
+## SNIPPET: ss-install-*-packages bash scripts
+## UPDATED: 30MAR2022
+
+## we must include the standard apt update/upgrade in case script is called directly ##
+## this helps to avoid conflicts and outdated packages during installation ##
+
+## update packages ##
+apt update > /dev/null 2>&1
+apt upgrade > /dev/null 2>&1
 
 ####################################################################################################
 #### SS-Install-UFW: Cleanup Temporary Files #######################################################
@@ -47,38 +71,40 @@ rm /tmp/user*
 ####################################################################################################
 
 ## disable UFW before proceeding with new install ##
-sudo ufw --force disable
+sudo ufw --force disable > /dev/null 2>&1
 
 ####################################################################################################
 #### SS-Install-UFW: Install UFW (Firewall) ########################################################
 ####################################################################################################
 
 ## purge all UFW packages and remove any previous UFW configuration files ##
-apt purge ^ufw
+# apt purge ^ufw
 # rm /etc/ufw/*
 
-## update repo cache ##
-apt update
-apt upgrade
-
 ## attempt fixing any broken package depencies ##
-apt install --fix-broken
+# apt install --fix-broken > /dev/null 2>&1
 
-## cleanup potential conflicting files ##
-apt autoremove
-apt autoclean
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" = "22.04" ]]; then
+    apt install ufw > /dev/null 2>&1
+fi
 
-## for Ubuntu 20.04 LTS only ##
-# if [[ "${UBUNTU_VERSION}" = "20.04" ]]; then
-    apt install ufw
-# fi
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" = "20.04" ]]; then
+    apt install ufw > /dev/null 2>&1
+fi
+
+## ubuntu 18.04 ##
+if [[ "${UBUNTU_VERSION}" = "18.04" ]]; then
+    apt install ufw > /dev/null 2>&1
+fi
 
 ####################################################################################################
 #### SS-Install-UFW: Reset Permissions (UFW) #######################################################
 ####################################################################################################
 
 ## run ss-perms-ufw-packages ##
-source "$PATH_SS_PERMS_UFW_PACKAGES"
+source "${PATH_SS_PERMS_UFW_PACKAGES}"
 
 ####################################################################################################
 #### SS-Install-UFW: Enable UFW ####################################################################
@@ -88,7 +114,7 @@ source "$PATH_SS_PERMS_UFW_PACKAGES"
 ## many times during re-installation of ss-install the shell session gets kicked off right after this step ##
 
 ## enable UFW because we are done configuring settings ##
-sudo ufw --force enable
+sudo ufw --force enable > /dev/null 2>&1
 
 ####################################################################################################
 #### SS-Install-UFW: Cleanup Temporary Files #######################################################
@@ -97,16 +123,6 @@ sudo ufw --force enable
 ## delete tmp files ##
 rm /tmp/ufw*
 rm /tmp/user*
-
-####################################################################################################
-#### SS-Install-UFW-Packages: Touch Timestamp File (End Script) ####################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_UFW_PACKAGES"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

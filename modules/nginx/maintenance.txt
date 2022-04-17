@@ -2,12 +2,12 @@
 <html lang="en">
 
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="30">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" crossorigin="anonymous">
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<meta http-equiv="refresh" content="30">
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap">
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" crossorigin="anonymous">
 
 <style>
 html, body, div, span, h1, h2, h3, p, a, strong, ol, ul, li {
@@ -18,89 +18,149 @@ html, body, div, span, h1, h2, h3, p, a, strong, ol, ul, li {
 	vertical-align: baseline;
 }
 
+@media screen and (max-width: 960px) {
 html, body {
-  height: 100%;
-  font-family: 'Lato', sans-serif;
-  font-weight: 400;
-  line-height: 1;
-  background: #EEEEEE;
+	line-height: 1;
+	font-family: 'Lato', sans-serif;
+	font-weight: 400;
+	background: #fff;
+	}
 }
 
-#wrapper {
-  padding: 60px;
+@media screen and (min-width: 960px) {
+html, body {
+	line-height: 1;
+	font-family: 'Lato', sans-serif;
+	font-weight: 400;
+	background: #fff;
+	}
 }
 
-#content {
-height: 100%;
-box-sizing: border-box;
-  padding: 60px 20px;
-  text-align: center;
-  background: #fff;
+@media screen and (max-width: 960px) {
+#splash {
+	margin: 0px;
+	padding: 60px 20px;
+ 	text-align: center;
+	background: #fff;
+	}
 }
 
-#top-icon {
-  line-height: 1;
-  font-size: 48px;
-  font-weight: 700;
-  margin-bottom: 30px;
-  color: #00E676;
+@media screen and (min-width: 960px) {
+#splash {
+	margin: 0px;
+	padding: 120px 60px;
+ 	text-align: center;
+	background: #fff;
+	}
 }
 
+#icon {
+	line-height: 1;
+	margin-bottom: 30px;
+	font-size: 60px;
+	font-weight: 700;
+	color: #00E676;
+}
+
+@media screen and (max-width: 960px) {
 h1 {
-  line-height: 1;
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 30px;
-  color: #00E676;
+	line-height: 1;
+	margin-bottom: 30px;
+	font-size: 24px;
+	font-weight: 700;
+	color: #00E676;
+	}
 }
 
+@media screen and (min-width: 960px) {
+h1 {
+	line-height: 1;
+	margin-bottom: 30px;
+	font-size: 36px;
+	font-weight: 700;
+	color: #00E676;
+	}
+}
+
+@media screen and (max-width: 960px) {
 h2 {
-  line-height: 1.5;
-  font-size: 24px;
-  font-weight: 400;
-  margin-bottom: 100px;
-  color: #424242;
+	line-height: 1.5;
+	margin-bottom: 60px;
+	font-size: 18px;
+	font-weight: 400;
+	color: #424242;
+	}
 }
 
+@media screen and (min-width: 960px) {
+h2 {
+	line-height: 1.5;
+	margin-bottom: 120px;
+	font-size: 24px;
+	font-weight: 400;
+	color: #424242;
+	}
+}
+
+hr {
+	margin-bottom: 30px;
+	border-top: 1px solid #E0E0E0;
+}
+
+@media screen and (max-width: 960px) {
 p {
-  line-height: 1;
-  font-size: 16px;
-  font-weight: 400;
-  margin-bottom: 0px;
-  color: #BDBDBD;
+	display: inline-block !important;
+	line-height: 1;
+	margin-bottom: 0px;
+	font-size: 14px;
+	font-weight: 400;
+	color: #BDBDBD;
+	}
 }
 
-.ss-logo {
-    margin-left: 10px;
-    margin-right: 5px;
+@media screen and (min-width: 960px) {
+p {
+	display: block !important;
+	line-height: 1;
+	margin-bottom: 0px;
+	font-size: 16px;
+	font-weight: 400;
+	color: #BDBDBD;
+	}
 }
 
 a {
-  font-size: 16px;
-  font-weight: 400;
-  text-decoration: none !important;
-  color: #9E9E9E !important;
+	font-weight: 700;
+	text-decoration: none !important;
+	color: #9E9E9E !important;
+}
+
+@media screen and (max-width: 960px) {
+br.desktop {
+	display: none !important;
+	}
+}
+
+@media screen and (min-width: 960px) {
+br.mobile {
+	display: none !important;
+	}
 }
 </style>
 </head>
   
-  <body>
-    <div id="wrapper">
-    <div id="content">
-      <div id="top-icon"><i class="fas fa-tools"></i></div>
-      <h1>We'll be right back! (Maintenance Mode)</h1>
-      <h2>Apologies for the inconvenience, our team is upgrading the server. Please check back shortly.</h2>
-      <p>Are you the server admin? Simply delete maintenance.html to remove this message.</p>
-	    <p>Robots see: HTTP Status Code 503 (Service Unavailable)</p>
-	    <p>&nbsp;</p>
-        <p>&nbsp;</p>
-        <p><a href="https://slickstack.io"><span class="ss-logo"><i class="fas fa-bolt"></i><i class="fas fa-bolt"></i></span>SlickStack</a></p>
-      </div><!-- content -->
-      </div><!-- wrapper -->
-  </body>
+<body>
+<div id="splash">
+	<div id="icon"><i class="fas fa-tools"></i></div>
+	<h1>We'll be right back!<br class="mobile"> (Maintenance Mode)</h1>
+	<h2>Apologies for the inconvenience, our team is upgrading the server. Please check back shortly.</h2>
+	<hr>
+	<p>Are you the server admin? Simply delete maintenance.html to remove this message.<br class="desktop">
+	Robots see: HTTP Status Code 503 (Service Unavailable).<br class="desktop">
+	This page auto-refreshes every 30 seconds.</p>
+	<br>
+	<br>
+	<p>Powered by <a href="https://slickstack.io">SlickStack</a></p>
+</div><!-- splash -->
+</body>
 </html>
-
-<!-- Ref: https://www.magicpattern.design/tools/css-backgrounds -->
-<!-- Ref: https://stackoverflow.com/questions/1776915/how-can-i-center-an-absolutely-positioned-element-in-a-div -->
-<!-- Ref: https://www.w3schools.com/tags/att_meta_http_equiv.asp -->
-<!-- Ref: https://stackoverflow.com/questions/32913226/auto-refresh-page-every-30-seconds -->

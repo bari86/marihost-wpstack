@@ -9,7 +9,7 @@
 #### purpose: Regenerates free Lets Encrypt certs and adjusts Nginx config (idempotent) ############
 #### module version: Certbot 0.40.x ################################################################
 #### sourced by: ss-install-nginx-config ###########################################################
-#### bash aliases: ss encrypt certbot, ss generate letsencrypt #####################################
+#### bash aliases: ss certbot, ss encrypt certbot, ss encrypt letsencrypt, ss letsencrypt ##########
 ####################################################################################################
 
 ## SS-ENCRYPT PERFORMS BASIC NGINX CONFIG MODIFICATION REGARDLESS OF SS-INSTALL-NGINX ##
@@ -27,6 +27,9 @@ source /var/www/ss-functions
 #### TABLE OF CONTENTS (SS-Encrypt-Certbot) ########################################################
 ####################################################################################################
 
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
 ## A. Touch Timestamp File
 ## B. Message (Begin Script)
 ## C. Reset Permissions (Nginx SSL)
@@ -40,7 +43,7 @@ source /var/www/ss-functions
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-touch "$TIMESTAMP_SS_ENCRYPT_CERTBOT"
+touch "${TIMESTAMP_SS_ENCRYPT_CERTBOT}"
 
 ####################################################################################################
 #### B. SS-Encrypt-Certbot: Message (Begin Script) #################################################
@@ -51,14 +54,14 @@ touch "$TIMESTAMP_SS_ENCRYPT_CERTBOT"
 
 ## echo message ##
 echo -e "${COLOR_INFO}Running ss-encrypt-certbot: Regenerates free Lets Encrypt certs and adjusts Nginx config (idempotent)... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
+sleep "${SLEEP_MESSAGE_BEGIN}"
 
 ####################################################################################################
 #### C. SS-Encrypt-Certbot: Reset Permissions (Nginx SSL) ##########################################
 ####################################################################################################
 
 ## run ss-perms-nginx-ssl ##
-source "$PATH_SS_PERMS_NGINX_SSL"
+source "${PATH_SS_PERMS_NGINX_SSL}"
 
 ####################################################################################################
 #### D. SS-Encrypt-Certbot: Generate DH Parameters (If Lets Encrypt Enabled) #######################
@@ -67,8 +70,8 @@ source "$PATH_SS_PERMS_NGINX_SSL"
 ## this will generate DH parameters using OpenSSL for use by Lets Encrypt certificates ##
 ## by maintaining this file we are able to strengthen the security of the SSL ##
 
-if [[ "$SSL_TYPE" == "certbot" ]] && [[ ! -f "/var/www/certs/dhparam.pem" ]]; then 
-    openssl dhparam -out /var/www/certs/dhparam.pem 2048
+if [[ "${SSL_TYPE}" == "certbot" ]] && [[ ! -f "/var/www/certs/dhparam.pem" ]]; then 
+    openssl dhparam -out /var/www/certs/dhparam.pem 2048 2> /dev/null
 fi
 
 ####################################################################################################
@@ -133,73 +136,74 @@ fi
 ## SINGLE SITE CERTS + STAGING ENABLED / DEV ENABLED ##
 
 ## if site domain contains www (and is therefore a subdomain) e.g. www.example.com or www.example.co.uk ##
-if [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" == www.* ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+if [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" == www.* ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain does not contain www (and is not any other type of subdomain) e.g. example.com or example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" == "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" == "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain is a non-www type of subdomain e.g. blog.example.com or blog.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" != "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" != "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN}
 
 
 ## SINGLE SITE CERTS + STAGING ENABLED / DEV DISABLED ##
 
 ## if site domain contains www (and is therefore a subdomain) e.g. www.example.com or www.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" == www.* ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" == www.* ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain does not contain www (and is not any other type of subdomain) e.g. example.com or example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" == "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" == "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain is a non-www type of subdomain e.g. blog.example.com or blog.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" != "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" != "false" ]] && [[ "$STAGING_SITE_SUBDOMAIN" != "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN} -d staging.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" != "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" != "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/staging/ -d staging.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN}
 
 
 ## SINGLE SITE CERTS + STAGING DISABLED / DEV ENABLED ##
 
 ## if site domain contains www (and is therefore a subdomain) e.g. www.example.com or www.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" == www.* ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" == www.* ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain does not contain www (and is not any other type of subdomain) e.g. example.com or example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" == "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" == "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain is a non-www type of subdomain e.g. blog.example.com or blog.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" != "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" != "false" ]] && [[ "$DEV_SITE_SUBDOMAIN" != "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN} -d dev.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" != "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" != "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/dev/ -d dev.${SITE_DOMAIN_EXCLUDING_WWW} -w /var/www/html/ -d ${SITE_DOMAIN}
 
 
 ## SINGLE SITE CERTS + STAGING DISABLED / DEV DISABLED ##
 
 ## if site domain contains www (and is therefore a subdomain) e.g. www.example.com or www.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" == www.* ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" == www.* ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain does not contain www (and is not any other type of subdomain) e.g. example.com or example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" == "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" == "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/ -d ${SITE_DOMAIN_EXCLUDING_WWW} -d ${SITE_DOMAIN_INCLUDING_WWW}
 
 ## if site domain is a non-www type of subdomain e.g. blog.example.com or blog.example.co.uk ##
-elif [[ "$WP_MULTISITE" != "true" ]] && [[ "$SITE_DOMAIN" != www.* ]] && [[ "$SITE_TLD" != "$SITE_DOMAIN" ]] && [[ "$STAGING_SITE" == "false" || "$STAGING_SITE_SUBDOMAIN" == "false" ]] && [[ "$DEV_SITE" == "false" || "$DEV_SITE_SUBDOMAIN" == "false" ]]; then
-    certbot certonly --noninteractive --agree-tos --cert-name slickstack -d ${SITE_DOMAIN} --register-unsafely-without-email --webroot -w /var/www/html/
+elif [[ "${WP_MULTISITE}" != "true" ]] && [[ "${SITE_DOMAIN}" != www.* ]] && [[ "${SITE_TLD}" != "${SITE_DOMAIN}" ]] && [[ "${STAGING_SITE}" == "false" ]] && [[ "${DEV_SITE}" == "false" ]]; then
+    certbot certonly --noninteractive --agree-tos --register-unsafely-without-email --cert-name slickstack --webroot -w /var/www/html/ -d ${SITE_DOMAIN}
 
 
 ## MULTISITE SUBDOMAINS + EITHER STAGING/DEV ENABLED (PART OF WILDCARD) ##
 
-elif [[ "$WP_MULTISITE" == "true" ]] && [[ "$WP_MULTISITE_SUBDOMAINS" != "false" ]]; then
-    certbot certonly --manual --agree-tos --cert-name slickstack -d ${SITE_DOMAIN_EXCLUDING_WWW} -d *.${SITE_DOMAIN_EXCLUDING_WWW} --register-unsafely-without-email --preferred-challenges=dns
+elif [[ "${WP_MULTISITE}" == "true" ]] && [[ "${WP_MULTISITE_SUBDOMAINS}" != "false" ]]; then
+    certbot certonly --manual --agree-tos --register-unsafely-without-email --cert-name slickstack --preferred-challenges=dns -d ${SITE_DOMAIN_EXCLUDING_WWW} -d *.${SITE_DOMAIN_EXCLUDING_WWW}
 
 
 ## MULTISITE SUBDOMAINS + BOTH STAGING/DEV DISABLED (STILL REQUIRES WILDCARD) ##
 ## n/a (same as above)
 
 
+### ALL THESE STILL NEED FIXING RE: WEBROOT SYNTAX SAME AS SINGLE SITES ABOVE ###
 ## MULTISITE SUBDIRECTORIES + STAGING ENABLED / DEV ENABLED ##
 
 ## if site domain contains www (and is therefore a subdomain) e.g. www.example.com or www.example.co.uk ##
@@ -356,6 +360,8 @@ source "$PATH_SS_RESTART_NGINX"
 ## Ref: https://community.letsencrypt.org/t/you-may-need-to-use-a-different-authenticator-plugin/115026
 ## Ref: https://community.letsencrypt.org/t/how-to-expand-certificate-with-a-wildcard-subdomain/133925/4
 ## Ref: https://wordpress.org/support/topic/wp-multisite-404-not-found-error/
+## Ref: https://community.letsencrypt.org/t/resolved-certbot-how-to-specify-webroot-for-unmatched-domains/23147/2
+## Ref: https://community.letsencrypt.org/t/multiple-domains-webroot-paths-using-webroot-plugin/7982
 
 ## WP Multisite research:
 

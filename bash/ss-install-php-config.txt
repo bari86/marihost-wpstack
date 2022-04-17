@@ -7,8 +7,8 @@
 #### path: /var/www/ss-install-php-config ##########################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls the PHP-FPM module config files based on ss-config (idempotent) ###########
-#### module version: PHP-FPM 7.4.x #################################################################
-#### sourced by: ss-install-php ####################################################################
+#### module version: PHP-FPM 8.1.x #################################################################
+#### sourced by: ss-install ########################################################################
 #### bash aliases: ss install php config ###########################################################
 ####################################################################################################
 
@@ -27,6 +27,9 @@ source /var/www/ss-functions
 #### TABLE OF CONTENTS (SS-Install-PHP-Config) #####################################################
 ####################################################################################################
 
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
 ## A. Touch Timestamp File
 ## B. Message (Begin Script)
 ## C. Cleanup Temporary Files
@@ -42,7 +45,7 @@ source /var/www/ss-functions
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_PHP_CONFIG"
+touch "${TIMESTAMP_SS_INSTALL_PHP_CONFIG}"
 
 ####################################################################################################
 #### B. SS-Install-PHP-Config: Message (Begin Script) ##############################################
@@ -53,16 +56,16 @@ touch "$TIMESTAMP_SS_INSTALL_PHP_CONFIG"
 
 ## echo message ##
 echo -e "${COLOR_INFO}Running ss-install-php-config: Reinstalls the PHP-FPM module config files based on ss-config (idempotent)... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
+sleep "${SLEEP_MESSAGE_BEGIN}"
 
 ####################################################################################################
 #### C. SS-Install-PHP-Config: Cleanup Temporary Files #############################################
 ####################################################################################################
 
 ## delete tmp files ##
-rm "$TMP_PHP_FPM_CONF"
-rm "$TMP_PHP_INI"
-rm "$TMP_WWW_CONF"
+# rm "${TMP_PHP_FPM_CONF}"
+# rm "${TMP_PHP_INI}"
+# rm "${TMP_WWW_CONF}"
 
 ####################################################################################################
 #### D. SS-Install-PHP-Config: Install PHP.ini Files ###############################################
@@ -74,26 +77,26 @@ rm "$TMP_WWW_CONF"
 ## download latest versions ##
 
 if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
-wget -O "$TMP_PHP_FPM_CONF" "$MIRROR_PHP_FPM_CONF_81"
-wget -O "$TMP_PHP_INI" "$MIRROR_PHP_INI_81"
-wget -O "$TMP_WWW_CONF" "$MIRROR_WWW_CONF_81"
+    ss_wget_slow -O "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF_81}"
+    ss_wget_slow -O "${TMP_PHP_INI}" "${MIRROR_PHP_INI_81}"
+    ss_wget_slow -O "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF_81}"
 fi
 
 if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
-wget -O "$TMP_PHP_FPM_CONF" "$MIRROR_PHP_FPM_CONF"
-wget -O "$TMP_PHP_INI" "$MIRROR_PHP_INI"
-wget -O "$TMP_WWW_CONF" "$MIRROR_WWW_CONF"
+    ss_wget_slow -O "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF}"
+    ss_wget_slow -O "${TMP_PHP_INI}" "${MIRROR_PHP_INI}"
+    ss_wget_slow -O "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF}"
 fi
 
 if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
-wget -O "$TMP_PHP_FPM_CONF" "$MIRROR_PHP_FPM_CONF_72"
-wget -O "$TMP_PHP_INI" "$MIRROR_PHP_INI_72"
-wget -O "$TMP_WWW_CONF" "$MIRROR_WWW_CONF_72"
+    ss_wget_slow -O "${TMP_PHP_FPM_CONF}" "${MIRROR_PHP_FPM_CONF_72}"
+    ss_wget_slow -O "${TMP_PHP_INI}" "${MIRROR_PHP_INI_72}"
+    ss_wget_slow -O "${TMP_WWW_CONF}" "${MIRROR_WWW_CONF_72}"
 fi
 
-#################
-#### PHP.ini ####
-#################
+####################################################################################################
+#### SS-Install-PHP-Config: Configure PHP.ini Boilerplate (Per Ubuntu Version) #####################
+####################################################################################################
 
 ## max execution time ##
 if [[ -z "$PHP_MAX_EXECUTION_TIME" ]]; then 
@@ -280,7 +283,7 @@ fi
 
 
 ####################################################################################################
-#### E. SS-Install-PHP-Config: Install PHP-FPM.conf ################################################
+#### SS-Install-PHP-Config: Configure PHP-FPM.conf Boilerplate (Per Ubuntu Version) ################
 ####################################################################################################
 
 ## emerg restart threshold ##
@@ -340,7 +343,7 @@ else
 fi
 
 ####################################################################################################
-#### F. SS-Install-PHP-Config: Install WWW.conf ####################################################
+#### SS-Install-PHP-Config: Configure WWW.conf Boilerplate (Per Ubuntu Version) ####################
 ####################################################################################################
 
 ## pool listen backlog ##
@@ -436,19 +439,32 @@ fi
 # sed -i '/error_log/c\error_log = /var/www/logs/error.log' /etc/php/7.4/fpm/php-fpm.conf
 
 
-## copy files to destination ##
-if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
-    cp "$TMP_PHP_FPM_CONF" /etc/php/7.4/fpm/php-fpm.conf
-    cp "$TMP_PHP_INI" /etc/php/7.4/fpm/php.ini
-    cp "$TMP_PHP_INI" /etc/php/7.4/cli/php.ini
-    cp "$TMP_WWW_CONF" /etc/php/7.4/fpm/pool.d/www.conf
+if [[ "${SS_APP}" != "mysql" ]]; then
+
+## ubuntu 22.04 ##
+if [[ "${UBUNTU_VERSION}" == "22.04" ]]; then
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_81}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_81}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_81}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_81}"
 fi
 
+## ubuntu 20.04 ##
+if [[ "${UBUNTU_VERSION}" == "20.04" ]]; then
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_74}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_74}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_74}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_74}"
+fi
+
+## ubuntu 18.04 ##
 if [[ "${UBUNTU_VERSION}" == "18.04" ]]; then
-    cp "$TMP_PHP_FPM_CONF" /etc/php/7.2/fpm/php-fpm.conf
-    cp "$TMP_PHP_INI" /etc/php/7.2/fpm/php.ini
-    cp "$TMP_PHP_INI" /etc/php/7.2/cli/php.ini
-    cp "$TMP_WWW_CONF" /etc/php/7.2/fpm/pool.d/www.conf
+    ss_mv "${TMP_PHP_FPM_CONF}" "${PATH_PHP_FPM_CONF_72}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_FPM_72}"
+    ss_cp "${TMP_PHP_INI}" "${PATH_PHP_INI_CLI_72}"
+    ss_mv "${TMP_WWW_CONF}" "${PATH_WWW_CONF_72}"
+fi
+
 fi
 
 ####################################################################################################
@@ -456,23 +472,23 @@ fi
 ####################################################################################################
 
 ## run ss-perms-php-config ##
-source "$PATH_SS_PERMS_PHP_CONFIG"
+source "${PATH_SS_PERMS_PHP_CONFIG}"
 
 ####################################################################################################
 #### SS-Install-PHP-Config: Restart Services (PHP-FPM) #############################################
 ####################################################################################################
 
 ## run ss-restart-php ##
-source "$PATH_SS_RESTART_PHP"
+source "${PATH_SS_RESTART_PHP}"
 
 ####################################################################################################
 #### SS-Install-PHP-Config: Cleanup Temporary Files ################################################
 ####################################################################################################
 
 ## delete tmp files ##
-rm /tmp/php-fpm*
-rm /tmp/php-ini*
-rm /tmp/www*
+# rm /tmp/php-fpm*
+# rm /tmp/php-ini*
+# rm /tmp/www*
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

@@ -6,7 +6,7 @@
 #### mirror: https://mirrors.slickstack.io/bash/ss-update-config.txt ###############################
 #### path: /var/www/ss-update-config ###############################################################
 #### destination: n/a (not a boilerplate) ##########################################################
-#### purpose: Updates ss-config file to latest boilerplate version and transfers settings ##########
+#### purpose: Updates ss-config file to current boilerplate version and transfers settings #########
 #### module version: Ubuntu 22.04 LTS ##############################################################
 #### sourced by: n/a ###############################################################################
 #### bash aliases: ss [update|upgrade] config ######################################################
@@ -14,6 +14,19 @@
 
 ## YOU CAN SAFELY RUN UPDATES WITH NO CHANGES TO YOUR LEMP MODULE CONFIGURATION FILES ##
 ## IN CASE YOU ACCIDENTALLY OVERWRITE CONFIG FILES SIMPLY RUN SS-INSTALL AGAIN ##
+
+####################################################################################################
+#### SS-Update-Config: Build Version ###############################################################
+####################################################################################################
+
+## this build version ensures compatibility with ss-config boilerplate (from mirrors) ##
+## it must match the latest ss-config boilerplate otherwise updating will fail ##
+
+SS_UPDATE_CONFIG_BUILD="APR2022P"
+
+####################################################################################################
+#### SS-Update-Config: Source SS-Config + SS-Functions #############################################
+####################################################################################################
 
 ## source ss-config ##
 source /var/www/ss-config
@@ -26,6 +39,9 @@ source /var/www/ss-functions
 ####################################################################################################
 #### TABLE OF CONTENTS (SS-Update-Config) ##########################################################
 ####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
 
 ## A. Build Version
 ## B. Touch Timestamp File
@@ -40,15 +56,6 @@ source /var/www/ss-functions
 ## K. Cleanup Temporary Files
 
 ####################################################################################################
-#### A. SS-Update-Config: Build Version ############################################################
-####################################################################################################
-
-## this build version ensures compatibility with ss-config boilerplate (from mirrors) ##
-## it must match the latest ss-config boilerplate otherwise updating will fail ##
-
-SS_UPDATE_BUILD="MAR2022D"
-
-####################################################################################################
 #### B. SS-Update-Config: Touch Timestamp File #####################################################
 ####################################################################################################
 
@@ -56,7 +63,7 @@ SS_UPDATE_BUILD="MAR2022D"
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-touch "$TIMESTAMP_SS_UPDATE_CONFIG"
+touch "${TIMESTAMP_SS_UPDATE_CONFIG}"
 
 ####################################################################################################
 #### C. SS-Update-Config: Message (Begin Script) ###################################################
@@ -67,14 +74,14 @@ touch "$TIMESTAMP_SS_UPDATE_CONFIG"
 
 ## echo message ##
 echo -e "${COLOR_INFO}Running ss-update-config: Updates ss-config file to latest boilerplate version and transfers settings... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
+sleep "${SLEEP_MESSAGE_BEGIN}"
 
 ####################################################################################################
 #### D. SS-Update-Config: Cleanup Temporary Files ##################################################
 ####################################################################################################
 
 ## delete tmp files ##
-rm "$TMP_SS_CONFIG"
+rm "${TMP_SS_CONFIG}"
 
 ####################################################################################################
 #### E. SS-Update-Config: Backup Active SS-Config File #############################################
@@ -124,11 +131,13 @@ fi
 ## otherwise default (recommended) options will be used from the new boilerplate ##
 
 ## retrieve latest version of ss-config-sample ##
-wget -O "$TMP_SS_CONFIG" "$MIRROR_SS_CONFIG_SAMPLE"
+wget -O "${TMP_SS_CONFIG}" "${MIRROR_SS_CONFIG_SAMPLE}"
+
+## snippet variables ##
+SS_BUILD_LATEST=$(source /tmp/ss-config; echo "${SS_BUILD}" 2> /dev/null)
 
 ## ensure latest (retrieved) ss-config build matches current ss-update build ##
-SS_BUILD_LATEST=$(source /tmp/ss-config; echo $SS_BUILD)
-if [[ "$SS_BUILD_LATEST" != "$SS_UPDATE_BUILD" ]]; then
+if [[ "${SS_BUILD_LATEST}" != "${SS_UPDATE_CONFIG_BUILD}" ]]; then
     rm "$TMP_SS_CONFIG"
     echo -e "${LIGHTRED}Exiting ss-update-config: There is a version mismatch between this script and public mirrors... ${NOCOLOR}"
     exit 1
@@ -257,6 +266,30 @@ sed -i "s|\(^RCLONE_PARALLEL_TRANSFERS=\).*|RCLONE_PARALLEL_TRANSFERS=\"$RCLONE_
 fi
 
 
+## rsync settings ##
+
+if [[ -n "$RSYNC_REMOTE_HOST" ]]; then 
+    sed -i "s|\(^RSYNC_REMOTE_HOST=\).*|RSYNC_REMOTE_HOST=\"$RSYNC_REMOTE_HOST\"|g" "$TMP_SS_CONFIG"
+fi
+
+if [[ -n "$RSYNC_BACKUP_PATH" ]]; then 
+    sed -i "s|\(^RSYNC_BACKUP_PATH=\).*|RSYNC_BACKUP_PATH=\"$RSYNC_BACKUP_PATH\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+if [[ -n "$RSYNC_USER" ]]; then 
+    sed -i "s|\(^RSYNC_USER=\).*|RSYNC_USER=\"$RSYNC_USER\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+if [[ -n "$RSYNC_PASSWORD" ]]; then 
+    sed -i "s|\(^RSYNC_PASSWORD=\).*|RSYNC_PASSWORD=\"$RSYNC_PASSWORD\"|g" "$TMP_SS_CONFIG"
+fi
+
+
+
+
+
 ## copy over general slickstack settings ##
 
 
@@ -288,6 +321,7 @@ if [[ -n "$SS_SYNC_STAGING" ]]; then
 sed -i "s|\(^SS_SYNC_STAGING=\).*|SS_SYNC_STAGING=\"$SS_SYNC_STAGING\"|g" "$TMP_SS_CONFIG"
 fi
 
+## DELETE THIS NOW REQUIRED FOR ALL SERVERS ##
 if [[ -n "$SS_SWAPFILE" ]]; then
 sed -i "s|\(^SS_SWAPFILE=\).*|SS_SWAPFILE=\"$SWAPFILE\"|g" "$TMP_SS_CONFIG"
 fi
@@ -480,21 +514,19 @@ if [[ -n "$NGINX_HEADER_POWERED_BY" ]]; then
 sed -i "s|\(^NGINX_HEADER_POWERED_BY=\).*|NGINX_HEADER_POWERED_BY=\"$NGINX_HEADER_POWERED_BY\"|g" "$TMP_SS_CONFIG"
 fi
 
+## DELETE HSTS HEADER SOON (NOW HARDCODED) ##
 if [[ -n "$NGINX_HEADER_STRICT_TRANSPORT_SECURITY" ]]; then
 sed -i "s|\(^NGINX_HEADER_STRICT_TRANSPORT_SECURITY=\).*|NGINX_HEADER_STRICT_TRANSPORT_SECURITY=\"$NGINX_HEADER_STRICT_TRANSPORT_SECURITY\"|g" "$TMP_SS_CONFIG"
 fi
 
+## DELETE THIS SOON NOW HARDCODED ##
 if [[ -n "$NGINX_HEADER_REFERRER_POLICY" ]]; then
 sed -i "s|\(^NGINX_HEADER_REFERRER_POLICY=\).*|NGINX_HEADER_REFERRER_POLICY=\"$NGINX_HEADER_REFERRER_POLICY\"|g" "$TMP_SS_CONFIG"
 fi
 
+## DELETE... NOW HARDCODED FOR NOW MAYBE RECONSIDER LATER AFTER SETTLED MORE ##
 if [[ -n "$NGINX_HEADER_PERMISSIONS_POLICY" ]]; then
 sed -i "s|\(^NGINX_HEADER_PERMISSIONS_POLICY=\).*|NGINX_HEADER_PERMISSIONS_POLICY=\"$NGINX_HEADER_PERMISSIONS_POLICY\"|g" "$TMP_SS_CONFIG"
-fi
-
-
-if [[ -n "$NGINX_HEADER_FEATURE_POLICY" ]]; then
-sed -i "s|\(^NGINX_HEADER_FEATURE_POLICY=\).*|NGINX_HEADER_FEATURE_POLICY=\"$NGINX_HEADER_FEATURE_POLICY\"|g" "$TMP_SS_CONFIG"
 fi
 
 
@@ -1452,6 +1484,16 @@ if [[ -n "$VALIDATE_TMP_SS_CONFIG" ]] && [[ -n "$DB_NAME_NOW" ]]; then
 else
     echo -e "${COLOR_ERROR}Exiting ss-update-config: The retrieved ss-config boilerplate appears corrupt so update was skipped... ${NOCOLOR}"
 fi
+
+
+####################################################################################################
+
+####################################################################################################
+
+## run this because ss-worker has some temp fixes to replaced @placeholders ##
+
+## run ss-worker ##
+source "$PATH_SS_WORKER"
 
 ####################################################################################################
 #### K. SS-Update-Config: Cleanup Temporary Files ##################################################

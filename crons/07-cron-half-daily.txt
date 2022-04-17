@@ -61,28 +61,39 @@ fi
 ####################################################################################################
 
 ## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
+## SNIPPET: ss-install, ss cron jobs
+## UPDATED: 03APR2022
 
-## SNIPPET: ss core cron jobs
-
-## this attempts to restore damaged or outdated ss-functions from our public mirrors ##
-## we perform this check before cron job tasks as they rely on ss-functions ##
+## this attempts to restore missing or outdated ss-functions from our public mirrors ##
+## we perform this check before ss-install runs and before any cron job tasks ##
 
 ## validate ss-functions ##
-VALIDATE_SS_FUNCTIONS=$(grep 'SS_EOF' /var/www/ss-functions)
-OUTDATED_SS_FUNCTIONS=$(find "/var/www/ss-functions" -mtime +1)
-if [[ -z "$VALIDATE_SS_FUNCTIONS" ]] || [[ -n "$OUTDATED_SS_FUNCTIONS" ]]; then
+VALIDATE_SS_FUNCTIONS=$(grep 'SS_EOF' /var/www/ss-functions 2> /dev/null)
+OUTDATED_SS_FUNCTIONS=$(find "/var/www/ss-functions" -mtime 2> /dev/null)
+if [[ -z "${VALIDATE_SS_FUNCTIONS}" ]] || [[ -n "${OUTDATED_SS_FUNCTIONS}" ]]; then
     rm -rf /tmp/ss-functions
-    wget --no-check-certificate -q -4 -t 1 -T 15 -O /tmp/ss-functions https://raw.githubusercontent.com/bari86/marihost-wpstack/master/bash/ss-functions.txt
-    VALIDATE_TMP_SS_FUNCTIONS=$(grep 'SS_EOF' /tmp/ss-functions)
-    if [[ -n "$VALIDATE_TMP_SS_FUNCTIONS" ]]; then
+    wget --no-check-certificate --no-cache --no-cookies --quiet --inet4-only --tries=3 --timeout=15 --waitretry=5 -O /tmp/ss-functions https://raw.githubusercontent.com/littlebizzy/slickstack/master/bash/ss-functions.txt
+    VALIDATE_TMP_SS_FUNCTIONS=$(grep 'SS_EOF' /tmp/ss-functions 2> /dev/null)
+    if [[ -n "${VALIDATE_TMP_SS_FUNCTIONS}" ]]; then
+        mkdir -p /var/www > /dev/null 2>&1
         mv -f /tmp/ss-functions /var/www/ss-functions
         chown root:root /var/www/ss-functions ## must be root:root
         chmod 0700 /var/www/ss-functions ## 0700 means only root can execute
     else
-        wget --no-check-certificate -q -4 -t 3 -T 30 -O /tmp/ss-functions https://gitlab.com/littlebizzy/slickstack/-/raw/master/bash/ss-functions.txt
-        mv -f /tmp/ss-functions /var/www/ss-functions
-        chown root:root /var/www/ss-functions ## must be root:root
-        chmod 0700 /var/www/ss-functions ## 0700 means only root can execute
+        wget --no-check-certificate --no-cache --no-cookies --quiet --inet4-only --tries=3 --timeout=15 --waitretry=5 -O /tmp/ss-functions https://gitlab.com/littlebizzy/slickstack/-/raw/master/bash/ss-functions.txt
+        VALIDATE_TMP_SS_FUNCTIONS=$(grep 'SS_EOF' /tmp/ss-functions 2> /dev/null)
+        if [[ -n "${VALIDATE_TMP_SS_FUNCTIONS}" ]]; then
+            mkdir -p /var/www > /dev/null 2>&1
+            mv -f /tmp/ss-functions /var/www/ss-functions
+            chown root:root /var/www/ss-functions ## must be root:root
+            chmod 0700 /var/www/ss-functions ## 0700 means only root can execute
+        else
+            wget --no-check-certificate --no-cache --no-cookies --quiet --inet4-only --tries=3 --timeout=15 --waitretry=5 -O /tmp/ss-functions https://sourceforge.net/p/slickstack/code/ci/master/tree/bash/ss-functions.txt?format=raw
+            mkdir -p /var/www > /dev/null 2>&1
+            mv -f /tmp/ss-functions /var/www/ss-functions
+            chown root:root /var/www/ss-functions ## must be root:root
+            chmod 0700 /var/www/ss-functions ## 0700 means only root can execute
+        fi
     fi
     rm -rf /tmp/ss-functions
 fi
@@ -161,7 +172,7 @@ source /var/www/ss-functions
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
 ## script timestamp ##
-ss_touch "$TIMESTAMP_07_CRON_HALF_DAILY"
+ss_touch "${TIMESTAMP_07_CRON_HALF_DAILY}"
 
 ####################################################################################################
 #### F. 07-Cron-Half-Daily: Run Custom Tasks (EDIT SOURCED FILES) ##################################
@@ -171,7 +182,7 @@ ss_touch "$TIMESTAMP_07_CRON_HALF_DAILY"
 ## carefully consider server resources and best practices before customizing ##
 
 ## run 07-cron-half-daily-custom ##
-source "$PATH_07_CRON_HALF_DAILY_CUSTOM"
+source "${PATH_07_CRON_HALF_DAILY_CUSTOM}"
 
 ####################################################################################################
 #### G. 07-Cron-Half-Daily: Run WP-Cron (If Enabled) ###############################################
@@ -181,7 +192,7 @@ source "$PATH_07_CRON_HALF_DAILY_CUSTOM"
 ## it is useful for sites with low traffic or that need strict cron management ##
 
 ## run wp-cron if set to half-daily ##
-if [[ "${WP_CRON_METHOD}" == "server" ]] && [[ "${WP_CRON_INTERVAL}" == "half-daily" ]]; then 
+if [[ "${WP_CRON_METHOD}" == "server" ]] && [[ "${WP_CRON_INTERVAL}" == "half-daily" ]]; then
     /usr/bin/php /var/www/html/wp-cron.php
 fi
 
@@ -193,103 +204,103 @@ fi
 ## certain tasks are automatically called if the relevant interval is missing ##
 
 ## run ss-clean-database if set to half-daily ##
-if [[ "$INTERVAL_SS_CLEAN_DATABASE" == "half-daily" ]]; then 
-    source "$PATH_SS_CLEAN_DATABASE"
+if [[ "${INTERVAL_SS_CLEAN_DATABASE}" == "half-daily" ]]; then
+    source "${PATH_SS_CLEAN_DATABASE}"
 fi
 
 ## run ss-dump-database if set to half-daily ##
-if [[ "$INTERVAL_SS_DUMP_DATABASE" == "half-daily" ]]; then 
-    source "$PATH_SS_DUMP_DATABASE"
+if [[ "${INTERVAL_SS_DUMP_DATABASE}" == "half-daily" ]]; then
+    source "${PATH_SS_DUMP_DATABASE}"
 fi
 
 ## run ss-clean-files if set to half-daily or if not defined (default) ##
-if [[ "$INTERVAL_SS_CLEAN_FILES" == "half-daily" ]] || [[ -z "$INTERVAL_SS_CLEAN_FILES" ]]; then 
-    source "$PATH_SS_CLEAN_FILES"
+if [[ "${INTERVAL_SS_CLEAN_FILES}" == "half-daily" ]] || [[ -z "${INTERVAL_SS_CLEAN_FILES}" ]]; then
+    source "${PATH_SS_CLEAN_FILES}"
 fi
 
 ## run ss-optimize-files if set to half-daily ##
-if [[ "$INTERVAL_SS_OPTIMIZE_FILES" == "half-daily" ]]; then 
-    source "$PATH_SS_OPTIMIZE_FILES"
+if [[ "${INTERVAL_SS_OPTIMIZE_FILES}" == "half-daily" ]]; then
+    source "${PATH_SS_OPTIMIZE_FILES}"
 fi
 
 ## run ss-dump-files if set to half-daily ##
-if [[ "$INTERVAL_SS_DUMP_FILES" == "half-daily" ]]; then 
-    source "$PATH_SS_DUMP_FILES"
+if [[ "${INTERVAL_SS_DUMP_FILES}" == "half-daily" ]]; then
+    source "${PATH_SS_DUMP_FILES}"
 fi
 
 ## run ss-install-wordpress-config if set to half-daily ##
-if [[ "$INTERVAL_SS_INSTALL_WORDPRESS_CONFIG" == "half-daily" ]]; then 
-    source "$PATH_SS_INSTALL_WORDPRESS_CONFIG"
+if [[ "${INTERVAL_SS_INSTALL_WORDPRESS_CONFIG}" == "half-daily" ]]; then
+    source "${PATH_SS_INSTALL_WORDPRESS_CONFIG}"
 fi
 
 ## run ss-install-wordpress-mu-plugins if set to half-daily ##
-if [[ "$INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS" == "half-daily" ]]; then 
-    source "$PATH_SS_INSTALL_WORDPRESS_MU_PLUGINS"
+if [[ "${INTERVAL_SS_INSTALL_WORDPRESS_MU_PLUGINS}" == "half-daily" ]]; then
+    source "${PATH_SS_INSTALL_WORDPRESS_MU_PLUGINS}"
 fi
 
 ## run ss-sync-staging if set to half-daily or if not defined (default) ##
-if [[ "$INTERVAL_SS_SYNC_STAGING" == "half-daily" ]] || [[ -z "$INTERVAL_SS_SYNC_STAGING" ]]; then 
-    source "$PATH_SS_SYNC_STAGING"
+if [[ "${INTERVAL_SS_SYNC_STAGING}" == "half-daily" ]] || [[ -z "${INTERVAL_SS_SYNC_STAGING}" ]]; then
+    source "${PATH_SS_SYNC_STAGING}"
 fi
 
 ## run ss-perms if set to half-daily ##
-if [[ "$INTERVAL_SS_PERMS" == "half-daily" ]]; then 
-    source "$PATH_SS_PERMS"
+if [[ "${INTERVAL_SS_PERMS}" == "half-daily" ]]; then
+    source "${PATH_SS_PERMS}"
 fi
 
 ## run ss-purge-nginx if set to half-daily ##
-if [[ "$INTERVAL_SS_PURGE_NGINX" == "half-daily" ]]; then 
-    source "$PATH_SS_PURGE_NGINX"
+if [[ "${INTERVAL_SS_PURGE_NGINX}" == "half-daily" ]]; then
+    source "${PATH_SS_PURGE_NGINX}"
 fi
 
 ## run ss-purge-opcache if set to half-daily ##
-if [[ "$INTERVAL_SS_PURGE_OPCACHE" == "half-daily" ]]; then 
-    source "$PATH_SS_PURGE_OPCACHE"
+if [[ "${INTERVAL_SS_PURGE_OPCACHE}" == "half-daily" ]]; then
+    source "${PATH_SS_PURGE_OPCACHE}"
 fi
 
 ## run ss-purge-redis if set to half-daily ##
-if [[ "$INTERVAL_SS_PURGE_REDIS" == "half-daily" ]]; then 
-    source "$PATH_SS_PURGE_REDIS"
+if [[ "${INTERVAL_SS_PURGE_REDIS}" == "half-daily" ]]; then
+    source "${PATH_SS_PURGE_REDIS}"
 fi
 
 ## run ss-purge-transients if set to half-daily ##
-if [[ "$INTERVAL_SS_PURGE_TRANSIENTS" == "half-daily" ]]; then 
-    source "$PATH_SS_PURGE_TRANSIENTS"
+if [[ "${INTERVAL_SS_PURGE_TRANSIENTS}" == "half-daily" ]]; then
+    source "${PATH_SS_PURGE_TRANSIENTS}"
 fi
 
 ## run ss-remote-backup if set to half-daily ##
-if [[ "$INTERVAL_SS_REMOTE_BACKUP" == "half-daily" ]]; then 
-    source "$PATH_SS_REMOTE_BACKUP"
+if [[ "${INTERVAL_SS_REMOTE_BACKUP}" == "half-daily" ]]; then
+    source "${PATH_SS_REMOTE_BACKUP}"
 fi
 
 ## run ss-restart-mysql if set to half-daily ##
-if [[ "$INTERVAL_SS_RESTART_MYSQL" == "half-daily" ]]; then 
-    source "$PATH_SS_RESTART_MYSQL"
+if [[ "${INTERVAL_SS_RESTART_MYSQL}" == "half-daily" ]]; then
+    source "${PATH_SS_RESTART_MYSQL}"
 fi
 
 ## run ss-restart-nginx if set to half-daily ##
-if [[ "$INTERVAL_SS_RESTART_NGINX" == "half-daily" ]]; then 
-    source "$PATH_SS_RESTART_NGINX"
+if [[ "${INTERVAL_SS_RESTART_NGINX}" == "half-daily" ]]; then
+    source "${PATH_SS_RESTART_NGINX}"
 fi
 
 ## run ss-restart-php if set to half-daily ##
-if [[ "$INTERVAL_SS_RESTART_PHP" == "half-daily" ]]; then 
-    source "$PATH_SS_RESTART_PHP"
+if [[ "${INTERVAL_SS_RESTART_PHP}" == "half-daily" ]]; then
+    source "${PATH_SS_RESTART_PHP}"
 fi
 
 ## run ss-restart-redis if set to half-daily ##
-if [[ "$INTERVAL_SS_RESTART_REDIS" == "half-daily" ]]; then 
-    source "$PATH_SS_RESTART_REDIS"
+if [[ "${INTERVAL_SS_RESTART_REDIS}" == "half-daily" ]]; then
+    source "${PATH_SS_RESTART_REDIS}"
 fi
 
 ## run ss-restart-ufw if set to half-daily ##
-if [[ "$INTERVAL_SS_RESTART_UFW" == "half-daily" ]]; then 
-    source "$PATH_SS_RESTART_UFW"
+if [[ "${INTERVAL_SS_RESTART_UFW}" == "half-daily" ]]; then
+    source "${PATH_SS_RESTART_UFW}"
 fi
 
 ## run ss-empty-logs if set to half-daily ##
-if [[ "$INTERVAL_SS_EMPTY_LOGS" == "half-daily" ]]; then 
-    source "$PATH_SS_EMPTY_LOGS"
+if [[ "${INTERVAL_SS_EMPTY_LOGS}" == "half-daily" ]]; then
+    source "${PATH_SS_EMPTY_LOGS}"
 fi
 
 ####################################################################################################
@@ -318,7 +329,7 @@ chmod 0700 /var/www/crons/custom/*cron* ## 0700 means only root can execute
 ## this is technically not necessary but we do it anyway for extra security ##
 
 ## delete lock ##
-ss_rm "$LOCK_07_CRON_HALF_DAILY"
+ss_rm "${LOCK_07_CRON_HALF_DAILY}"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
