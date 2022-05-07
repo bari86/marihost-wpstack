@@ -8,7 +8,7 @@
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls the Nginx module config files based on ss-config (idempotent) #############
 #### module version: Nginx 1.18.x ##################################################################
-#### sourced by: ss-install ##########################
+#### sourced by: ss-install ########################################################################
 #### bash aliases: ss install nginx config #########################################################
 ####################################################################################################
 
@@ -24,20 +24,33 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### TABLE OF CONTENTS #############################################################################
+#### TABLE OF CONTENTS (SS-Install-Nginx-Config) ###################################################
 ####################################################################################################
 
-## A. Message (Begin)
-## B. Cleanup Temporary Files
-## C. Retrieve Latest Maintenance.html
-## D. Generate OpenSSL Certificate
-## E. Generate Htpasswd File
-## F. Install Nginx.conf
-## G. Delete Old Server Blocks
-## H.
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Touch Timestamp File
+## B. Message (Begin Script)
+## C. Cleanup Temporary Files
+## D. Retrieve Current Maintenance.html
+## E. Run SS-Encrypt-OpenSSL
+## F. Generate Htpasswd File
+## G. Install Nginx.conf
+## H. Delete Old Server Blocks
 
 ####################################################################################################
-#### A. SS-Install-Nginx-Config: Message (Begin Script) ############################################
+#### A. SS-Install-Nginx-Config: Touch Timestamp File ##############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_NGINX_CONFIG}"
+
+####################################################################################################
+#### B. SS-Install-Nginx-Config: Message (Begin Script) ############################################
 ####################################################################################################
 
 ## this is a simple message that announces to the shell the purpose of this bash script ##
@@ -48,7 +61,7 @@ echo -e "${COLOR_INFO}Running ss-install-nginx-config: Reinstalls the Nginx modu
 sleep "$SLEEP_MESSAGE_BEGIN"
 
 ####################################################################################################
-#### B. SS-Install-Nginx-Config: Cleanup Temporary Files ###########################################
+#### C. SS-Install-Nginx-Config: Cleanup Temporary Files ###########################################
 ####################################################################################################
 
 ## we briefly cleanup any leftover temporarily files that are relevant to this script ##
@@ -60,36 +73,37 @@ rm /tmp/server-block*
 rm /tmp/default*
 rm /tmp/letsencrypt.conf*
 rm /tmp/openssl.conf*
+rm /tmp/maintenance.html
 
 ####################################################################################################
-#### C. SS-Install-Nginx-Config: Retrieve Latest Maintenance.html ##################################
+#### D. SS-Install-Nginx-Config: Retrieve Current Maintenance.html #################################
 ####################################################################################################
 
 ## here we retrieve the latest default maintenance.html file (or use your own design) ##
 ## this file is parsed by Nginx to enable maintenance mode via SlickStack ##
 
 ## retrieve latest maintenance.html ##
-wget -O "$TMP_MAINTENANCE_HTML" "$MIRROR_MAINTENANCE_HTML"
+ss_wget_slow -O "${TMP_MAINTENANCE_HTML}" "${MIRROR_MAINTENANCE_HTML}"
 
 ## install maintenance.html ##
-cp "$TMP_MAINTENANCE_HTML" "$PATH_MAINTENANCE_HTML"
+cp "${TMP_MAINTENANCE_HTML}" "${PATH_MAINTENANCE_HTML}"
 
 ## reset permissions ##
-chown www-data:www-data "$PATH_MAINTENANCE_HTML"
-chmod 0444 "$PATH_MAINTENANCE_HTML" ## 0444 is enough
+chown www-data:www-data "${PATH_MAINTENANCE_HTML}"
+chmod 0444 "${PATH_MAINTENANCE_HTML}" ## 0444 is enough
 
 ####################################################################################################
-#### D. SS-Install-Nginx-Config: Generate OpenSSL Certificate ######################################
+#### E. SS-Install-Nginx-Config: Run SS-Encrypt-OpenSSL ############################################
 ####################################################################################################
 
 ## here we generate slickstack.crt and slickstack.key as the default SSL for Nginx ##
 ## this approach is extremely stable and works fantastic with CloudFlare ##
 
 ## run ss-encrypt-openssl ##
-source "$PATH_SS_ENCRYPT_OPENSSL"
+source "${PATH_SS_ENCRYPT_OPENSSL}"
 
 ####################################################################################################
-#### E. SS-Install-Nginx-Config: Generate Htpasswd File ############################################
+#### F. SS-Install-Nginx-Config: Generate Htpasswd File ############################################
 ####################################################################################################
 
 ## null file contents ##
@@ -100,14 +114,14 @@ ENCRYPTED_GUEST_PASSWORD=$(openssl passwd -apr1 "${GUEST_PASSWORD}")
 printf "${GUEST_USER}:${ENCRYPTED_GUEST_PASSWORD}\n" >> /var/www/meta/.htpasswd
 
 ####################################################################################################
-#### F. SS-Install-Nginx-Config: Install Nginx.conf ################################################
+#### G. SS-Install-Nginx-Config: Install Nginx.conf ################################################
 ####################################################################################################
 
 ## here we install an optimized Nginx config designed for high traffic and CloudFlare ##
 ## this step is critical to setting up caching, SSL certs, and HTTP headers ##
 
 ## download latest Nginx config boilerplate ##
-wget -O "$TMP_NGINX_CONF" "$MIRROR_NGINX_CONF"
+ss_wget_slow -O "${TMP_NGINX_CONF}" "${MIRROR_NGINX_CONF}"
 
 ## noindex entire site using HTTP headers (if enabled) ##
 if [[ "$SITE_NOINDEX" == "true" ]]; then 
@@ -369,10 +383,10 @@ else
 fi
 
 ## copy files to their destinations ##
-cp "$TMP_NGINX_CONF" "$PATH_NGINX_CONF"
+cp "${TMP_NGINX_CONF}" "${PATH_NGINX_CONF}"
 
 ####################################################################################################
-#### G. SS-Install-Nginx-Config: Delete Old Server Blocks #############################################
+#### H. SS-Install-Nginx-Config: Delete Old Server Blocks ##########################################
 ####################################################################################################
 
 ## here we delete any existing previous server blocks to avoid conflicts with Nginx ##
@@ -383,7 +397,7 @@ cp "$TMP_NGINX_CONF" "$PATH_NGINX_CONF"
 rm /var/www/sites/*
 
 ####################################################################################################
-#### SS-Install-Nginx-Config: Install Nginx Server Block (Dev Subdomain) ###########################
+#### SS-Install-Nginx-Config: Install Nginx Server Block (Dev Site) ################################
 ####################################################################################################
 
 ## here we install the Nginx server block for dev subdomain if enabled in ss-config ##
@@ -490,7 +504,7 @@ if [[ "$STAGING_SITE" == "true" ]]; then
 fi
 
 ####################################################################################################
-#### SS-Install-Nginx-Config: Install Nginx Server Block (Production) ##################
+#### SS-Install-Nginx-Config: Install Nginx Server Block (Production) ##############################
 ####################################################################################################
 
 ## here we install the Nginx server block for production (default) site no matter what ##
@@ -541,7 +555,7 @@ fi
     fi
 
 ####################################################################################################
-#### SS-Install-Nginx-Config: Temporarily Activate OpenSSL ####################
+#### SS-Install-Nginx-Config: Temporarily Activate OpenSSL #########################################
 ####################################################################################################
 
 ## here we must temporarily activate OpenSSL in order to avoid fatal errors in Nginx ##
@@ -550,14 +564,14 @@ fi
 ## FIX THIS: it should only be needed if letsencrypt.conf and /var/www/certs/fullchain.pem do not already exist ##
 
 ## run ss-install-nginx-openssl ##
-source "$PATH_SS_INSTALL_NGINX_OPENSSL"
+source "${PATH_SS_INSTALL_NGINX_OPENSSL}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Restart Modules (Nginx) ##############################################
 ####################################################################################################
 
 ## run ss-restart-nginx ##
-source "$PATH_SS_RESTART_NGINX"
+source "${PATH_SS_RESTART_NGINX}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Generate Lets Encrypt Certificate (Via SS-Encrypt-Certbot) ###########
@@ -567,7 +581,7 @@ source "$PATH_SS_RESTART_NGINX"
 ## this approach is extremely stable and works fantastic with CloudFlare ##
 
 ## run ss-encrypt-certbot ##
-source "$PATH_SS_ENCRYPT_CERTBOT"
+source "${PATH_SS_ENCRYPT_CERTBOT}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Install Preferred SSL Certificate (Per SS-Config) ####################
@@ -577,7 +591,7 @@ source "$PATH_SS_ENCRYPT_CERTBOT"
 ## this depends on your ss-config settings (both certs should exist regardless) ##
 
 ## run ss-install-nginx-ssl ##
-source "$PATH_SS_INSTALL_NGINX_SSL"
+source "${PATH_SS_INSTALL_NGINX_SSL}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Enable TMPFS Mount (Optional) ########################################
@@ -597,14 +611,14 @@ fi
 ####################################################################################################
 
 ## run ss-perms-nginx-config ##
-source "$PATH_SS_PERMS_NGINX_CONFIG"
+source "${PATH_SS_PERMS_NGINX_CONFIG}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Restart Modules (Nginx) ##############################################
 ####################################################################################################
 
 ## run ss-restart-nginx ##
-source "$PATH_SS_RESTART_NGINX"
+source "${PATH_SS_RESTART_NGINX}"
 
 ####################################################################################################
 #### SS-Install-Nginx-Config: Install WordPress Config (Via SS-Install-WordPress-Config) ###########
@@ -613,7 +627,7 @@ source "$PATH_SS_RESTART_NGINX"
 ## ensures that concatenate is disabled in wp-config to support latest nginx server block ##
 
 if [[ "$SS_APP" == "wordpress" || -z "$SS_APP"  ]]; then
-    source "$PATH_SS_INSTALL_WORDPRESS_CONFIG"
+    source "${PATH_SS_INSTALL_WORDPRESS_CONFIG}"
 fi
 
 ####################################################################################################
@@ -629,16 +643,6 @@ rm /tmp/server-block*
 rm /tmp/default*
 rm /tmp/letsencrypt.conf*
 rm /tmp/openssl.conf*
-
-####################################################################################################
-#### SS-Install-Nginx-Config: Touch Timestamp File (End Script) ####################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_NGINX_CONFIG"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

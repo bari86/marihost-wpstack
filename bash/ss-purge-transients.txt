@@ -34,20 +34,20 @@ source /var/www/ss-functions
 ## E. End Validation
 
 ####################################################################################################
-#### A. Validate Proper Environment 
-####################################################################################################
-
-if [[ "$SS_APP" == "wordpress" ]] || [[ "$SS_APP" != "mysql" ]] || [[ -z "$SS_APP" ]]; then
-
-####################################################################################################
 #### B. SS-Purge-Transients: Touch Timestamp File ##################################################
 ####################################################################################################
 
 ## this is a dummy timestamp file that will remember the last time this script was run ##
 ## it can be useful for developer reference and is sometimes used by SlickStack ##
 
-    ## script timestamp ##
-    touch "$TIMESTAMP_SS_PURGE_TRANSIENTS"
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_PURGE_TRANSIENTS}"
+
+####################################################################################################
+#### A. Validate Proper Environment 
+####################################################################################################
+
+if [[ "$SS_APP" == "wordpress" ]] || [[ "$SS_APP" != "mysql" ]] || [[ -z "$SS_APP" ]]; then
 
 ####################################################################################################
 #### C. SS-Purge-Transients: Message (Begin Script) ################################################

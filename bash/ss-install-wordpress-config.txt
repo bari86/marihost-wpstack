@@ -7,9 +7,9 @@
 #### path: /var/www/ss-install-wordpress-config ####################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls WordPress module (CMS) config files based on ss-config (idempotent) #######
-#### module version: WordPress 5.8.x ###############################################################
+#### module version: WordPress 5.9.x ###############################################################
 #### sourced by: ss-install, ss-install-nginx-config ###############################################
-#### bash aliases: ss install wordpress config, ss install wp config ###############################
+#### bash aliases: ss install [wordpress|wp] config ################################################
 ####################################################################################################
 
 ## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
@@ -37,8 +37,11 @@ source /var/www/ss-functions
 # then
 
 ####################################################################################################
-#### TABLE OF CONTENTS #############################################################################
+#### TABLE OF CONTENTS (SS-Install-WordPress-Config) ###############################################
 ####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
 
 ## A. Message (Begin)
 ## B. Cleanup Temporary Files
@@ -50,6 +53,16 @@ source /var/www/ss-functions
 ## Touch Timestamp File
 
 ####################################################################################################
+#### SS-Install-WordPress-Config: Touch Timestamp File #############################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL_WORDPRESS_CONFIG}"
+
+####################################################################################################
 #### A. SS-Install-WordPress-Config: Message (Begin Script) ########################################
 ####################################################################################################
 
@@ -58,7 +71,7 @@ source /var/www/ss-functions
 
 ## echo message ##
 echo -e "${COLOR_INFO}Running ss-install-wordpress-config: Reinstalls WordPress module (CMS) config files based on ss-config (idempotent)... ${NOCOLOR}"
-sleep "$SLEEP_MESSAGE_BEGIN"
+sleep "${SLEEP_MESSAGE_BEGIN}"
 
 ####################################################################################################
 #### B. SS-Install-WordPress-Config: Cleanup Temporary Files #######################################
@@ -667,16 +680,6 @@ rm "$TMP_WORDPRESS_CONFIG_DEV"
  #   echo -e "${YELLOW}therefore ss-install-wordpress-config has exited without running. ${NOCOLOR}"
  #   echo -e ""
 # fi
-
-####################################################################################################
-#### SS-Install-WordPress-Config: Touch Timestamp File (End Script) ################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "$TIMESTAMP_SS_INSTALL_WORDPRESS_CONFIG"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############

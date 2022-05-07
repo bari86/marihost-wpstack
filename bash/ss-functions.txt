@@ -34,6 +34,16 @@
 ## H. Pretty Colors + Styles For The Shell
 
 ####################################################################################################
+#### Mirror Links ####
+####################################################################################################
+
+## preparing for future better support for forking this repo ##
+
+GITHUB_PREFIX="https://raw.githubusercontent.com/littlebizzy/slickstack/master/"
+GITLAB_PREFIX="https://gitlab.com/littlebizzy/slickstack/-/raw/master/"
+SOURCEFORGE_PREFIX="https://sourceforge.net/p/slickstack/code/ci/master/tree/"
+
+####################################################################################################
 #### A. SS-Functions: SlickStack Variables #########################################################
 ####################################################################################################
 
@@ -54,8 +64,15 @@ SYSTEM_DISK_TOTAL_EASY=$(df -kh . | tail -n1 | awk '{print $2}')
 SYSTEM_DISK_FREE_EASY=$(df -kh . | tail -n1 | awk '{print $4}')
 SYSTEM_DISK_USED_PERCENT=$(df -kh . | tail -n1 | awk '{print $5}')
 SYSTEM_RAM_MEMORY=$(echo $(($(getconf _PHYS_PAGES) * $(getconf PAGE_SIZE) / (1024 * 1024))) 2> /dev/null)
-SYSTEM_RAM_TOTAL=$(free -mh | head -2 | tail -1 | awk '{print $2}')
-SYSTEM_SWAP_TOTAL=$(free -mh | tail -1 | awk '{print $2}')
+SYSTEM_RAM_TOTAL=$(free -mh | head -2 | tail -1 | awk '{print $2}' | sed 's/i//')
+SYSTEM_SWAP_TOTAL=$(free -mh | tail -1 | awk '{print $2}' | sed 's/i//')
+
+if [[ -z "${SYSTEM_SWAP_TOTAL}" ]]; then
+    SYSTEM_SWAP_TOTAL_FINAL="N/A"
+else 
+    SYSTEM_SWAP_TOTAL_FINAL="${SYSTEM_SWAP_TOTAL}"
+fi
+
 SYSTEM_NETWORK_INTERFACE=$(ip route get 1.1.1.1 | head -n1 | awk '{print $5}')
 SYSTEM_IPV4_ADDRESS=$(ip addr show "$SYSTEM_NETWORK_INTERFACE" | grep "inet " | awk '{ print $2;exit }' | cut -d/ -f1)
 SYSTEM_IPV6_ADDRESS=$(ip addr show "$SYSTEM_NETWORK_INTERFACE" | grep "inet6 " | awk '{ print $2;exit }' | cut -d/ -f1)
@@ -860,6 +877,7 @@ TMP_RCLONE_CONF="/tmp/rclone.conf"
 TMP_ROBOTS_TXT="/tmp/robots.txt"
 TMP_SS_CONSTANTS_PHP="/tmp/ss-constants.php"
 TMP_SSHD_CONFIG="/tmp/sshd_config"
+TMP_SUDOERS="/tmp/sudoers"
 TMP_THIRDPARTY_CONF="/tmp/thirdparty.conf"
 TMP_WORDPRESS_CONFIG_DEV="/tmp/wp-config-dev.php"
 TMP_WORDPRESS_CONFIG_PRODUCTION="/tmp/wp-config-production.php"
@@ -1044,6 +1062,7 @@ PATH_OPENSSL_CERTIFICATE="/var/www/certs/slickstack.crt"
 PATH_OPENSSL_KEY="/var/www/certs/slickstack.key"
 PATH_CRONTAB_ROOT="/var/spool/cron/crontabs/root"
 PATH_MY_CNF="/etc/mysql/my.cnf"
+PATH_LETSENCRYPT_CERT_FULLCHAIN="/etc/letsencrypt/live/slickstack/fullchain.pem"
 PATH_LETSENCRYPT_CONF="/etc/nginx/conf.d/letsencrypt.conf"
 PATH_MAINTENANCE_HTML="/var/www/meta/maintenance.html"
 PATH_MAINTENANCE_HTML_LIVE="/var/www/html/maintenance.html"
@@ -1311,6 +1330,15 @@ function apt {
     command /usr/bin/apt --yes --quiet --option Dpkg::Options::=--force-confold --option Dpkg::Options::=--force-confdef "$@"
 }
 
+function ss_adduser {
+    adduser --disabled-password --quiet --shell /bin/bash --gecos "" "$@" 2> /dev/null
+}
+
+## ss_certbot ##
+function ss_certbot {
+    command certbot "$@" > /dev/null 2>&1
+}
+
 ## cp alias flags ##
 function cp {
     command cp -R -f -d --no-preserve=mode,ownership "$@"
@@ -1338,6 +1366,11 @@ function ss_grep {
 
 ## mkdir alias flags ##
 function mkdir {
+    command mkdir -p "$@"
+}
+
+## ss_mkdir alias flags ##
+function ss_mkdir {
     command mkdir -p "$@"
 }
 
@@ -1406,6 +1439,12 @@ function rsync {
 ## ss_rsync alias flags ##
 function ss_rsync {
     command rsync -aI --ignore-errors "$@"
+}
+
+## ss_rsync_backup alias flags ##
+function ss_rsync_backup {
+    command rsync -acz --mkpath --rsh="sshpass -p ${RSYNC_PASSWORD} ssh -o StrictHostKeyChecking=no -l ${RSYNC_USER}" "$@"
+    # command rsync -acze "ssh -o StrictHostKeyChecking=no" --mkpath --rsh='sshpass -p "${RSYNC_PASSWORD}" -e ssh -l test' "$@"
 }
 
 ## touch alias flags ##
@@ -1578,5 +1617,6 @@ ENDSTAND=$(tput rmso) # end standout
 ## Ref: https://stackoverflow.com/questions/8748831/when-do-we-need-curly-braces-around-shell-variables
 ## Ref: https://stackoverflow.com/questions/8110530/check-free-disk-space-for-current-partition-in-bash
 ## Ref: https://stackoverflow.com/questions/16136943/how-to-get-the-second-column-from-command-output
+## Ref: https://stackoverflow.com/questions/4651012/why-is-the-default-terminal-width-80-characters
 
 ## SS_EOF

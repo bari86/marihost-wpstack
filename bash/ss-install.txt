@@ -7,7 +7,7 @@
 #### path: /var/www/ss-install #####################################################################
 #### destination: n/a (not a boilerplate) ##########################################################
 #### purpose: Reinstalls the entire SlickStack LEMP environment and all modules (idempotent) #######
-#### module version: Ubuntu 20.04 LTS ##############################################################
+#### module version: Ubuntu 22.04 LTS ##############################################################
 #### sourced by: n/a (wget -O ss slick.fyi && bash ss) #############################################
 #### bash aliases: ss install ######################################################################
 ####################################################################################################
@@ -15,10 +15,27 @@
 ## SS-CONFIG MUST BE PROPERLY CONFIGURED AND ON CURRENT BUILD BEFORE RUNNING SS-INSTALL ##
 ## ENSURE THAT YOUR SS-CONFIG BUILD REMAINS CURRENT BY RUNNING SS-UPDATE-CONFIG ##
 
-SS_INSTALL_BUILD="APR2022P"
+SS_INSTALL_BUILD="MAY2022G"
 
 ####################################################################################################
-#### SS-Install: Validate (Restore) SS-Functions ###################################################
+#### TABLE OF CONTENTS (SS-Install) ################################################################
+####################################################################################################
+
+## this is a brief summary of the different code snippets you will find in this script ##
+## each section should be commented so you understand what is being accomplished ##
+
+## A. Validate (Restore) SS-Functions
+## B. Source SS-Config + SS-Functions (After Validated)
+## C. Verify Environment Compatibility
+## D. Check For Any Undefined Options
+## E. Retrieve SS-Config Boilerplate
+## F. Interactive Bash Setup Wizard (SS-Config)
+
+## Touch Timestamp File
+## Message (Begin Script)
+
+####################################################################################################
+#### A. SS-Install: Validate (Restore) SS-Functions ################################################
 ####################################################################################################
 
 ## THIS SNIPPET DOES NOT RELY ON SS-CONFIG OR SS-FUNCTIONS
@@ -60,7 +77,7 @@ if [[ -z "${VALIDATE_SS_FUNCTIONS}" ]] || [[ -n "${OUTDATED_SS_FUNCTIONS}" ]]; t
 fi
 
 ####################################################################################################
-#### SS-Install: Source SS-Config + SS-Functions (After Validated) #################################
+#### B. SS-Install: Source SS-Config + SS-Functions (After Validated) ##############################
 ####################################################################################################
 
 ## at this point we have restored ss-functions and ss-config may or may not exist yet ##
@@ -76,7 +93,17 @@ source /var/www/ss-functions
 ## BELOW THIS RELIES ON SS-CONFIG AND SS-FUNCTIONS
 
 ####################################################################################################
-#### SS-Install: Verify Environment Compatibility Before Proceeding ################################
+#### SS-Install: Touch Timestamp File ##############################################################
+####################################################################################################
+
+## this is a dummy timestamp file that will remember the last time this script was run ##
+## it can be useful for developer reference and is sometimes used by SlickStack ##
+
+## script timestamp ##
+ss_touch "${TIMESTAMP_SS_INSTALL}"
+
+####################################################################################################
+#### C. SS-Install: Verify Environment Compatibility ###############################################
 ####################################################################################################
 
 ## never run ss-install unless the build version below matches active ss-config version ##
@@ -115,7 +142,7 @@ if [[ -f "/.dockerenv" ]] || grep -Eq '(lxc|docker)' /proc/1/cgroup; then
 fi
 
 ####################################################################################################
-#### SS-Update: Verify Undefined Options Do Not Exist Before Proceeding ############################
+#### D. SS-Install: Check For Any Undefined Options ################################################
 ####################################################################################################
 
 ## SNIPPET: ss-install, ss-update-config
@@ -138,7 +165,7 @@ if [[ -f "/var/www/ss-config" ]]; then
 fi
 
 ####################################################################################################
-#### SS-Install: Retrieve SS-Config Boilerplate ####################################################
+#### E. SS-Install: Retrieve SS-Config Boilerplate #################################################
 ####################################################################################################
 
 ## here we retrieve the ss-config boilerplate from our public mirrors to begin wizard ##
@@ -163,7 +190,7 @@ if [[ -z "$VALIDATE_TMP_SS_CONFIG" ]]; then
 fi
 
 ####################################################################################################
-#### SS-Install: Interactive Bash Setup Wizard (SS-Config) #########################################
+#### F. SS-Install: Interactive Bash Setup Wizard (SS-Config) ######################################
 ####################################################################################################
 
 ## this basic wizard will allow you to interactively setup your ss-config file options ##
@@ -206,11 +233,11 @@ FOURTH_LINE="${COLOR_INFO}#### ${LIGHTGRAY}Virtualization: ${LIGHTGREEN}${SYSTEM
 FOURTH_LINE_TRIM=${FOURTH_LINE::120}
 FIFTH_LINE="${COLOR_INFO}#### ${LIGHTGRAY}Disk space: ${LIGHTGREEN}${SYSTEM_DISK_FREE_EASY} free space out of ${SYSTEM_DISK_TOTAL_EASY} total space (${SYSTEM_DISK_USED_PERCENT} currently used) ${COLOR_INFO}${FILLER}${NOCOLOR}"
 FIFTH_LINE_TRIM=${FIFTH_LINE::120}
-INTRO_SWAPFILE="${COLOR_INFO}#### ${LIGHTGRAY}Swapfile: ${LIGHTGREEN}${SYSTEM_SWAP_TOTAL} (will be installed if not exists) ${COLOR_INFO}${FILLER}${NOCOLOR}"
+INTRO_SWAPFILE="${COLOR_INFO}#### ${LIGHTGRAY}Swapfile: ${LIGHTGREEN}${SYSTEM_SWAP_TOTAL_FINAL} (will be installed if not exists) ${COLOR_INFO}${FILLER}${NOCOLOR}"
 INTRO_SWAPFILE_TRIM=${INTRO_SWAPFILE::120}
 INTRO_MEMORY="${COLOR_INFO}#### ${LIGHTGRAY}RAM memory (total): ${LIGHTGREEN}${SYSTEM_RAM_TOTAL} (2GB+ best for WooCommerce and such) ${COLOR_INFO}${FILLER}${NOCOLOR}"
 INTRO_MEMORY_TRIM=${INTRO_MEMORY::120}
-SIXTH_LINE="${COLOR_INFO}#### ${LIGHTGRAY}CPU cores: ${LIGHTGREEN}${SYSTEM_CPU_CORES} core(s) ${COLOR_INFO}${FILLER}${NOCOLOR}"
+SIXTH_LINE="${COLOR_INFO}#### ${LIGHTGRAY}vCPU cores: ${LIGHTGREEN}${SYSTEM_CPU_CORES} core(s) ${COLOR_INFO}${FILLER}${NOCOLOR}"
 SIXTH_LINE_TRIM=${SIXTH_LINE::120}
 EIGHT_LINE="${COLOR_INFO}#### ${LIGHTGRAY}IP Address (IPv4): ${LIGHTGREEN}${SYSTEM_IPV4_ADDRESS} ${COLOR_INFO}${FILLER}${NOCOLOR}"
 EIGHT_LINE_TRIM=${EIGHT_LINE::120}
@@ -268,7 +295,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     sed -i "s/@DB_PASSWORD_ROOT/$(openssl rand -hex 12)/g" /tmp/ss-config
 
     ## PROMPT: choose sudo username (default = batman) ##
-    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose sudo username (for SSH):" ${LIGHTGREEN})" -e -i 'batman' ss_var_sudo_user || ss_var_sudo_user=batman ${NOCOLOR}
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose sudo username (for SSH):" ${LIGHTGREEN})" -e -i 'batman' ss_var_sudo_user || ss_var_sudo_user=batman "${NOCOLOR}"
     sed -i "s/@SUDO_USER/$ss_var_sudo_user/g" /tmp/ss-config
 
     ## new line ##
@@ -276,7 +303,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
 
     ## PROMPT: choose sudo password (default = random) ##
     sudopass_random=$(openssl rand -hex 12)
-    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose sudo password (should be strong): "${LIGHTGREEN})" -e -i ${sudopass_random} ss_var_sudo_password || ss_var_sudo_password=${sudopass_random} ${NOCOLOR}
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose sudo password (should be strong): "${LIGHTGREEN})" -e -i ${sudopass_random} ss_var_sudo_password || ss_var_sudo_password=${sudopass_random} "${NOCOLOR}"
     sed -i "s/@SUDO_PASSWORD/$ss_var_sudo_password/g" /tmp/ss-config
 
     ## new line ##
@@ -390,14 +417,14 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     printf "\n"
 
     ## PROMPT: choose site TLD (otherwise example.com) ##
-    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose site TLD (subdomains not allowed): "${LIGHTGREEN})" -e -i "$SS_TLD" ss_var_site_tld || ss_var_site_tld=${SS_TLD} "${NOCOLOR}"
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose site TLD (subdomains not allowed): "${LIGHTGREEN})" -e -i "${SS_TLD}" ss_var_site_tld || ss_var_site_tld=${SS_TLD} "${NOCOLOR}"
     sed -i "s/@SITE_TLD/$ss_var_site_tld/g" /tmp/ss-config
 
     ## new line ##
     printf "\n"
 
     ## PROMPT: choose site domain (otherwise www.example.com) ##
-    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose site domain (subdirectories not allowed): "${LIGHTGREEN})" -e -i "$SS_TLD" ss_var_site_domain || ss_var_site_domain=${SS_HOSTNAME} "${NOCOLOR}"
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose site domain (subdirectories not allowed): "${LIGHTGREEN})" -e -i "www.${SS_TLD}" ss_var_site_domain || ss_var_site_tld=www.${SS_TLD} "${NOCOLOR}"
     sed -i "s/@SITE_DOMAIN/$ss_var_site_domain/g" /tmp/ss-config
 
     ## new line ##
@@ -477,6 +504,13 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     guest_pass_random=$(openssl rand -hex 12)
     read -t 300 -p "$(echo -e ${LIGHTGRAY}"Choose guest password (easy is fine): "${LIGHTGREEN})" -e -i ${guest_pass_random} ss_var_guest_password || ss_var_guest_password=${guest_pass_random} "${NOCOLOR}"
     sed -i "s/@GUEST_PASSWORD/$ss_var_guest_password/g" /tmp/ss-config
+
+    ## new line ##
+    printf "\n"
+
+    ## PROMPT: which remote backups do you want ##
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Which remote backups do you want? (none|rsync|rclone): "${LIGHTGREEN})" -e -i 'none' ss_var_remote_backups || ss_var_remote_backups=none "${NOCOLOR}"
+    sed -i "s/@SS_REMOTE_BACKUPS/$ss_var_remote_backups/g" /tmp/ss-config
 
     ## new line ##
     printf "\n"
@@ -615,7 +649,7 @@ fi
 ## here we must source ss-config again after the setup wizard has completed generation ##
 ## this is different than the conditional sourcing at the top of this script ##
 
-## include SlickStack configuration ##
+## source ss-config ##
 source /var/www/ss-config
 
 ####################################################################################################
@@ -645,9 +679,6 @@ fi
 ## now that ss-config is configured we must retrieve the current cron jobs and scripts ##
 ## ss-check is a critical file at this stage so ss-install will exit if missing ##
 
-## snippet variables ##
-
-
 ## download current versions ##
 ss_wget_slow -O "${TMP_SS_CHECK}" "${MIRROR_SS_CHECK}"
 
@@ -672,19 +703,19 @@ else
 fi
 
 ####################################################################################################
-#### SS-Install: Set Confold As Ubuntu Dpkg Default ################################################
+#### SS-Install: Set Ubuntu Dpkg Default (Confold) #################################################
 ####################################################################################################
 
 ## the first time you run ss-install we want to ensure that confold is dpkg default ##
 ## this helps to avoid overwriting module config files that SlickStack uses ##
 
-## set confold as dpkg default (fail-safe in case apt upgrade called directly) ##
+## set confold as dpkg default ##
 DEBIAN_FRONTEND="noninteractive dpkg --configure -a --force-confold"
 
-## update Ubuntu repo cache ##
+## update apt cache ##
 apt update > /dev/null 2>&1
 
-## upgrade installed Ubuntu packages (LEMP modules) + but now Linux kernel (full-upgrade) ##
+## upgrade packages ##
 apt upgrade > /dev/null 2>&1
 
 ####################################################################################################
@@ -765,8 +796,8 @@ source "${PATH_SS_INSTALL_PHP_CONFIG}"
 
 if [[ "${SS_APP}" != "mysql" ]]; then
 
-    ## run ss-install-nginx-packages ##
-    source "$PATH_SS_INSTALL_NGINX_PACKAGES"
+## run ss-install-nginx-packages ##
+source "${PATH_SS_INSTALL_NGINX_PACKAGES}"
 
 chown -R "${SFTP_USER}":www-data /var/www/html/.well-known ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
 chown -R "${SFTP_USER}":www-data /var/www/html/.well-known/acme-challenge ## accessed by server for e.g. Cerbot but also by SFTP user for things like Stripe ##
@@ -787,11 +818,8 @@ chown www-data:www-data /var/www/logs ## must be www-data:www-data
 chown www-data:www-data /var/www/meta ## must be www-data:www-data
 chown www-data:www-data /var/www/meta/.htpasswd ## must be www-data:www-data
 
-    ## run ss-install-nginx-config ##
-    source "${PATH_SS_INSTALL_NGINX_CONFIG}"
-
-    ## run ss-install-nginx-ssl ##
-    # source "${PATH_SS_INSTALL_NGINX_SSL}"
+## run ss-install-nginx-config ##
+source "${PATH_SS_INSTALL_NGINX_CONFIG}"
 
 fi
 
@@ -817,9 +845,6 @@ source "${PATH_SS_INSTALL_MYSQL_PACKAGES}"
 
 ## run ss-install-mysql-config ##
 source "${PATH_SS_INSTALL_MYSQL_CONFIG}"
-
-## run ss-install-mysql-database ##
-# source "${PATH_SS_INSTALL_MYSQL_DATABASE}"
 
 ####################################################################################################
 #### SS-Install: Install Redis #####################################################################
@@ -903,7 +928,7 @@ if [[ "${SS_APP}" == "mediawiki" ]]; then
 fi
 
 ####################################################################################################
-#### SS-Install: Install Rclone ########################################################
+#### SS-Install: Install Rclone ####################################################################
 ####################################################################################################
 
 ## run ss-install-rclone-packages ##
@@ -953,23 +978,24 @@ source "${PATH_SS_EMPTY_LOGS}"
 source "${PATH_SS_PERMS}"
 
 ####################################################################################################
-#### SS-Install: Disable Maintenance Mode ##########################################################
-####################################################################################################
-
-## run ss-maintenance-disable ##
-source "${PATH_SS_MAINTENANCE_DISABLE}"
-
-####################################################################################################
 #### SS-Install: Sync Staging Site #################################################################
 ####################################################################################################
 
 ## now that everything is setup and permissions fixed we sync production to staging ##
 ## it will only sync files/database if staging site is enabled in ss-config ##
 
-## FIX THIS: first we must support non-interactive prod database setup
-
 ## run ss-sync-staging ##
-# source "${PATH_SS_SYNC_STAGING}"
+source "${PATH_SS_SYNC_STAGING}"
+
+####################################################################################################
+#### SS-Install: Disable Maintenance Mode ##########################################################
+####################################################################################################
+
+## since everything is now setup including perms and staging we disable maintenance ##
+## for good measure we also purge all caches immediately after this snippet ##
+
+## run ss-maintenance-disable ##
+source "${PATH_SS_MAINTENANCE_DISABLE}"
 
 ####################################################################################################
 #### SS-Install: Clear Caches (All Caches) #########################################################
@@ -1013,10 +1039,11 @@ source "${PATH_SS_RESTART_MYSQL}"
 source "${PATH_SS_RESTART_UFW}"
 
 ####################################################################################################
-#### SS-Install: Run SS-Worker #########################################
+#### SS-Install: Run SS-Worker #####################################################################
 ####################################################################################################
 
-## just in case any random things need to be done ##
+## just in case any random things need to be done we run ss-worker at the very end ##
+## ss-worker takes care of various tasks that lack a specific bash script ##
 
 ## run ss-worker ##
 source "${PATH_SS_WORKER}"
@@ -1057,13 +1084,24 @@ fi
 
 ## confirm installation complete ##
 echo -e ""
-echo -e "${LIGHTGRAY}MariHost install complete! Please note the sudo user and password above ${NOCOLOR}"
-echo -e "${LIGHTGRAY}to avoid being locked out of your new server (the root user is disabled). ${NOCOLOR}"
-echo -e "${LIGHTGRAY}Also, be sure to enable [Full SSL] mode in CloudFlare to avoid redirect ${NOCOLOR}"
-echo -e "${LIGHTGRAY}loops (we do not recommend enabling HSTS, however). For an extra boost, ${NOCOLOR}"
-echo -e "${LIGHTGRAY}use CloudFlare Page Rules to [cache all] for /wp-content/* requests, and ${NOCOLOR}"
-echo -e "${LIGHTGRAY}to force-redirect (non)www domain requests too. Lastly be sure to set TLS ${NOCOLOR}"
-echo -e "${LIGHTGRAY}version to 1.2+ in Cloudflare for top SSL Labs score. Cheers! ${NOCOLOR}"
+echo -e "${COLOR_INFO}################################################################################${NOCOLOR}"
+echo -e "${COLOR_INFO}#### Congrats! MariHost installation is now complete. ########################${NOCOLOR}"
+echo -e "${COLOR_INFO}################################################################################${NOCOLOR}"
+echo -e ""
+echo -e "${COLOR_WARN}NOTE: The SFTP user/password is the default login for WP Admin on all sites ${NOCOLOR}"
+echo -e "${COLOR_WARN}until otherwise configured by your team. Use the bash alias ss to save on ${NOCOLOR}"
+echo -e "${COLOR_WARN}keystrokes (type ss help for a full list of commands). If this is the first ${NOCOLOR}"
+echo -e "${COLOR_WARN}time you installed SlickStack on this server, type the word bash below and ${NOCOLOR}"
+echo -e "${COLOR_WARN}hit ENTER to reload this shell session and activate these shortcuts. Also ${NOCOLOR}"
+echo -e "${COLOR_WARN}be sure to write down your sudo user/password for SSH access, since the root ${NOCOLOR}"
+echo -e "${COLOR_WARN}user is disabled. Also, be sure to enable [Full SSL] mode in Cloudflare to ${NOCOLOR}"
+echo -e "${COLOR_WARN}avoid redirect loops (HSTS can also be activated if you like). For an extra ${NOCOLOR}"
+echo -e "${COLOR_WARN}boost, use Cloudflare Page Rules to [cache all] for /wp-content/* requests ${NOCOLOR}"
+echo -e "${COLOR_WARN}and to force-redirect (non)www requests too. Lastly, be sure to set TLS ${NOCOLOR}"
+echo -e "${COLOR_WARN}version to 1.2+ in Cloudflare for top SSL security scores. If you notice ${NOCOLOR}"
+echo -e "${COLOR_WARN}any errors on your frontend, simply run ss-install again. Cheers! ${NOCOLOR}"
+echo -e ""
+echo -e "${COLOR_INFO}Ctrl/Cmd + click to open --> ${LIGHTGREEN}https://${SITE_DOMAIN}/wp-login.php ${NOCOLOR}"
 echo -e ""
 
 ####################################################################################################
@@ -1073,16 +1111,6 @@ echo -e ""
 ## delete tmp files ##
 rm /tmp/config
 rm /tmp/ss
-
-####################################################################################################
-#### SS-Install: Touch Timestamp File (End Script) #################################################
-####################################################################################################
-
-## this is a dummy timestamp file that will remember the last time this script was run ##
-## it can be useful for developer reference and is sometimes used by SlickStack ##
-
-## script timestamp ##
-touch "${TIMESTAMP_SS_INSTALL}"
 
 ####################################################################################################
 #### SlickStack: External References Used To Improve This Script (Thanks, Interwebz) ###############
