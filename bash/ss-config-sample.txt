@@ -57,8 +57,8 @@ SFTP_PASSWORD="@SFTP_PASSWORD"
 ## SSH_PORT = [22|6969|etc] best to keep port 22 for better vendor compatibility ##
 ## SSH_KEYS = [false|true] if enabled then password logins will be disabled ##
 
-SSH_PORT="@SSH_PORT"
-SSH_KEYS="@SSH_KEYS"
+SSH_PORT="22"
+SSH_KEYS="false"
 
 ####################################################################################################
 #### SS-Config: Domain Settings ####################################################################
@@ -95,8 +95,8 @@ DB_NAME="@DB_NAME"
 DB_USER="@DB_USER"
 DB_PASSWORD="@DB_PASSWORD_USER"
 DB_PASSWORD_ROOT="@DB_PASSWORD_ROOT"
-DB_HOST="@DB_HOST"
-DB_PREFIX="@DB_PREFIX"
+DB_HOST="127.0.0.1"
+DB_PREFIX="mhwp_"
 DB_CHARSET="utf8mb4"
 DB_COLLATE=""
 
@@ -224,7 +224,7 @@ SS_PILOT_FILE="@SS_PILOT_FILE"
 ## SS_TIMEZONE = [UTC|Greenwich|etc] pretty much everyone should use UTC time zone ##
 ## SS_REMOTE_BACKUPS = [none|rsync|rclone] which method of remote backups you want ##
 
-SS_DATABASE_REMOTE="@SS_DATABASE_REMOTE"
+SS_DATABASE_REMOTE="false"
 SS_OBJECT_CACHE="true"
 SS_SYNC_STAGING="true" ## temp fix until SS Dashboard functional
 SS_SWAPFILE_SIZE="auto"
@@ -263,7 +263,7 @@ WHITELABEL_SUPPORT_EMAIL="support@marihost.com"
 ## SSL_SESSION_CACHE = [shared:SSL:64m] there should be no reason to use other settings ##
 ## SSL_BUFFER_SIZE = [16k|8k|4k] smaller is better but less than 16k can cause errors ##
 
-SSL_TYPE="@SSL_TYPE"
+SSL_TYPE="openssl"
 SSL_PROTOCOLS="TLSv1.2 TLSv1.3"
 SSL_CIPHERS="ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384"
 SSL_SESSION_TIMEOUT="1d"
