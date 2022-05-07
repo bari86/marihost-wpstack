@@ -756,43 +756,43 @@ INTERVAL_SS_WORKER="regular" ## default = regular
 ## activate this custom list of MU (Must-Use) plugins using the SS_MU_PLUGINS variable ##
 ## NOTE: Autoloader, Custom Functions, Object Cache, and XXX Notices are required ##
 
-MU_PLUGIN_01_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/clear-caches.zip"
+MU_PLUGIN_01_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/clear-caches.zip"
 MU_PLUGIN_01_DIR="clear-caches"
 
-MU_PLUGIN_02_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/cloudflare.zip"
+MU_PLUGIN_02_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/cloudflare.zip"
 MU_PLUGIN_02_DIR="cloudflare"
 
-MU_PLUGIN_03_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/delete-expired-transients.zip"
+MU_PLUGIN_03_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/delete-expired-transients.zip"
 MU_PLUGIN_03_DIR="delete-expired-transients"
 
-MU_PLUGIN_04_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-attachment-pages.zip"
+MU_PLUGIN_04_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-attachment-pages.zip"
 MU_PLUGIN_04_DIR="disable-attachment-pages"
 
-MU_PLUGIN_05_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-emojis.zip"
+MU_PLUGIN_05_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-emojis.zip"
 MU_PLUGIN_05_DIR="disable-emojis"
 
-MU_PLUGIN_06_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-empty-trash.zip"
+MU_PLUGIN_06_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-empty-trash.zip"
 MU_PLUGIN_06_DIR="disable-empty-trash"
 
-MU_PLUGIN_07_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-image-compression.zip"
+MU_PLUGIN_07_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-image-compression.zip"
 MU_PLUGIN_07_DIR="disable-image-compression"
 
-MU_PLUGIN_08_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-post-via-email.zip"
+MU_PLUGIN_08_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-post-via-email.zip"
 MU_PLUGIN_08_DIR="disable-post-via-email"
 
-MU_PLUGIN_09_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/disable-xml-rpc.zip"
+MU_PLUGIN_09_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/disable-xml-rpc.zip"
 MU_PLUGIN_09_DIR="disable-xml-rpc"
 
-MU_PLUGIN_10_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-https.zip"
+MU_PLUGIN_10_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/force-https.zip"
 MU_PLUGIN_10_DIR="force-https"
 
-MU_PLUGIN_11_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/force-strong-hashing.zip"
+MU_PLUGIN_11_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/force-strong-hashing.zip"
 MU_PLUGIN_11_DIR="force-strong-hashing"
 
-MU_PLUGIN_12_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/header-cleanup.zip"
+MU_PLUGIN_12_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/header-cleanup.zip"
 MU_PLUGIN_12_DIR="header-cleanup"
 
-MU_PLUGIN_13_SOURCE="https://github.com/littlebizzy/slickstack/raw/master/modules/wordpress/mu-plugins/plugin-blacklist.zip"
+MU_PLUGIN_13_SOURCE="https://github.com/bari86/marihost-wpstack/raw/master/modules/wordpress/mu-plugins/plugin-blacklist.zip"
 MU_PLUGIN_13_DIR="plugin-blacklist"
 
 ## SS_EOF
