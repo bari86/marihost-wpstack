@@ -360,7 +360,7 @@ if [[ ! -f "/var/www/ss-config" ]]; then
     printf "\n"
 
     ## PROMPT: enable SS dashboard in WP Admin (default = true) ##
-    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Enable the SlickStack dashboard in WP Admin: "${LIGHTGREEN})" -e -i 'true' ss_var_slickstack_dashboard || ss_var_slickstack_dashboard=true "${NOCOLOR}"
+    read -t 300 -p "$(echo -e ${LIGHTGRAY}"Enable the MariHost dashboard in WP Admin: "${LIGHTGREEN})" -e -i 'true' ss_var_slickstack_dashboard || ss_var_slickstack_dashboard=true "${NOCOLOR}"
     sed -i "s/@SS_WORDPRESS_ADMIN_DASHBOARD/$ss_var_slickstack_dashboard/g" /tmp/ss-config
 
     ## new line ##
@@ -593,7 +593,7 @@ chown root:root /var/www/crons/custom ## must be root:root
 SSHKEYS_CHOSEN=$(source /var/www/ss-config; echo ${SSH_KEYS} 2> /dev/null)
 if [[ "${SSHKEYS_CHOSEN}" == "true" ]] && [[ ! -f "/var/www/auth/id_rsa.pub" ]]; then
     echo -e "${YELLOW}Exiting ss-install: Please upload your /var/www/auth/id_rsa.pub file before proceeding... ${NOCOLOR}"
-    echo -e "${YELLOW}Alternatively SlickStack will create a new key pair for you (just run ss-install again now)... ${NOCOLOR}"
+    echo -e "${YELLOW}Alternatively MariHost will create a new key pair for you (just run ss-install again now)... ${NOCOLOR}"
 fi
 
 ## force exit if thirdparty SSL chosen ##
@@ -667,7 +667,7 @@ CALC_DOMAIN_SUB=$(echo "${CALC_DOMAIN}" | grep -o "\." | wc -l)
 if [[ "${CALC_DOMAIN_SUB}" -gt 1 ]]; then
     echo -e ""
     echo -e "${COLOR_WARN}It appears your SITE_DOMAIN value is a sub-subdomain or is otherwise not ${NOCOLOR}"
-    echo -e "${COLOR_WARN}compatible with SlickStack. Please edit ss-config and try again. ${NOCOLOR}"
+    echo -e "${COLOR_WARN}compatible with MariHost. Please edit ss-config and try again. ${NOCOLOR}"
     echo -e ""
     exit 1
 fi
@@ -1091,7 +1091,7 @@ echo -e ""
 echo -e "${COLOR_WARN}NOTE: The SFTP user/password is the default login for WP Admin on all sites ${NOCOLOR}"
 echo -e "${COLOR_WARN}until otherwise configured by your team. Use the bash alias ss to save on ${NOCOLOR}"
 echo -e "${COLOR_WARN}keystrokes (type ss help for a full list of commands). If this is the first ${NOCOLOR}"
-echo -e "${COLOR_WARN}time you installed SlickStack on this server, type the word bash below and ${NOCOLOR}"
+echo -e "${COLOR_WARN}time you installed MariHost on this server, type the word bash below and ${NOCOLOR}"
 echo -e "${COLOR_WARN}hit ENTER to reload this shell session and activate these shortcuts. Also ${NOCOLOR}"
 echo -e "${COLOR_WARN}be sure to write down your sudo user/password for SSH access, since the root ${NOCOLOR}"
 echo -e "${COLOR_WARN}user is disabled. Also, be sure to enable [Full SSL] mode in Cloudflare to ${NOCOLOR}"
